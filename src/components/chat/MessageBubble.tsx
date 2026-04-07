@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTypewriter } from "@/hooks/useTypewriter";
@@ -68,14 +67,14 @@ export default function MessageBubble({
             {attachments
               .filter((a) => a.mimeType.startsWith("image/"))
               .map((att) => {
-                const src = `/${att.filePath.replace("public/", "")}`;
+                const src = `/api/files/${encodeURIComponent(att.filePath.split("/").pop() || "")}`;
                 return (
                   <div key={att.id} className="relative group w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={src}
                       alt={att.fileName}
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover"
                     />
                     {onEditImage && (
                       <button
@@ -103,7 +102,7 @@ export default function MessageBubble({
               .map((att) => (
                 <a
                   key={att.id}
-                  href={`/${att.filePath.replace("public/", "")}`}
+                  href={`/api/files/${encodeURIComponent(att.filePath.split("/").pop() || "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors max-w-[220px]"

@@ -6,6 +6,12 @@ import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma";
 import { appConfig } from "@/lib/config";
 
+function getUploadDir() {
+  return process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), "public", "uploads");
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
@@ -50,7 +56,7 @@ export async function POST(req: Request) {
       ? ext
       : ".bin";
     const uniqueName = `${uuidv4()}${safeExt}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    const uploadDir = getUploadDir();
 
     await mkdir(uploadDir, { recursive: true });
 
@@ -59,7 +65,8 @@ export async function POST(req: Request) {
     const fullPath = path.join(uploadDir, uniqueName);
     await writeFile(fullPath, buffer);
 
-    const relPath = `public/uploads/${uniqueName}`;
+    // Store just the filename — resolved via UPLOAD_DIR at read time
+    const relPath = `uploads/${uniqueName}`;
 
     // Save to DB with empty messageId (linked later)
     const attachment = await prisma.attachment.create({

@@ -54,14 +54,21 @@ export async function GET() {
           for (const modelInfo of data.models) {
             const name = modelInfo.name.replace("models/", "");
 
-            // Exclude image generation, audio, TTS, video, and live models — chat-only
+            // Only include gemini-* chat models, exclude specialized ones
+            if (!name.startsWith("gemini-")) continue;
+
             const isNonChatModel =
               name.includes("image") ||
               name.includes("imagen") ||
               name.includes("audio") ||
               name.includes("tts") ||
               name.includes("veo") ||
-              name.includes("live");
+              name.includes("live") ||
+              name.includes("computer") ||
+              name.includes("embedding") ||
+              name.includes("aqa") ||
+              name.includes("robotics") ||
+              name.includes("customtools");
             if (isNonChatModel) continue;
 
             // Only include models that support generateContent

@@ -7,6 +7,18 @@ import type { AIMessage, AIMessageContent, AIProvider } from "@/types";
 import path from "path";
 import fs from "fs";
 
+function getUploadDir() {
+  return process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), "public", "uploads");
+}
+
+/** Resolve attachment filePath (handles both old "public/uploads/x" and new "uploads/x") */
+function resolveAttachmentPath(filePath: string): string {
+  const fileName = path.basename(filePath);
+  return path.join(getUploadDir(), fileName);
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -95,7 +107,7 @@ export async function POST(
     const fileImageParts: AIMessageContent[] = [];
     if (isUser) {
       for (const att of attList.filter((a) => a.mimeType.startsWith("image/"))) {
-        const absPath = path.join(process.cwd(), att.filePath);
+        const absPath = resolveAttachmentPath(att.filePath);
         try {
           const b64 = fs.readFileSync(absPath).toString("base64");
           fileImageParts.push({ type: "image_url", image_url: { url: `data:${att.mimeType};base64,${b64}` } });
@@ -107,7 +119,7 @@ export async function POST(
     const filePdfParts: AIMessageContent[] = [];
     if (isUser) {
       for (const att of attList.filter((a) => a.mimeType === "application/pdf")) {
-        const absPath = path.join(process.cwd(), att.filePath);
+        const absPath = resolveAttachmentPath(att.filePath);
         try {
           const b64 = fs.readFileSync(absPath).toString("base64");
           filePdfParts.push({ type: "inline_data", inline_data: { mimeType: "application/pdf", data: b64 } });
