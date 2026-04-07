@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          String         @default("user")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  folders       Folder[]
+  settings      Setting[]
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  userId     String
+  folderId   String?
+  title      String    @default("Yeni Sohbet")
+  aiProvider String    @default("openai")
+  aiModel    String    @default("gpt-4.1")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder     Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  messages   Message[]
+}
+
+model Folder {
+  id            String         @id @default(cuid())
+  userId        String
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           String
+  content        String
+  provider       String?
+  model          String?
+  status         String       @default("done")
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  messageId String?
+  fileName  String
+  mimeType  String
+  filePath  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String
+  value     String
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}

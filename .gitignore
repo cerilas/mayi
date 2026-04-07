@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# uploads (user files)
+/public/uploads/
+
+# test files
+test-*.js
+
+# misc docs (not part of app)
+talimatlar-my.txt
+mylogo.png
