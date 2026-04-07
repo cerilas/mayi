@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export default function ConfirmDialog({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -122,6 +123,7 @@ export default function ConfirmDialog({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
