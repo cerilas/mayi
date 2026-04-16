@@ -1,11 +1,22 @@
 import { GoogleGenAI } from "@google/genai";
 import type { AIMessage, AIRequestOptions } from "@/types";
 import { toolDeclarations, executeToolCall } from "@/ai/tools/builtinTools";
+import { prisma } from "@/lib/prisma";
 
 const URL_REGEX = /https?:\/\/[^\s"'<>()[\]{}]+/i;
 const MAX_TOOL_TURNS = 5; // function calling döngüsü sınırı
 
-function getApiKey(): string {
+async function getApiKey(): Promise<string> {
+  // 1. Try DB setting (any admin who saved a key)
+  try {
+    const dbSetting = await prisma.setting.findFirst({
+      where: { key: "gemini_api_key", value: { not: "" } },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (dbSetting?.value) return dbSetting.value;
+  } catch { /* DB not ready, fall through */ }
+
+  // 2. Fallback to env vars
   const geminiKey = process.env.GEMINI_API_KEY;
   const fallbackFromOpenAI =
     !geminiKey && (process.env.OPENAI_API_KEY ?? "").startsWith("AIza")
@@ -14,7 +25,7 @@ function getApiKey(): string {
   const apiKey = geminiKey || fallbackFromOpenAI;
   if (!apiKey) {
     throw new Error(
-      "GEMINI_API_KEY tanımlanmamış. Lütfen .env dosyasına Gemini anahtarınızı ekleyin."
+      "GEMINI_API_KEY tanımlanmamış. Lütfen Ayarlar'dan veya .env dosyasından Gemini anahtarınızı ekleyin."
     );
   }
   return apiKey;
@@ -251,7 +262,7 @@ export async function streamGemini(
   options: AIRequestOptions,
   onChunk: (text: string) => void
 ): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+  const ai = new GoogleGenAI({ apiKey: await getApiKey() });
   const systemInstruction = getSystemInstruction(options.messages);
   const contents = buildContents(options.messages);
   const { mode, tools } = buildTools(options.messages, options.webSearch);
@@ -356,7 +367,7 @@ export async function streamGemini(
 }
 
 export async function chatGemini(options: AIRequestOptions): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+  const ai = new GoogleGenAI({ apiKey: await getApiKey() });
   const systemInstruction = getSystemInstruction(options.messages);
   const contents = buildContents(options.messages);
   const { tools } = buildTools(options.messages, options.webSearch);

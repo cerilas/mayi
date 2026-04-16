@@ -27,6 +27,7 @@ model Conversation {
   title      String    @default("Yeni Sohbet")
   aiProvider String    @default("openai")
   aiModel    String    @default("gpt-4.1")
+  shareId    String?   @unique
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?

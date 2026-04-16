@@ -183,27 +183,35 @@ export async function POST(
     })),
   ];
 
-  // PDF attachments need more time to process
-  const hasPdfAttachment = history.some((m) =>
-    m.attachments.some((a) => a.mimeType === "application/pdf")
+  // Attachments (PDF or images) need more time to process
+  const hasHeavyAttachment = history.some((m) =>
+    m.attachments.some((a) => a.mimeType === "application/pdf" || a.mimeType.startsWith("image/"))
   );
 
   const stream = new ReadableStream({
     async start(controller) {
       let fullResponse = "";
-      const generationTimeoutMs = hasPdfAttachment ? 180000 : 90000;
+      let controllerClosed = false;
+      const generationTimeoutMs = hasHeavyAttachment ? 180000 : 90000;
+
+      function safeEnqueue(chunk: Uint8Array) {
+        if (!controllerClosed) controller.enqueue(chunk);
+      }
+      function safeClose() {
+        if (!controllerClosed) { controllerClosed = true; controller.close(); }
+      }
 
       // Send keep-alive immediately so the client watchdog doesn't fire
-      // while Gemini is processing large payloads (PDFs, long histories)
-      if (hasPdfAttachment) {
-        controller.enqueue(new TextEncoder().encode("__KEEPALIVE__"));
+      // while Gemini is processing large payloads (PDFs, images, long histories)
+      if (hasHeavyAttachment) {
+        safeEnqueue(new TextEncoder().encode("__KEEPALIVE__"));
       }
 
       try {
         if (appConfig.ai.enableStreaming) {
           fullResponse = await withTimeout(
             streamAI({ provider, model, messages: aiMessages, webSearch, structuredOutput: true }, (chunk) => {
-              controller.enqueue(new TextEncoder().encode(chunk));
+              safeEnqueue(new TextEncoder().encode(chunk));
             }),
             generationTimeoutMs,
             "AI yanıt üretimi"
@@ -214,7 +222,7 @@ export async function POST(
             generationTimeoutMs,
             "AI yanıt üretimi"
           );
-          controller.enqueue(new TextEncoder().encode(fullResponse));
+          safeEnqueue(new TextEncoder().encode(fullResponse));
         }
 
         if (!fullResponse.trim()) {
@@ -230,11 +238,11 @@ export async function POST(
           error: errMsg,
         });
         const encodedError = Buffer.from(errMsg, "utf8").toString("base64");
-        controller.enqueue(new TextEncoder().encode(`\n\n__ERROR_B64__${encodedError}`));
+        safeEnqueue(new TextEncoder().encode(`\n\n__ERROR_B64__${encodedError}`));
         await prisma.message.create({
           data: { conversationId, role: "assistant", content: "", provider, model, status: "error", errorMessage: errMsg },
         });
-        controller.close();
+        safeClose();
         return;
       }
 
@@ -257,13 +265,13 @@ export async function POST(
           const title = await generateTitle(titleContext, provider, model);
           await prisma.conversation.update({ where: { id: conversationId }, data: { title } });
           const encodedTitle = Buffer.from(title, "utf8").toString("base64");
-          controller.enqueue(new TextEncoder().encode(`\n\n__TITLE_B64__${encodedTitle}`));
+          safeEnqueue(new TextEncoder().encode(`\n\n__TITLE_B64__${encodedTitle}`));
         } catch {
           // non-critical
         }
       }
 
-      controller.close();
+      safeClose();
     },
   });
 

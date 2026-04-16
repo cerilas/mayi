@@ -66,7 +66,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="" className="w-6 h-6 rounded" />
+            <img src="/logo.png" alt="" className="w-6 h-6 rounded object-contain" />
             <span className="text-sm font-semibold text-gray-900">MY FizyoAI</span>
           </div>
         </div>

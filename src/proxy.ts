@@ -22,6 +22,6 @@ export default auth((req: NextRequest & { auth: unknown }) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|logo\\.png|apple-touch-icon\\.png|.*\\.svg).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|logo\\.png|myfiziologo\\.png|my-logo\\.png|mahmutyucel\\.jpg|myfizioteamimage\\.jpg|apple-touch-icon\\.png|.*\\.svg).*)",
   ],
 };

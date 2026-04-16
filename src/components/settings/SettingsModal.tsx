@@ -4,6 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import { THEME_COLORS, applyTheme, loadSavedTheme } from "@/lib/theme";
+import {
+  ASSISTANT_ICON_OPTIONS,
+  loadSavedAssistantIconId,
+  saveAssistantIcon,
+} from "@/lib/assistantIcon";
+import AssistantAvatar from "@/components/chat/AssistantAvatar";
 
 // ─────────────────────────────────────────────
 // Types
@@ -35,14 +41,20 @@ interface SettingsModalProps {
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
-  const [tab, setTab] = useState<"users" | "theme" | "instructions">(isAdmin ? "users" : "instructions");
+  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey">(isAdmin ? "users" : "instructions");
 
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
+  const [activeAssistantIcon, setActiveAssistantIcon] = useState(loadSavedAssistantIconId());
 
   function handleThemeSelect(id: string) {
     setActiveTheme(id);
     applyTheme(id);
+  }
+
+  function handleAssistantIconSelect(id: string) {
+    setActiveAssistantIcon(id);
+    saveAssistantIcon(id);
   }
 
   // ── System instruction tab state ────────────
@@ -52,6 +64,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [sysLoading, setSysLoading] = useState(false);
   const [sysSaving, setSysSaving] = useState(false);
   const [sysSaved, setSysSaved] = useState(false);
+
+  // ── API Key tab state (admin only) ──────────
+  const [apiKeyValue, setApiKeyValue] = useState("");
+  const [apiKeyMasked, setApiKeyMasked] = useState("");
+  const [apiKeyLoaded, setApiKeyLoaded] = useState(false);
+  const [apiKeySaving, setApiKeySaving] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [apiKeyEditing, setApiKeyEditing] = useState(false);
 
   useEffect(() => {
     if (tab === "instructions" && !sysInstructionSaved) {
@@ -69,6 +89,43 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         .finally(() => setSysLoading(false));
     }
   }, [tab, sysInstructionSaved]);
+
+  // Load API key (admin only)
+  useEffect(() => {
+    if (isAdmin && tab === "apikey" && !apiKeyLoaded) {
+      fetch("/api/settings")
+        .then((r) => r.json())
+        .then((data) => {
+          const masked = data.gemini_api_key ?? "";
+          setApiKeyMasked(masked);
+          setApiKeyLoaded(true);
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin, tab, apiKeyLoaded]);
+
+  async function handleSaveApiKey() {
+    if (!apiKeyValue.trim()) return;
+    setApiKeySaving(true);
+    setApiKeySaved(false);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "gemini_api_key", value: apiKeyValue }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApiKeyMasked(data.value);
+        setApiKeyValue("");
+        setApiKeyEditing(false);
+        setApiKeySaved(true);
+        setTimeout(() => setApiKeySaved(false), 2000);
+      }
+    } finally {
+      setApiKeySaving(false);
+    }
+  }
 
   async function handleSaveInstructions() {
     setSysSaving(true);
@@ -199,6 +256,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               Kullanıcı Yönetimi
             </button>
           )}
+          {isAdmin && (
+            <button
+              onClick={() => setTab("apikey")}
+              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "apikey" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+            >
+              API Anahtarı
+            </button>
+          )}
           <button
             onClick={() => setTab("instructions")}
             className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "instructions" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
@@ -239,6 +304,27 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <span className="text-[9px] sm:text-[10px] text-gray-600 font-medium">{color.label}</span>
                   </button>
                 ))}
+              </div>
+
+              <div className="mt-8">
+                <p className="text-sm text-gray-500 mb-5">Yapay zeka mesaj ikonunu seçin. Klinik logosu sabit kalır.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {ASSISTANT_ICON_OPTIONS.map((icon) => (
+                    <button
+                      key={icon.id}
+                      onClick={() => handleAssistantIconSelect(icon.id)}
+                      title={icon.label}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                        activeAssistantIcon === icon.id
+                          ? "border-gray-800 shadow-md scale-[1.02]"
+                          : "border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      <AssistantAvatar iconId={icon.id} className="w-12 h-12 rounded-xl" />
+                      <span className="text-[10px] text-gray-600 font-medium">{icon.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -313,6 +399,98 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* ── API KEY TAB ── */}
+          {tab === "apikey" && isAdmin && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 mb-1">Gemini API Anahtarı</h3>
+                <p className="text-xs text-gray-400 mb-4">
+                  Google AI Studio&apos;dan aldığınız API anahtarını buraya girin. Bu anahtar veritabanında saklanır ve .env dosyasındaki anahtarın yerine kullanılır.
+                </p>
+              </div>
+
+              {/* Current key display */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700">Mevcut Anahtar</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={apiKeyMasked || "Tanımlanmamış"}
+                    className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 font-mono"
+                  />
+                  {apiKeyMasked && (
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-[11px] text-green-600 font-medium">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Aktif
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Edit section */}
+              {apiKeyEditing ? (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-700">Yeni API Anahtarı</label>
+                    <input
+                      type="password"
+                      value={apiKeyValue}
+                      onChange={(e) => setApiKeyValue(e.target.value)}
+                      placeholder="AIza..."
+                      className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent font-mono"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSaveApiKey}
+                      disabled={apiKeySaving || !apiKeyValue.trim()}
+                      className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: "var(--brand)" }}
+                    >
+                      {apiKeySaving ? "Kaydediliyor…" : "Kaydet"}
+                    </button>
+                    <button
+                      onClick={() => { setApiKeyEditing(false); setApiKeyValue(""); }}
+                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      İptal
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setApiKeyEditing(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: "var(--brand)" }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  {apiKeyMasked ? "Anahtarı Değiştir" : "Anahtar Ekle"}
+                </button>
+              )}
+
+              {apiKeySaved && (
+                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  API anahtarı güncellendi
+                </span>
+              )}
+
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-xs text-gray-400">
+                  <strong>Not:</strong> API anahtarı veritabanında şifrelenmemiş olarak saklanır. Eğer .env dosyasında da bir anahtar varsa, veritabanındaki öncelikli olarak kullanılır.
+                </p>
+              </div>
             </div>
           )}
 

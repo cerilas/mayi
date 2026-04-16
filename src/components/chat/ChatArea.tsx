@@ -5,6 +5,115 @@ import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import TextType from "./TextType";
 import { appConfig } from "@/lib/config";
+import AssistantAvatar from "./AssistantAvatar";
+
+function ShareButton({ conversationId }: { conversationId: string }) {
+  const [shared, setShared] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  // Fetch current share status
+  useEffect(() => {
+    fetch(`/api/conversations/${conversationId}/share`)
+      .then((r) => r.json())
+      .then((data) => {
+        setShared(!!data.shared);
+        setShareId(data.shareId ?? null);
+      })
+      .catch(() => {});
+  }, [conversationId]);
+
+  const toggleShare = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/share`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      setShared(!!data.shared);
+      setShareId(data.shareId ?? null);
+      setCopied(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyLink = () => {
+    if (!shareId) return;
+    const url = `${window.location.origin}/share/${shareId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+        title="Paylaş"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-4 w-72">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Sohbeti Paylaş</h3>
+
+            {shared && shareId ? (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500">
+                  Bu sohbet herkese açık bir link ile paylaşılıyor.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/share/${shareId}`}
+                    className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 truncate text-gray-600"
+                  />
+                  <button
+                    onClick={copyLink}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    {copied ? "Kopyalandı!" : "Kopyala"}
+                  </button>
+                </div>
+                <button
+                  onClick={toggleShare}
+                  disabled={loading}
+                  className="w-full text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg py-1.5 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "İşleniyor..." : "Paylaşımı Kaldır"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500">
+                  Bir link oluşturun, herkes giriş yapmadan sohbeti görüntüleyebilsin.
+                </p>
+                <button
+                  onClick={toggleShare}
+                  disabled={loading}
+                  className="w-full px-3 py-2 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "İşleniyor..." : "Paylaşım Linki Oluştur"}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface Attachment {
   id: string;
@@ -189,8 +298,10 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
 
       try {
         const hasPdf = pendingAttachments.some((a) => a.mimeType === "application/pdf");
-        const totalTimeoutMs = hasPdf ? 200000 : 95000;
-        const firstChunkMs = hasPdf ? 60000 : 15000;
+        const hasImage = pendingAttachments.some((a) => a.mimeType.startsWith("image/"));
+        const hasHeavyAttachment = hasPdf || hasImage;
+        const totalTimeoutMs = hasHeavyAttachment ? 200000 : 95000;
+        const firstChunkMs = hasHeavyAttachment ? 60000 : 15000;
 
         const abortController = new AbortController();
         const requestTimeout = window.setTimeout(() => {
@@ -508,18 +619,26 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
+
       {/* Conversation title bar — hidden on mobile (mobile has its own header in layout) */}
       <div className="hidden md:flex border-b border-gray-200 px-6 py-3 items-center gap-2">
-        <h2 className="text-sm font-medium text-gray-800 truncate">
+        <h2 className="text-sm font-medium text-gray-800 truncate flex-1">
           {conversation?.title ?? "Sohbet"}
         </h2>
         {generatingImage && (
           <span className="text-xs text-gray-400">görsel oluşturuluyor...</span>
         )}
+        <ShareButton conversationId={conversationId} />
       </div>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 md:pl-6 md:pr-8">
+      <div ref={scrollContainerRef} className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 md:pl-6 md:pr-8 relative">
+        {/* Watermark — centered & fixed in chat viewport */}
+        <div className="pointer-events-none sticky top-0 left-0 w-full h-0 z-0 flex items-center justify-center">
+          <div className="absolute top-[40vh] -translate-y-1/2">
+            <img src="/my-bg-wm.svg" alt="" className="w-48 md:w-64 opacity-100" draggable={false} />
+          </div>
+        </div>
         {/* Load more indicator */}
         {hasMore && (
           <div className="flex items-center justify-center py-3">
@@ -567,11 +686,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             ) : (sending || generatingImage) ? (
               // Typing indicator — shown while waiting for first chunk
               <div className="flex gap-3 py-4 justify-start">
-                <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mt-0.5" style={{ backgroundColor: "var(--brand)" }}>
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                </div>
+                <AssistantAvatar />
                 <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-sm text-gray-500">
                   <TextType
                     text={["Düşünüyorum", "Yanıt hazırlıyorum", "Bir saniye"]}

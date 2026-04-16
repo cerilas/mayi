@@ -4,6 +4,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTypewriter } from "@/hooks/useTypewriter";
+import AssistantAvatar from "@/components/chat/AssistantAvatar";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -53,11 +54,7 @@ export default function MessageBubble({
     <div className={`flex min-w-0 gap-3 py-4 ${isUser ? "justify-end" : "justify-start"}`}>
       {/* Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mt-0.5" style={{ backgroundColor: "var(--brand)" }}>
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
-        </div>
+        <AssistantAvatar />
       )}
 
       <div className={`max-w-[75%] min-w-0 ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}>

@@ -19,7 +19,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz prompt" }, { status: 400 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Try DB setting first, then env var
+  let apiKey: string | undefined;
+  try {
+    const dbSetting = await prisma.setting.findFirst({
+      where: { key: "gemini_api_key", value: { not: "" } },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (dbSetting?.value) apiKey = dbSetting.value;
+  } catch { /* fall through */ }
+  if (!apiKey) apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Gemini API key bulunamadı" }, { status: 500 });
   }
