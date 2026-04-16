@@ -229,7 +229,8 @@ export default function MagicRings({
       const h = mount.clientHeight;
       if (w === 0 || h === 0) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Cap DPR at 1 for performance — prevents double-resolution GPU renders
+      const dpr = 1;
       renderer.setSize(w, h);
       renderer.setPixelRatio(dpr);
       uniforms.uResolution.value.set(w * dpr, h * dpr);
@@ -240,6 +241,14 @@ export default function MagicRings({
 
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
+
+    // Pause rendering when scrolled out of view
+    let isVisible = true;
+    const io = new IntersectionObserver(
+      (entries) => { isVisible = entries[0].isIntersecting; },
+      { threshold: 0 }
+    );
+    io.observe(mount);
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = mount.getBoundingClientRect();
@@ -267,8 +276,13 @@ export default function MagicRings({
     mount.addEventListener("click", onClick);
 
     let frameId = 0;
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL = 1000 / 30; // 30fps cap
     const animate = (t: number) => {
       frameId = requestAnimationFrame(animate);
+      if (!isVisible) return;
+      if (t - lastFrameTime < FRAME_INTERVAL) return;
+      lastFrameTime = t;
       const p = propsRef.current;
       if (!p) return;
 
@@ -309,6 +323,7 @@ export default function MagicRings({
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
       ro.disconnect();
+      io.disconnect();
       mount.removeEventListener("mousemove", onMouseMove);
       mount.removeEventListener("mouseenter", onMouseEnter);
       mount.removeEventListener("mouseleave", onMouseLeave);

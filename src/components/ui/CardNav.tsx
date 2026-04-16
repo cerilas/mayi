@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import './CardNav.css';
 
@@ -75,7 +75,7 @@ const CardNav = ({
         contentEl.style.height = 'auto';
 
         // force reflow
-        contentEl.offsetHeight;
+        void contentEl.offsetHeight;
 
         const topBar = 60;
         const padding = 16;
@@ -169,6 +169,31 @@ const CardNav = ({
     if (el) cardsRef.current[i] = el;
   };
 
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      const navEl = navRef.current;
+      const tl = tlRef.current;
+      if (!navEl || !tl) return;
+
+      const target = event.target as Node | null;
+      if (target && !navEl.contains(target)) {
+        setIsHamburgerOpen(false);
+        tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
+        tl.reverse();
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isExpanded]);
+
   return (
     <div className={`card-nav-container ${className}`}>
       <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor }}>
@@ -211,7 +236,14 @@ const CardNav = ({
               <div className="nav-card-label">{item.label}</div>
               <div className="nav-card-links">
                 {item.links?.map((lnk, i) => (
-                  <a key={`${lnk.label}-${i}`} className="nav-card-link" href={lnk.href || '#'} aria-label={lnk.ariaLabel}>
+                  <a
+                    key={`${lnk.label}-${i}`}
+                    className="nav-card-link"
+                    href={lnk.href || '#'}
+                    aria-label={lnk.ariaLabel}
+                    target={lnk.href ? '_blank' : undefined}
+                    rel={lnk.href ? 'noopener noreferrer' : undefined}
+                  >
                     <ArrowUpRight />
                     {lnk.label}
                   </a>

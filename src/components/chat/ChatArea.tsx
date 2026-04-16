@@ -168,6 +168,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
     setLoading(true);
     setMessages([]);
     setStreamingContent("");
+    initialLoadRef.current = true; // Reset so we scroll to bottom on new conversation
 
     fetch(`/api/conversations/${conversationId}?limit=20`)
       .then((r) => r.json())
@@ -187,28 +188,38 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
       .finally(() => setLoading(false));
   }, [conversationId]);
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior });
+    }
+  }, []);
+
   // Scroll to bottom when sending starts (user message appeared) or streaming begins
   useEffect(() => {
     if (sending || generatingImage) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom("smooth");
     }
-  }, [sending, generatingImage]);
+  }, [sending, generatingImage, scrollToBottom]);
 
   // Keep scrolled to bottom while streaming content grows
   useEffect(() => {
     if (streamingContent) {
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      scrollToBottom("instant");
     }
-  }, [streamingContent]);
+  }, [streamingContent, scrollToBottom]);
 
-  // Scroll to bottom on first load
+  // Scroll to bottom on first load of each conversation
   const initialLoadRef = useRef(true);
   useEffect(() => {
     if (initialLoadRef.current && messages.length > 0) {
       initialLoadRef.current = false;
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      // Use rAF to ensure DOM has rendered before scrolling
+      requestAnimationFrame(() => scrollToBottom("instant"));
     }
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   // Load more messages when scrolling to top
   const loadMoreMessages = useCallback(async () => {
@@ -439,7 +450,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         setMessages((prev) => [...prev, assistantMsg]);
         setStreamingContent("");
         // Scroll to bottom after new message
-        requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
+        requestAnimationFrame(() => scrollToBottom("smooth"));
 
         // Update conversation provider/model if changed
         if (
@@ -613,6 +624,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-6 h-6 border-2 brand-border-spinner rounded-full animate-spin" />
+        <div ref={bottomRef} />
       </div>
     );
   }
@@ -703,7 +715,6 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             ) : null}
           </>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
