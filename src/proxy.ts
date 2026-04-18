@@ -4,17 +4,10 @@ import type { NextRequest } from "next/server";
 
 export default auth((req: NextRequest & { auth: unknown }) => {
   const isAuthenticated = !!(req as { auth: unknown }).auth;
-  const { pathname } = req.nextUrl;
-  const isLoginPage = pathname === "/login";
-  const isPublicRoute =
-    pathname === "/" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml" ||
-    pathname === "/manifest.webmanifest" ||
-    pathname.startsWith("/share/");
-  const isPublicApi = pathname.startsWith("/api/auth") || pathname.startsWith("/api/share/");
+  const isLoginPage = req.nextUrl.pathname === "/login";
+  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth");
 
-  if (isPublicRoute || isPublicApi) return NextResponse.next();
+  if (isPublicApi) return NextResponse.next();
 
   if (!isAuthenticated && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", req.url));
