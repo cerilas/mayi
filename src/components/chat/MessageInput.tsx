@@ -58,6 +58,13 @@ export default function MessageInput({
   const maxMb = appConfig.upload.maxFileSizeMb;
   const allowedTypes = appConfig.upload.allowedMimeTypes;
 
+  // Auto-focus textarea when component mounts or becomes enabled
+  useEffect(() => {
+    if (!disabled) {
+      textareaRef.current?.focus();
+    }
+  }, [disabled]);
+
   // When an external edit image arrives, auto-enter image mode
   useEffect(() => {
     if (editImage) {
@@ -333,6 +340,7 @@ export default function MessageInput({
           )}
           <textarea
             ref={textareaRef}
+            autoFocus
             value={text}
             onChange={(e) => {
               setText(e.target.value);
