@@ -290,24 +290,8 @@ export async function streamGemini(
     return full;
   }
 
-  // Structured output mode: non-streaming JSON → formatted markdown
-  if (options.structuredOutput) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await (ai.models as any).generateContent({
-      model: options.model,
-      contents,
-      config: {
-        ...config,
-        responseMimeType: "application/json",
-        responseJsonSchema: STRUCTURED_RESPONSE_SCHEMA,
-      },
-    });
-
-    const formatted = formatStructuredResponse(response.text ?? "");
-    if (formatted) onChunk(formatted);
-    return formatted;
-  }
-
+  // In streaming mode, skip structured JSON output — use plain streaming for
+  // real-time token display. The system prompt already instructs markdown formatting.
   // Function calling mode: try streaming, handle tool calls if they appear
   const streamResult = await ai.models.generateContentStream({
     model: options.model,
