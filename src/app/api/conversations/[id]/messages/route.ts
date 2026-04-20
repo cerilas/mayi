@@ -202,10 +202,8 @@ export async function POST(
       }
 
       // Send keep-alive immediately so the client watchdog doesn't fire
-      // while Gemini is processing large payloads (PDFs, images, long histories)
-      if (hasHeavyAttachment) {
-        safeEnqueue(new TextEncoder().encode("__KEEPALIVE__"));
-      }
+      // while Gemini is processing (especially slow models like 3.1 Pro Preview)
+      safeEnqueue(new TextEncoder().encode("__KEEPALIVE__"));
 
       try {
         if (appConfig.ai.enableStreaming) {

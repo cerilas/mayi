@@ -311,8 +311,8 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         const hasPdf = pendingAttachments.some((a) => a.mimeType === "application/pdf");
         const hasImage = pendingAttachments.some((a) => a.mimeType.startsWith("image/"));
         const hasHeavyAttachment = hasPdf || hasImage;
-        const totalTimeoutMs = hasHeavyAttachment ? 200000 : 95000;
-        const firstChunkMs = hasHeavyAttachment ? 60000 : 15000;
+        const totalTimeoutMs = hasHeavyAttachment ? 200000 : 120000;
+        const firstChunkMs = hasHeavyAttachment ? 60000 : 30000;
 
         const abortController = new AbortController();
         const requestTimeout = window.setTimeout(() => {
