@@ -389,12 +389,15 @@ export default function Sidebar() {
     <aside className="flex flex-col w-65 min-w-65 bg-gray-50 border-r border-gray-200 h-full">
       {/* Header */}
       <div className="px-4 pt-5 pb-3">
-        <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => router.push("/chat")}
+          className="flex items-center gap-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
             <img src="/logo.png" alt="MY FizyoAI" className="w-full h-full object-contain" />
           </div>
           <span className="font-semibold text-gray-900 text-sm">MY FizyoAI</span>
-        </div>
+        </button>
 
         <div className="flex gap-1.5">
           <button
