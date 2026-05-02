@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 const ALLOWED_KEYS = ["system_instruction", "base_instruction"];
-const ADMIN_KEYS = ["gemini_api_key"];
+const ADMIN_KEYS = ["gemini_api_key", "patient_system_instruction"];
 const ALL_KEYS = [...ALLOWED_KEYS, ...ADMIN_KEYS];
 
 export async function GET() {

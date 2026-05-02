@@ -148,15 +148,45 @@ export async function POST(
   // Fetch per-user base instruction + custom system instruction from DB
   let customInstruction = "";
   let dbBaseInstruction = "";
-  try {
-    const settings = await prisma.setting.findMany({
-      where: { userId: session.user.id, key: { in: ["system_instruction", "base_instruction"] } },
-    });
-    for (const s of settings) {
-      if (s.key === "system_instruction") customInstruction = s.value;
-      if (s.key === "base_instruction") dbBaseInstruction = s.value;
-    }
-  } catch { /* ignore */ }
+  
+  if (session.user.role === "patient") {
+    try {
+      const patientUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: { patientProfile: true },
+      });
+      const p = patientUser?.patientProfile;
+
+      const adminSetting = await prisma.setting.findFirst({
+        where: { key: "patient_system_instruction" },
+        orderBy: { updatedAt: "desc" }
+      });
+      const globalPatientInstruction = adminSetting?.value || "";
+
+      customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
+Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
+- Hasta Adı: ${patientUser?.name || 'Bilinmiyor'}
+- Yaşı: ${p?.age || 'Bilinmiyor'}
+- Cinsiyeti: ${p?.gender || 'Bilinmiyor'}
+- Hastalık Kısa Tanıtımı: ${p?.shortDescription || 'Yok'}
+- Hastalık Uzun Detayları: ${p?.longDetails || 'Yok'}
+- Fizyoterapist/Klinik Görüşü: ${p?.clinicalOpinion || 'Yok'}
+- Atanmış Video/Egzersiz Linkleri: ${p?.videoLinks?.length ? p.videoLinks.join(', ') : 'Yok'}
+
+${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel kurallara uymalısın:\n" + globalPatientInstruction : ""}
+`;
+    } catch { /* ignore */ }
+  } else {
+    try {
+      const settings = await prisma.setting.findMany({
+        where: { userId: session.user.id, key: { in: ["system_instruction", "base_instruction"] } },
+      });
+      for (const s of settings) {
+        if (s.key === "system_instruction") customInstruction = s.value;
+        if (s.key === "base_instruction") dbBaseInstruction = s.value;
+      }
+    } catch { /* ignore */ }
+  }
 
   const defaultBase =
     "Sen yardımcı bir yapay zeka asistanısın. Türkçe cevap ver." +

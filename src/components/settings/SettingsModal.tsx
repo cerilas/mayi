@@ -41,7 +41,9 @@ interface SettingsModalProps {
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
-  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey">(isAdmin ? "users" : "instructions");
+  const isPatient = session?.user?.role === "patient";
+  const defaultTab = isAdmin ? "users" : isPatient ? "theme" : "instructions";
+  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey">(defaultTab);
 
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
@@ -59,6 +61,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   // ── System instruction tab state ────────────
   const [sysInstruction, setSysInstruction] = useState("");
+  const [patientSysInstruction, setPatientSysInstruction] = useState("");
   const [sysInstructionSaved, setSysInstructionSaved] = useState("");
   const [baseInstruction, setBaseInstruction] = useState("");
   const [sysLoading, setSysLoading] = useState(false);
@@ -81,6 +84,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         .then((data) => {
           const val = data.system_instruction ?? "";
           setSysInstruction(val);
+          setPatientSysInstruction(data.patient_system_instruction ?? "");
           setSysInstructionSaved(val || "__loaded__");
           const base = data.base_instruction ?? "";
           setBaseInstruction(base);
@@ -131,7 +135,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     setSysSaving(true);
     setSysSaved(false);
     try {
-      const [r1, r2] = await Promise.all([
+      const promises = [
         fetch("/api/settings", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -142,8 +146,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "system_instruction", value: sysInstruction }),
         }),
-      ]);
-      if (r1.ok && r2.ok) {
+      ];
+      if (isAdmin) {
+        promises.push(
+          fetch("/api/settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: "patient_system_instruction", value: patientSysInstruction }),
+          })
+        );
+      }
+      const results = await Promise.all(promises);
+      if (results.every(r => r.ok)) {
         setSysSaved(true);
         setSysInstructionSaved(sysInstruction || "__loaded__");
         setTimeout(() => setSysSaved(false), 2000);
@@ -264,12 +278,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               API Anahtarı
             </button>
           )}
-          <button
-            onClick={() => setTab("instructions")}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "instructions" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-          >
-            Sistem Talimatı
-          </button>
+          {!isPatient && (
+            <button
+              onClick={() => setTab("instructions")}
+              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "instructions" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+            >
+              Sistem Talimatı
+            </button>
+          )}
           <button
             onClick={() => setTab("theme")}
             className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "theme" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
@@ -378,6 +394,26 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       {sysInstruction.length} / 4000 karakter
                     </span>
                   </div>
+
+                  {isAdmin && (
+                    <>
+                      <div className="border-t border-gray-100" />
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Genel Hasta Talimatı</label>
+                        <p className="text-xs text-gray-400">
+                          Tüm hastalar için geçerli olacak genel kurallar (Örn: Hastalarla ismiyle konuş, onlara moral ver).
+                        </p>
+                        <textarea
+                          value={patientSysInstruction}
+                          onChange={(e) => setPatientSysInstruction(e.target.value)}
+                          rows={4}
+                          maxLength={4000}
+                          placeholder={"Örnek:\n- Hastalara nazik davran, moral ver.\n- Hastalıklarıyla ilgili endişelendirecek yorumlardan kaçın."}
+                          className="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent resize-none font-mono leading-relaxed"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex items-center justify-end gap-3">
                     {sysSaved && (
