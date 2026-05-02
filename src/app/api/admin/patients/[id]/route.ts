@@ -10,9 +10,11 @@ async function requireAdmin() {
   return session;
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+
+  const { id } = await params;
 
   const body = await req.json().catch(() => ({}));
   const {
@@ -30,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   } = body;
 
   const existing = await prisma.user.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { patientProfile: true },
   });
 
@@ -69,7 +71,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const user = await prisma.user.update({
-    where: { id: params.id },
+    where: { id },
     data: updateData,
     include: { patientProfile: true },
   });
@@ -77,15 +79,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json(user);
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
-  const existing = await prisma.user.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+
+  const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing || existing.role !== "patient") {
     return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
   }
 
-  await prisma.user.delete({ where: { id: params.id } });
+  await prisma.user.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
