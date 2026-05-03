@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 const ALLOWED_KEYS = ["system_instruction", "base_instruction"];
 const ADMIN_KEYS = ["gemini_api_key", "patient_system_instruction"];
-const ALL_KEYS = [...ALLOWED_KEYS, ...ADMIN_KEYS];
+const PUBLIC_ADMIN_KEYS = ["netgsm_active_header"];
+const ALL_KEYS = [...ALLOWED_KEYS, ...ADMIN_KEYS, ...PUBLIC_ADMIN_KEYS];
 
 export async function GET() {
   const session = await auth();
@@ -25,6 +26,7 @@ export async function GET() {
       // Mask the key for reading — admin sees masked version, edits via PUT
       result[s.key] = s.value ? "••••••••" + s.value.slice(-4) : "";
     } else {
+      // Both ALLOWED_KEYS and PUBLIC_ADMIN_KEYS are returned as is
       result[s.key] = s.value;
     }
   }
@@ -45,7 +47,7 @@ export async function PUT(req: Request) {
   if (!ALL_KEYS.includes(key))
     return NextResponse.json({ error: "Geçersiz ayar anahtarı" }, { status: 400 });
 
-  if (ADMIN_KEYS.includes(key) && !isAdmin)
+  if ((ADMIN_KEYS.includes(key) || PUBLIC_ADMIN_KEYS.includes(key)) && !isAdmin)
     return NextResponse.json({ error: "Bu ayarı değiştirme yetkiniz yok" }, { status: 403 });
 
   const setting = await prisma.setting.upsert({

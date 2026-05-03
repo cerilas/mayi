@@ -177,6 +177,90 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [formLoading, setFormLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
 
+  // ── SMS Settings state ──────────────────────
+  const [smsHeaders, setSmsHeaders] = useState<string[]>([]);
+  const [smsHeadersLoading, setSmsHeadersLoading] = useState(false);
+  const [activeHeader, setActiveHeader] = useState("");
+  const [savingHeader, setSavingHeader] = useState(false);
+  const [savedHeader, setSavedHeader] = useState(false);
+
+  useEffect(() => {
+    if (isAdmin && tab === "sms_settings") {
+      fetch("/api/settings")
+        .then(r => r.json())
+        .then(data => {
+          if (data.netgsm_active_header) setActiveHeader(data.netgsm_active_header);
+        });
+
+      setSmsHeadersLoading(true);
+      fetch("/api/admin/sms/headers")
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) setSmsHeaders(data.headers);
+        })
+        .finally(() => setSmsHeadersLoading(false));
+    }
+  }, [isAdmin, tab]);
+
+  async function handleSaveSmsHeader() {
+    setSavingHeader(true);
+    setSavedHeader(false);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "netgsm_active_header", value: activeHeader }),
+      });
+      if (res.ok) {
+        setSavedHeader(true);
+        setTimeout(() => setSavedHeader(false), 2000);
+      }
+    } finally {
+      setSavingHeader(false);
+    }
+  }
+
+  // ── SMS state ─────────────────────────────
+  const [smsTarget, setSmsTarget] = useState<UserRow | null>(null);
+  const [smsPhone, setSmsPhone] = useState("");
+  const [smsPassword, setSmsPassword] = useState("");
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [smsError, setSmsError] = useState("");
+  const [smsSuccess, setSmsSuccess] = useState("");
+
+  function openSmsModal(user: UserRow) {
+    setSmsTarget(user);
+    setSmsPhone("");
+    setSmsPassword("");
+    setSmsError("");
+    setSmsSuccess("");
+  }
+
+  async function handleSmsSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSmsLoading(true);
+    setSmsError("");
+    setSmsSuccess("");
+    try {
+      const res = await fetch("/api/admin/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: smsTarget?.id, phone: smsPhone, newPassword: smsPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSmsSuccess("SMS başarıyla gönderildi.");
+        setTimeout(() => setSmsTarget(null), 2000);
+      } else {
+        setSmsError(data.error || "Hata oluştu.");
+      }
+    } catch {
+      setSmsError("Sunucu hatası.");
+    } finally {
+      setSmsLoading(false);
+    }
+  }
+
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
@@ -278,6 +362,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               API Anahtarı
             </button>
           )}
+          {isAdmin && (
+            <button
+              onClick={() => setTab("sms_settings")}
+              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "sms_settings" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+            >
+              SMS Ayarları
+            </button>
+          )}
           {!isPatient && (
             <button
               onClick={() => setTab("instructions")}
@@ -296,6 +388,58 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
+
+          {/* ── SMS SETTINGS TAB ── */}
+          {tab === "sms_settings" && isAdmin && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">NetGSM Aktif Gönderici Başlığı</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Sistemin göndereceği SMS'lerde kullanılacak gönderici başlığını seçin. Başlıkların listesi NetGSM hesabınızdan otomatik olarak çekilmektedir.
+                </p>
+                {smsHeadersLoading ? (
+                  <div className="flex justify-center py-4">
+                    <div className="w-5 h-5 border-2 border-gray-200 border-t-[var(--brand)] rounded-full animate-spin" />
+                  </div>
+                ) : smsHeaders.length > 0 ? (
+                  <div className="space-y-4">
+                    <select
+                      value={activeHeader}
+                      onChange={(e) => setActiveHeader(e.target.value)}
+                      className="w-full max-w-sm text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent bg-white"
+                    >
+                      <option value="">Seçiniz</option>
+                      {smsHeaders.map((header) => (
+                        <option key={header} value={header}>{header}</option>
+                      ))}
+                    </select>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSaveSmsHeader}
+                        disabled={savingHeader || !activeHeader}
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: "var(--brand)" }}
+                      >
+                        {savingHeader ? "Kaydediliyor..." : "Kaydet"}
+                      </button>
+                      {savedHeader && (
+                        <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Başlık kaydedildi
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-50 text-red-600 text-sm p-4 rounded-lg">
+                    Onaylı SMS başlığı bulunamadı veya API bilgileri geçersiz. Lütfen .env dosyanızdaki NetGSM ayarlarını kontrol edin.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── THEME TAB ── */}
           {tab === "theme" && (
@@ -533,7 +677,34 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ── USERS TAB ── */}
           {tab === "users" && isAdmin && (
             <div>
-              {showForm ? (
+              {smsTarget ? (
+                <form onSubmit={handleSmsSubmit} className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    {smsTarget.name} - Giriş Bilgilerini SMS Gönder
+                  </h3>
+                  {smsError && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{smsError}</p>}
+                  {smsSuccess && <p className="text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2">{smsSuccess}</p>}
+                  <p className="text-xs text-gray-500">
+                    Kullanıcının giriş şifresi aşağıda yazdığınız şifre ile güncellenecek ve kendisine giriş yapabilmesi için SMS gönderilecektir.
+                  </p>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Telefon Numarası</label>
+                    <input type="text" required value={smsPhone} onChange={e => setSmsPhone(e.target.value)} placeholder="5XX XXX XX XX" className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Yeni Şifre (Geçici Şifre)</label>
+                    <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="submit" disabled={smsLoading || !!smsSuccess} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700">
+                      {smsLoading ? "Gönderiliyor..." : "SMS Gönder"}
+                    </button>
+                    <button type="button" onClick={() => setSmsTarget(null)} className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                      İptal
+                    </button>
+                  </div>
+                </form>
+              ) : showForm ? (
                 /* ── User form ── */
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-800">
@@ -678,6 +849,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1 justify-end">
+                                  <button
+                                    onClick={() => openSmsModal(user)}
+                                    className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors"
+                                    title="SMS Gönder"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 16.5c0 .83-.67 1.5-1.5 1.5h-4.34l-3.32 2.66a1 1 0 01-1.64-.78V18H4.5C3.67 18 3 17.33 3 16.5v-10C3 5.67 3.67 5 4.5 5h15c.83 0 1.5.67 1.5 1.5v10z" />
+                                    </svg>
+                                  </button>
                                   <button
                                     onClick={() => openEditForm(user)}
                                     className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"

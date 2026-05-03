@@ -55,6 +55,46 @@ export default function PatientsPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [smsTarget, setSmsTarget] = useState<Patient | null>(null);
+  const [smsPhone, setSmsPhone] = useState("");
+  const [smsPassword, setSmsPassword] = useState("");
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [smsError, setSmsError] = useState("");
+  const [smsSuccess, setSmsSuccess] = useState("");
+
+  function openSmsModal(p: Patient) {
+    setSmsTarget(p);
+    setSmsPhone(p.patientProfile?.phone || "");
+    setSmsPassword("");
+    setSmsError("");
+    setSmsSuccess("");
+  }
+
+  async function handleSmsSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSmsLoading(true);
+    setSmsError("");
+    setSmsSuccess("");
+    try {
+      const res = await fetch("/api/admin/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: smsTarget?.id, phone: smsPhone, newPassword: smsPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSmsSuccess("SMS başarıyla gönderildi.");
+        setTimeout(() => setSmsTarget(null), 2000);
+      } else {
+        setSmsError(data.error || "Hata oluştu.");
+      }
+    } catch {
+      setSmsError("Sunucu hatası.");
+    } finally {
+      setSmsLoading(false);
+    }
+  }
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -296,6 +336,7 @@ export default function PatientsPage() {
                   <td className="px-6 py-4 text-gray-600">{p.patientProfile?.phone || "-"}</td>
                   <td className="px-6 py-4 text-gray-600">{p.patientProfile?.age || "-"} / {p.patientProfile?.gender || "-"}</td>
                   <td className="px-6 py-4 text-right">
+                    <button onClick={() => openSmsModal(p)} className="text-green-600 hover:text-green-800 font-medium mr-3">SMS</button>
                     <button onClick={() => openEditForm(p)} className="text-blue-600 hover:text-blue-800 font-medium mr-3">Düzenle</button>
                     <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 font-medium">Sil</button>
                   </td>
@@ -330,7 +371,37 @@ export default function PatientsPage() {
         )}
 
         {/* Form Modal */}
-        {showForm && (
+        {smsTarget ? (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+              <h2 className="text-xl font-bold mb-4">Giriş Bilgilerini SMS Gönder</h2>
+              <button onClick={() => setSmsTarget(null)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <form onSubmit={handleSmsSubmit} className="space-y-4">
+                {smsError && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{smsError}</p>}
+                {smsSuccess && <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">{smsSuccess}</p>}
+                <p className="text-sm text-gray-500">
+                  Kullanıcının şifresi aşağıda belirleyeceğiniz şifre ile güncellenecek ve yeni giriş bilgileri SMS ile gönderilecektir.
+                </p>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Telefon Numarası</label>
+                  <input type="text" required value={smsPhone} onChange={e => setSmsPhone(e.target.value)} placeholder="5XX XXX XX XX" className="w-full text-sm px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Yeni Şifre</label>
+                  <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="w-full text-sm px-3 py-2 border rounded-lg" />
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <button type="button" onClick={() => setSmsTarget(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">İptal</button>
+                  <button type="submit" disabled={smsLoading || !!smsSuccess} className="px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 bg-green-600 hover:bg-green-700">
+                    {smsLoading ? "Gönderiliyor..." : "Gönder"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : showForm && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-full overflow-y-auto p-6 relative">
               <h2 className="text-xl font-bold mb-4">{editingPatient ? "Hasta Düzenle" : "Yeni Hasta Ekle"}</h2>

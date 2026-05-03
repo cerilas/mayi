@@ -1,0 +1,1 @@
+.text-type,.text-type__content{display:inline}.text-type__cursor{margin-left:1px;animation:1s step-end infinite textTypeBlink;display:inline}.text-type__cursor--hidden{visibility:hidden}@keyframes textTypeBlink{0%,to{opacity:1}50%{opacity:0}}
