@@ -54,6 +54,31 @@ export default function PatientsPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("files", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok && data.attachments?.[0]) {
+        const filePath = `/api/files/${data.attachments[0].filePath}`;
+        setForm(prev => ({ ...prev, photo: filePath }));
+      } else {
+        setError(data.error || "Fotoğraf yüklenemedi.");
+      }
+    } catch {
+      setError("Fotoğraf yüklenirken hata oluştu.");
+    } finally {
+      setPhotoUploading(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  }
 
   const [smsTarget, setSmsTarget] = useState<Patient | null>(null);
   const [smsPhone, setSmsPhone] = useState("");
@@ -424,7 +449,40 @@ export default function PatientsPage() {
                       <option value="">Seçiniz</option><option value="Erkek">Erkek</option><option value="Kadın">Kadın</option><option value="Diğer">Diğer</option>
                     </select>
                   </div>
-                  <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Fotoğraf URL</label><input value={form.photo} onChange={e => setForm({...form, photo: e.target.value})} placeholder="https://..." className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Hasta Fotoğrafı</label>
+                    <div className="flex items-center gap-4">
+                      {form.photo && (
+                        <img src={form.photo} alt="Hasta" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                      )}
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          ref={photoInputRef}
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={photoUploading}
+                          onClick={() => photoInputRef.current?.click()}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {photoUploading ? "Yükleniyor..." : form.photo ? "Fotoğrafı Değiştir" : "Fotoğraf Yükle"}
+                        </button>
+                        {form.photo && (
+                          <button
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, photo: "" }))}
+                            className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-800"
+                          >
+                            Kaldır
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Kısa Hastalık Tanıtımı</label><input value={form.shortDescription} onChange={e => setForm({...form, shortDescription: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Uzun Detaylar</label><textarea value={form.longDetails} onChange={e => setForm({...form, longDetails: e.target.value})} rows={3} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Klinik Görüş</label><textarea value={form.clinicalOpinion} onChange={e => setForm({...form, clinicalOpinion: e.target.value})} rows={2} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
