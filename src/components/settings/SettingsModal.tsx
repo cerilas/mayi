@@ -43,7 +43,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const isAdmin = session?.user?.role === "admin";
   const isPatient = session?.user?.role === "patient";
   const defaultTab = isAdmin ? "users" : isPatient ? "theme" : "instructions";
-  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey">(defaultTab);
+  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey" | "sms_settings">(defaultTab);
 
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
