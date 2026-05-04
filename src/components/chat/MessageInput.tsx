@@ -97,7 +97,8 @@ export default function MessageInput({
     const ta = textareaRef.current;
     if (ta) {
       ta.style.height = "auto";
-      ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+      // 3 lines: 3 × 20px line-height + 24px vertical padding ≈ 84px
+      ta.style.height = Math.min(ta.scrollHeight, 84) + "px";
     }
   }
 
@@ -324,8 +325,8 @@ export default function MessageInput({
             disabled={disabled}
             placeholder={imageMode ? "Görseli açıklayın..." : "Mesaj yazın..."}
             rows={1}
-            className="flex-1 self-center px-4 py-3 text-sm resize-none outline-none bg-transparent max-h-40 disabled:opacity-60"
-            style={{ color: "var(--text-primary)", lineHeight: "1.4" }}
+            className="flex-1 self-center px-4 py-3 text-sm resize-none outline-none bg-transparent disabled:opacity-60 overflow-y-auto"
+            style={{ color: "var(--text-primary)", lineHeight: "1.4", maxHeight: "84px" }}
           />
 
           {/* Send — floats inside pill, vertically centered */}
