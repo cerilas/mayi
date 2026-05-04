@@ -665,7 +665,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         {/* Watermark — centered & fixed in chat viewport */}
         <div className="pointer-events-none sticky top-0 left-0 w-full h-0 z-0 flex items-center justify-center">
           <div className="absolute top-[40vh] -translate-y-1/2">
-            <img src="/my-bg-wm.svg" alt="" className="w-48 md:w-64 opacity-100" draggable={false} />
+            <img src="/watermark-logo.png" alt="" className="w-48 md:w-64 opacity-100" draggable={false} />
           </div>
         </div>
         {/* Load more indicator */}

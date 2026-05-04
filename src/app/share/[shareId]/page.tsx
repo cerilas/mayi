@@ -322,7 +322,7 @@ export default function SharedChatPage() {
     <div className="min-h-screen bg-gray-50 relative">
       {/* Watermark */}
       <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center">
-        <img src="/my-bg-wm.svg" alt="" className="w-48 md:w-64" draggable={false} />
+        <img src="/watermark-logo.png" alt="" className="w-48 md:w-64" draggable={false} />
       </div>
 
       {/* Header */}
