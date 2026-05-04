@@ -333,61 +333,55 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col max-h-[90vh]" style={{ minHeight: "520px" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Ayarlar</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-600">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100 px-6 gap-4">
-          {isAdmin && (
-            <button
-              onClick={() => setTab("users")}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "users" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            >
-              Kullanıcı Yönetimi
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => setTab("apikey")}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "apikey" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            >
-              API Anahtarı
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => setTab("sms_settings")}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "sms_settings" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            >
-              SMS Ayarları
-            </button>
-          )}
-          {!isPatient && (
-            <button
-              onClick={() => setTab("instructions")}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "instructions" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            >
-              Sistem Talimatı
-            </button>
-          )}
-          <button
-            onClick={() => setTab("theme")}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${tab === "theme" ? "border-[var(--brand)] text-[var(--brand)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-          >
-            Renk Teması
-          </button>
-        </div>
+        {/* Sidebar + Content layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <div className="w-48 shrink-0 border-r border-gray-100 bg-gray-50/50 py-3 px-2 overflow-y-auto">
+            <nav className="flex flex-col gap-0.5">
+              {isAdmin && (
+                <button onClick={() => setTab("users")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "users" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                  Kullanıcılar
+                </button>
+              )}
+              {isAdmin && (
+                <button onClick={() => setTab("apikey")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "apikey" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
+                  API Anahtarı
+                </button>
+              )}
+              {isAdmin && (
+                <button onClick={() => setTab("sms_settings")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "sms_settings" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M21 16.5c0 .83-.67 1.5-1.5 1.5h-4.34l-3.32 2.66a1 1 0 01-1.64-.78V18H4.5C3.67 18 3 17.33 3 16.5v-10C3 5.67 3.67 5 4.5 5h15c.83 0 1.5.67 1.5 1.5v10z" /></svg>
+                  SMS Ayarları
+                </button>
+              )}
+              {!isPatient && (
+                <button onClick={() => setTab("instructions")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "instructions" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                  Talimatlar
+                </button>
+              )}
+              <button onClick={() => setTab("theme")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "theme" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" /></svg>
+                Görünüm
+              </button>
+            </nav>
+          </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-5">
 
           {/* ── SMS SETTINGS TAB ── */}
           {tab === "sms_settings" && isAdmin && (
@@ -403,16 +397,27 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   </div>
                 ) : smsHeaders.length > 0 ? (
                   <div className="space-y-4">
-                    <select
-                      value={activeHeader}
-                      onChange={(e) => setActiveHeader(e.target.value)}
-                      className="w-full max-w-sm text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent bg-white"
-                    >
-                      <option value="">Seçiniz</option>
+                    <div className="grid grid-cols-2 gap-2">
                       {smsHeaders.map((header) => (
-                        <option key={header} value={header}>{header}</option>
+                        <button
+                          key={header}
+                          type="button"
+                          onClick={() => setActiveHeader(header)}
+                          className={`relative px-4 py-3 rounded-xl border-2 text-sm font-medium text-left transition-all ${
+                            activeHeader === header
+                              ? "border-[var(--brand)] bg-[var(--brand)]/5 text-gray-900 shadow-sm"
+                              : "border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          {activeHeader === header && (
+                            <span className="absolute top-2 right-2">
+                              <svg className="w-4 h-4" fill="var(--brand)" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                            </span>
+                          )}
+                          {header}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleSaveSmsHeader}
@@ -751,15 +756,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Rol</label>
-                      <select
-                        value={form.role}
-                        onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as "admin" | "user" }))}
-                        className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent bg-white"
-                      >
-                        <option value="user">Kullanıcı</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Rol</label>
+                      <div className="flex gap-2">
+                        {(["user", "admin"] as const).map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setForm((p) => ({ ...p, role: r }))}
+                            className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border-2 transition-all ${
+                              form.role === r
+                                ? "border-[var(--brand)] bg-[var(--brand)]/5 text-gray-900"
+                                : "border-gray-100 text-gray-500 hover:border-gray-200"
+                            }`}
+                          >
+                            {r === "admin" ? "Admin" : "Kullanıcı"}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-3 pt-2">
@@ -891,6 +904,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>,
