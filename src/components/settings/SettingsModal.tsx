@@ -42,8 +42,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
   const isPatient = session?.user?.role === "patient";
-  const defaultTab = isAdmin ? "users" : isPatient ? "theme" : "instructions";
-  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey" | "sms_settings">(defaultTab);
+  const defaultTab = isAdmin ? "users" : isPatient ? "account" : "instructions";
+  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey" | "sms_settings" | "account">(defaultTab);
 
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
@@ -228,6 +228,48 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [smsError, setSmsError] = useState("");
   const [smsSuccess, setSmsSuccess] = useState("");
 
+  // ── Account (password change) state ────────
+  const [acCurrentPw, setAcCurrentPw] = useState("");
+  const [acNewPw, setAcNewPw] = useState("");
+  const [acConfirmPw, setAcConfirmPw] = useState("");
+  const [acLoading, setAcLoading] = useState(false);
+  const [acError, setAcError] = useState("");
+  const [acSuccess, setAcSuccess] = useState("");
+
+  function generateRandomPassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let pw = "";
+    for (let i = 0; i < 8; i++) pw += chars.charAt(Math.floor(Math.random() * chars.length));
+    return pw;
+  }
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    setAcError("");
+    setAcSuccess("");
+    if (acNewPw !== acConfirmPw) { setAcError("Şifreler eşleşmiyor."); return; }
+    if (acNewPw.length < 6) { setAcError("Şifre en az 6 karakter olmalıdır."); return; }
+    setAcLoading(true);
+    try {
+      const res = await fetch("/api/account/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: acCurrentPw, newPassword: acNewPw }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAcSuccess("Şifreniz başarıyla güncellendi.");
+        setAcCurrentPw(""); setAcNewPw(""); setAcConfirmPw("");
+      } else {
+        setAcError(data.error || "Hata oluştu.");
+      }
+    } catch {
+      setAcError("Sunucu hatası.");
+    } finally {
+      setAcLoading(false);
+    }
+  }
+
   function openSmsModal(user: UserRow) {
     setSmsTarget(user);
     setSmsPhone("");
@@ -377,11 +419,45 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" /></svg>
                 Görünüm
               </button>
+              <div className="my-2 border-t border-gray-100" />
+              <button onClick={() => setTab("account")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "account" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                Hesabım
+              </button>
             </nav>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-6 py-5">
+
+          {/* ── ACCOUNT TAB ── */}
+          {tab === "account" && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 mb-1">Şifre Değiştir</h3>
+                <p className="text-xs text-gray-500 mb-4">Mevcut şifrenizi girerek yeni bir şifre belirleyebilirsiniz.</p>
+              </div>
+              {acError && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{acError}</p>}
+              {acSuccess && <p className="text-xs text-green-600 bg-green-50 rounded-xl px-4 py-2.5">{acSuccess}</p>}
+              <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Mevcut Şifre</label>
+                  <input type="password" required value={acCurrentPw} onChange={e => setAcCurrentPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Yeni Şifre</label>
+                  <input type="password" required minLength={6} value={acNewPw} onChange={e => setAcNewPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="En az 6 karakter" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Yeni Şifre (Tekrar)</label>
+                  <input type="password" required minLength={6} value={acConfirmPw} onChange={e => setAcConfirmPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="Tekrar girin" />
+                </div>
+                <button type="submit" disabled={acLoading} className="px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50" style={{ backgroundColor: "var(--brand)" }}>
+                  {acLoading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* ── SMS SETTINGS TAB ── */}
           {tab === "sms_settings" && isAdmin && (
@@ -698,7 +774,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Yeni Şifre (Geçici Şifre)</label>
-                    <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg" />
+                    <div className="flex gap-2">
+                      <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg" />
+                      <button type="button" onClick={() => setSmsPassword(generateRandomPassword())} className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors whitespace-nowrap" title="8 haneli rastgele şifre oluştur">
+                        🎲 Rastgele
+                      </button>
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <button type="submit" disabled={smsLoading || !!smsSuccess} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700">

@@ -415,7 +415,12 @@ export default function PatientsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Yeni Şifre</label>
-                  <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="w-full text-sm px-3 py-2 border rounded-lg" />
+                  <div className="flex gap-2">
+                    <input type="text" required minLength={6} value={smsPassword} onChange={e => setSmsPassword(e.target.value)} placeholder="123456" className="flex-1 text-sm px-3 py-2 border rounded-lg" />
+                    <button type="button" onClick={() => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"; let p = ""; for (let i = 0; i < 8; i++) p += c.charAt(Math.floor(Math.random() * c.length)); setSmsPassword(p); }} className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors whitespace-nowrap" title="8 haneli rastgele şifre oluştur">
+                      🎲 Rastgele
+                    </button>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-4">
                   <button type="button" onClick={() => setSmsTarget(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">İptal</button>
