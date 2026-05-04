@@ -49,138 +49,138 @@ export default function MessageInput({
   isPatient,
 }: MessageInputProps) {
   const [text, setText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [imageMode, setImageMode] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
-  const maxMb = appConfig.upload.maxFileSizeMb;
-  const allowedTypes = appConfig.upload.allowedMimeTypes;
-
-  // Auto-focus textarea when component mounts or becomes enabled
+  // Fix mobile keyboard gap
   useEffect(() => {
-    if (!disabled) {
-      textareaRef.current?.focus();
-    }
-  }, [disabled]);
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vv) return;
+    const handler = () => {
+      // When keyboard is open, viewport height < window.innerHeight
+      // We set a CSS variable to offset the input
+      const offset = window.innerHeight - vv.height;
+      document.documentElement.style.setProperty("--keyboard-offset", `${offset}px`);
+    };
+    vv.addEventListener("resize", handler);
+    vv.addEventListener("scroll", handler);
+    return () => {
+      vv.removeEventListener("resize", handler);
+      vv.removeEventListener("scroll", handler);
+      document.documentElement.style.setProperty("--keyboard-offset", "0px");
+    };
+  }, []);
 
-  // When an external edit image arrives, auto-enter image mode
+  // Close tools popup on outside click
   useEffect(() => {
-    if (editImage) {
-      setImageMode(true);
-      setAttachments([]);
-      textareaRef.current?.focus();
+    function handleClick(e: MouseEvent) {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
     }
-  }, [editImage]);
+    if (toolsOpen) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [toolsOpen]);
+
+  const allowedTypes = [
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "application/pdf",
+  ];
 
   function autoResize() {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 192) + "px";
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((a) => a.filter((x) => x.id !== id));
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    setUploadError("");
-
-    for (const file of files) {
-      if (!allowedTypes.includes(file.type)) {
-        setUploadError(`Desteklenmeyen tür: ${file.type}`);
-        return;
-      }
-      if (file.size > maxMb * 1024 * 1024) {
-        setUploadError(`Maksimum dosya boyutu: ${maxMb}MB`);
-        return;
-      }
-    }
-
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadError("");
     try {
-      const formData = new FormData();
-      files.forEach((f) => formData.append("files", f));
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const fd = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        fd.append("files", files[i]);
+      }
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
-
       if (!res.ok) {
-        setUploadError(data.error ?? "Yükleme başarısız");
+        setUploadError(data.error || "Yükleme başarısız");
         return;
       }
-
-      const newAtts: PendingAttachment[] = data.attachments.map(
-        (att: PendingAttachment) => ({
-          ...att,
-          preview: att.mimeType === "application/pdf"
-            ? ""
-            : URL.createObjectURL(files.find((f) => f.name === att.fileName)!),
+      const newAtts: PendingAttachment[] = (data.attachments || []).map(
+        (a: any) => ({
+          id: a.id,
+          fileName: a.fileName,
+          mimeType: a.mimeType,
+          filePath: a.filePath,
+          preview: a.mimeType.startsWith("image/")
+            ? `/api/files/${a.filePath}`
+            : "",
         })
       );
       setAttachments((prev) => [...prev, ...newAtts]);
     } catch {
-      setUploadError("Yükleme sırasında hata oluştu");
+      setUploadError("Sunucu hatası");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
-  function removeAttachment(id: string) {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
-  }
-
   const handleSend = useCallback(() => {
-    const content = text.trim();
-    if ((!content && attachments.length === 0) || disabled || uploading) return;
+    const trimmed = text.trim();
+    if (!trimmed && attachments.length === 0) return;
 
-    if (imageMode && onGenerateImage) {
-      // Use externally loaded edit image first, then fall back to uploaded attachment
-      let inputImage: { mimeType: string; base64: string } | undefined;
-      if (editImage) {
-        inputImage = editImage;
-      } else {
-        const imgAttachment = attachments.find((a) => a.mimeType.startsWith("image/"));
-        if (imgAttachment?.preview && imgAttachment.preview.startsWith("data:")) {
-          const [header, b64] = imgAttachment.preview.split(",");
-          const mimeMatch = header.match(/data:([^;]+)/);
-          if (mimeMatch && b64) {
-            inputImage = { mimeType: mimeMatch[1], base64: b64 };
-          }
-        }
-      }
-      onGenerateImage(content, inputImage);
+    if (imageMode && onGenerateImage && trimmed) {
+      onGenerateImage(trimmed, editImage || undefined);
       setText("");
-      setAttachments([]);
+      setImageMode(false);
       onClearEditImage?.();
-      if (textareaRef.current) textareaRef.current.style.height = "auto";
+      autoResize();
       return;
     }
 
-    if ((!content && attachments.length === 0)) return;
-
-    onSend(
-      content,
-      attachments.map((a) => a.id),
-      "gemini",
-      model,
-      attachments.map((a) => ({ id: a.id, fileName: a.fileName, mimeType: a.mimeType, filePath: a.filePath })),
-      webSearch
-    );
+    const provider = "gemini" as const;
+    const pendingInfos: PendingAttachmentInfo[] = attachments.map((a) => ({
+      id: a.id,
+      fileName: a.fileName,
+      mimeType: a.mimeType,
+      filePath: a.filePath,
+    }));
+    onSend(trimmed, [], provider, model, pendingInfos, webSearch);
     setText("");
     setAttachments([]);
     setWebSearch(false);
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
-  }, [text, attachments, disabled, uploading, onSend, model, imageMode, onGenerateImage, setAttachments, editImage, onClearEditImage, webSearch]);
+    autoResize();
+  }, [text, attachments, model, imageMode, onGenerateImage, editImage, onClearEditImage, onSend, webSearch]);
 
-  function handleKeyDown(e: React.KeyboardEvent) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   }
+
+  // Active mode indicators
+  const hasActiveMode = imageMode || webSearch;
 
   return (
     <div className="px-3 sm:px-4 py-2 sm:py-3 shrink-0" style={{ borderTop: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
@@ -259,63 +259,133 @@ export default function MessageInput({
         <p className="text-xs text-red-600 mb-2">{uploadError}</p>
       )}
 
-      {/* Input row */}
-      <div className="flex items-end gap-2">
-        {/* Upload button (hidden in image mode) */}
-        {!imageMode && (
-        <button
-          type="button"
-          disabled={disabled || uploading}
-          onClick={() => fileInputRef.current?.click()}
-          className="flex-shrink-0 p-2 text-gray-500 brand-icon-btn rounded-lg transition-colors disabled:opacity-40"
-          title="Görsel veya PDF yükle"
-        >
-          {uploading ? (
-            <div className="w-5 h-5 border-2 border-gray-300 brand-spinner rounded-full animate-spin" />
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+      {/* Active mode pills */}
+      {hasActiveMode && (
+        <div className="flex gap-1.5 mb-2">
+          {imageMode && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 text-purple-700 text-[11px] font-medium">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Görsel Üret
+              <button onClick={() => { setImageMode(false); onClearEditImage?.(); }} className="ml-0.5 hover:text-purple-900">×</button>
+            </span>
           )}
-        </button>
-        )}
-        {/* Image generation toggle */}
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => { setImageMode((v) => !v); setAttachments([]); onClearEditImage?.(); }}
-          className={`flex-shrink-0 p-2 rounded-lg transition-colors disabled:opacity-40 ${
-            imageMode
-              ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
-              : "text-gray-500 hover:text-purple-600 hover:bg-purple-50"
-          }`}
-          title={imageMode ? "Görsel üretim modu aktif – Kapatmak için tıkla" : "Görsel üret (Gemini ile)"}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        </button>
-        {/* Web search toggle (disabled in image mode) */}
-        {!imageMode && (
+          {webSearch && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-medium">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+              </svg>
+              Web Arama
+              <button onClick={() => setWebSearch(false)} className="ml-0.5 hover:text-blue-900">×</button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Input row */}
+      <div className="flex items-end gap-1.5 sm:gap-2">
+        {/* Tools button — single icon for all tools */}
+        <div ref={toolsRef} className="relative flex-shrink-0">
           <button
             type="button"
             disabled={disabled}
-            onClick={() => setWebSearch((v) => !v)}
-            className={`flex-shrink-0 p-2 rounded-lg transition-colors disabled:opacity-40 ${
-              webSearch
-                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            onClick={() => setToolsOpen((v) => !v)}
+            className={`p-2 rounded-xl transition-all disabled:opacity-40 ${
+              toolsOpen || hasActiveMode
+                ? "text-[var(--brand)] bg-[var(--brand)]/10"
+                : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
             }`}
-            title={webSearch ? "Web araması aktif – Kapatmak için tıkla" : "Web araması yap (Google)"}
+            title="Araçlar"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+            <svg className={`w-5 h-5 transition-transform ${toolsOpen ? "rotate-45" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
+            {/* Active indicator dot */}
+            {hasActiveMode && !toolsOpen && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[var(--brand)] rounded-full" />
+            )}
           </button>
-        )}
+
+          {/* Tools popup */}
+          {toolsOpen && (
+            <div className="absolute bottom-full left-0 mb-2 rounded-2xl shadow-xl py-2 min-w-[200px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-150"
+              style={{ background: "var(--bg-primary)", border: "1px solid var(--border-primary)", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+
+              {/* Upload */}
+              {!imageMode && (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => { fileInputRef.current?.click(); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                  style={{ color: "var(--text-secondary)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Dosya Yükle</span>
+                </button>
+              )}
+
+              {/* Image generation */}
+              <button
+                type="button"
+                onClick={() => { setImageMode((v) => !v); if (!imageMode) { setAttachments([]); onClearEditImage?.(); } setToolsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                style={{ color: imageMode ? "rgb(126, 34, 206)" : "var(--text-secondary)", background: imageMode ? "rgba(126, 34, 206, 0.06)" : "transparent" }}
+                onMouseEnter={e => { if (!imageMode) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                onMouseLeave={e => { if (!imageMode) e.currentTarget.style.background = "transparent"; }}
+              >
+                <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span className="flex-1 text-left">Görsel Üret</span>
+                {imageMode && (
+                  <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                )}
+              </button>
+
+              {/* Web search */}
+              {!imageMode && (
+                <button
+                  type="button"
+                  onClick={() => { setWebSearch((v) => !v); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                  style={{ color: webSearch ? "rgb(29, 78, 216)" : "var(--text-secondary)", background: webSearch ? "rgba(29, 78, 216, 0.06)" : "transparent" }}
+                  onMouseEnter={e => { if (!webSearch) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                  onMouseLeave={e => { if (!webSearch) e.currentTarget.style.background = "transparent"; }}
+                >
+                  <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                  </svg>
+                  <span className="flex-1 text-left">Web Araması</span>
+                  {webSearch && (
+                    <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  )}
+                </button>
+              )}
+
+              {/* Model selector — admin/system only */}
+              {!isPatient && (
+                <>
+                  <div className="my-1 mx-3" style={{ borderTop: "1px solid var(--border-secondary)" }} />
+                  <div className="px-1">
+                    <ModelSelector
+                      model={model}
+                      onModelChange={(m) => { onModelChange(m); setToolsOpen(false); }}
+                      disabled={disabled}
+                      inline
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -331,15 +401,6 @@ export default function MessageInput({
             ? "border-purple-300 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-400"
             : "brand-focus-within"
         }`} style={{ background: "var(--bg-input)", borderColor: imageMode ? undefined : "var(--border-primary)" }}>
-          {imageMode && (
-            <div className="flex items-center gap-1.5 px-3 pt-2 text-xs text-purple-600 font-medium">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-              Görsel Üret Modu
-            </div>
-          )}
           <textarea
             ref={textareaRef}
             autoFocus
@@ -350,7 +411,7 @@ export default function MessageInput({
             }}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            placeholder={imageMode ? "Oluşturulacak görseli açıklayın..." : "Mesaj yazın... (Shift+Enter: yeni satır)"}
+            placeholder={imageMode ? "Oluşturulacak görseli açıklayın..." : "Mesaj yazın..."}
             rows={1}
             className="w-full px-3 py-2.5 text-sm resize-none outline-none bg-transparent max-h-48 disabled:opacity-60"
             style={{ color: "var(--text-primary)" }}
@@ -384,17 +445,6 @@ export default function MessageInput({
           )}
         </button>
       </div>
-
-      {/* Model selector (hidden for patients) */}
-      {!isPatient && (
-      <div className="flex justify-start mt-2">
-        <ModelSelector
-          model={model}
-          onModelChange={onModelChange}
-          disabled={disabled}
-        />
-      </div>
-      )}
     </div>
   );
 }
