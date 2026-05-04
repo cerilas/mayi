@@ -40,7 +40,7 @@ export default function LoginPage() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const scrollToLogin = () => scrollToSection("login-section");
+  const scrollToLogin = () => scrollToSection("login-form");
 
   const navItems = [
     {
@@ -350,7 +350,7 @@ export default function LoginPage() {
             <h2 style={{ fontSize: "clamp(1.75rem, 4vw, 2.25rem)", fontWeight: 800, color: "#fff", margin: "0 0 0.75rem" }}>Platforma Giriş Yapın</h2>
             <p style={{ color: "rgba(255,255,255,0.4)", margin: 0 }}>Klinik hesabınızla devam edin</p>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "center", justifyContent: "center", flexDirection: "column-reverse" }} className="login-flex-container">
             <ProfileCard
               name="Mahmut Yücel"
               title="Fizyoterapist"
@@ -366,7 +366,7 @@ export default function LoginPage() {
               innerGradient="linear-gradient(145deg, #0a112888 0%, #d2226633 50%, #3caade33 100%)"
               onContactClick={() => window.open("https://myfizyopilates.com", "_blank", "noopener,noreferrer")}
             />
-            <div style={{ position: "relative", width: "100%", maxWidth: "345px" }}>
+            <div id="login-form" style={{ position: "relative", width: "100%", maxWidth: "345px" }}>
               <div style={{ position: "absolute", inset: -1, borderRadius: "30px", overflow: "hidden" }}>
                 <div style={{ position: "absolute", inset: 0, animation: "spin 4s linear infinite", transformOrigin: "center", background: "conic-gradient(from 0deg, #d22267, #3caade, #7b2ff7, #d22267)", width: "150%", height: "150%", left: "-25%", top: "-25%" }} />
               </div>
@@ -413,6 +413,15 @@ export default function LoginPage() {
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
         @keyframes bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(6px)} }
         @keyframes spin { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
+        
+        .login-flex-container {
+          flex-direction: column-reverse;
+        }
+        @media (min-width: 768px) {
+          .login-flex-container {
+            flex-direction: row !important;
+          }
+        }
         
         .bento-card {
           grid-column: span 12;
