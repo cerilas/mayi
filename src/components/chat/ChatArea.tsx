@@ -347,7 +347,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
           signal: abortController.signal,
           body: JSON.stringify({
             content,
-            attachmentIds,
+            attachmentIds: pendingAttachments.map(a => a.id),
             provider: "gemini",
             model: selectedModel,
             webSearch,
