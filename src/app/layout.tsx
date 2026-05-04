@@ -19,8 +19,12 @@ export const metadata: Metadata = {
   title: "MY FizyoAI",
   description: "Mahmut Yücel Fizyoterapi Kliniği - AI Asistanı",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+    ],
     apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
   },
 };
 
