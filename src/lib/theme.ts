@@ -19,6 +19,8 @@ export const THEME_COLORS: ThemeColor[] = [
 
 export const DEFAULT_THEME_ID = "blue";
 
+export type ColorMode = "light" | "dark";
+
 export function getTheme(id: string): ThemeColor {
   return THEME_COLORS.find((t) => t.id === id) ?? THEME_COLORS[0];
 }
@@ -27,14 +29,53 @@ export function applyTheme(id: string) {
   const theme = getTheme(id);
   const root = document.documentElement;
   root.style.setProperty("--brand", theme.hex);
-  root.style.setProperty("--brand-light", theme.hexLight);
   root.style.setProperty("--brand-dark", theme.hexDark);
+
+  // In dark mode, use a subtle semi-transparent brand-light
+  const isDark = root.classList.contains("dark");
+  root.style.setProperty(
+    "--brand-light",
+    isDark ? hexToRgba(theme.hex, 0.15) : theme.hexLight
+  );
+
   if (typeof localStorage !== "undefined") {
     localStorage.setItem("theme", id);
   }
 }
 
+export function applyColorMode(mode: ColorMode) {
+  const root = document.documentElement;
+  if (mode === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+  if (typeof localStorage !== "undefined") {
+    localStorage.setItem("colorMode", mode);
+  }
+  // Re-apply brand theme so brand-light adapts
+  applyTheme(loadSavedTheme());
+}
+
 export function loadSavedTheme(): string {
   if (typeof localStorage === "undefined") return DEFAULT_THEME_ID;
   return localStorage.getItem("theme") ?? DEFAULT_THEME_ID;
+}
+
+export function loadSavedColorMode(): ColorMode {
+  if (typeof localStorage === "undefined") return "light";
+  const saved = localStorage.getItem("colorMode");
+  if (saved === "dark" || saved === "light") return saved;
+  // Fallback to system preference
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+  return "light";
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

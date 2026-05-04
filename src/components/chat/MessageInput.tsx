@@ -183,7 +183,7 @@ export default function MessageInput({
   }
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className="px-4 py-3" style={{ borderTop: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
       {/* Disclaimer */}
       {appConfig.disclaimer.enabled && (
         <div className="text-xs text-gray-400 text-center mb-2 flex items-center justify-center gap-1.5">
@@ -326,11 +326,11 @@ export default function MessageInput({
         />
 
         {/* Textarea */}
-        <div className={`flex-1 border rounded-xl overflow-hidden bg-white transition-colors ${
+        <div className={`flex-1 border rounded-xl overflow-hidden transition-colors ${
           imageMode
             ? "border-purple-300 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-400"
-            : "border-gray-300 brand-focus-within"
-        }`}>
+            : "brand-focus-within"
+        }`} style={{ background: "var(--bg-input)", borderColor: imageMode ? undefined : "var(--border-primary)" }}>
           {imageMode && (
             <div className="flex items-center gap-1.5 px-3 pt-2 text-xs text-purple-600 font-medium">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,6 +353,7 @@ export default function MessageInput({
             placeholder={imageMode ? "Oluşturulacak görseli açıklayın..." : "Mesaj yazın... (Shift+Enter: yeni satır)"}
             rows={1}
             className="w-full px-3 py-2.5 text-sm resize-none outline-none bg-transparent max-h-48 disabled:opacity-60"
+            style={{ color: "var(--text-primary)" }}
           />
         </div>
 

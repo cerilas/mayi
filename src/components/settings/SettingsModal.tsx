@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
-import { THEME_COLORS, applyTheme, loadSavedTheme } from "@/lib/theme";
+import { THEME_COLORS, applyTheme, loadSavedTheme, applyColorMode, loadSavedColorMode } from "@/lib/theme";
+import type { ColorMode } from "@/lib/theme";
 import {
   ASSISTANT_ICON_OPTIONS,
   loadSavedAssistantIconId,
@@ -48,6 +49,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
   const [activeAssistantIcon, setActiveAssistantIcon] = useState(loadSavedAssistantIconId());
+  const [colorMode, setColorMode] = useState<ColorMode>(loadSavedColorMode());
 
   function handleThemeSelect(id: string) {
     setActiveTheme(id);
@@ -407,11 +409,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col max-h-[90vh]" style={{ minHeight: "520px" }}>
+      <div className="rounded-2xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col max-h-[90vh]" style={{ minHeight: "520px", background: "var(--bg-primary)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Ayarlar</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-600">
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--border-secondary)" }}>
+          <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Ayarlar</h2>
+          <button onClick={onClose} className="p-2 rounded-xl transition-all" style={{ color: "var(--text-tertiary)" }}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -421,38 +423,38 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         {/* Sidebar + Content layout */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-48 shrink-0 border-r border-gray-100 bg-gray-50/50 py-3 px-2 overflow-y-auto">
+          <div className="w-48 shrink-0 py-3 px-2 overflow-y-auto" style={{ borderRight: "1px solid var(--border-secondary)", background: "var(--bg-secondary)" }}>
             <nav className="flex flex-col gap-0.5">
               {isAdmin && (
-                <button onClick={() => setTab("users")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "users" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <button onClick={() => setTab("users")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "users" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
                   Kullanıcılar
                 </button>
               )}
               {isAdmin && (
-                <button onClick={() => setTab("apikey")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "apikey" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <button onClick={() => setTab("apikey")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "apikey" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
                   API Anahtarı
                 </button>
               )}
               {isAdmin && (
-                <button onClick={() => setTab("sms_settings")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "sms_settings" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <button onClick={() => setTab("sms_settings")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "sms_settings" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   Genel Ayarlar
                 </button>
               )}
               {!isPatient && (
-                <button onClick={() => setTab("instructions")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "instructions" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+                <button onClick={() => setTab("instructions")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "instructions" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
                   Talimatlar
                 </button>
               )}
-              <button onClick={() => setTab("theme")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "theme" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+              <button onClick={() => setTab("theme")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "theme" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" /></svg>
                 Görünüm
               </button>
               <div className="my-2 border-t border-gray-100" />
-              <button onClick={() => setTab("account")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "account" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:bg-white/60 hover:text-gray-700" }`}>
+              <button onClick={() => setTab("account")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "account" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
                 Hesabım
               </button>
@@ -615,7 +617,39 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ── THEME TAB ── */}
           {tab === "theme" && (
             <div>
-              <p className="text-sm text-gray-500 mb-5">Uygulamanın vurgu rengini seçin. Seçiminiz tarayıcıda kaydedilir.</p>
+              {/* Dark / Light Mode Toggle */}
+              <div className="mb-6">
+                <p className="text-sm mb-3" style={{ color: "var(--text-secondary)" }}>Mod seçin</p>
+                <div className="flex gap-2">
+                  {(["light", "dark"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => { setColorMode(mode); applyColorMode(mode); }}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        colorMode === mode
+                          ? "border-[var(--brand)] shadow-sm"
+                          : "hover:opacity-80"
+                      }`}
+                      style={{
+                        borderColor: colorMode === mode ? "var(--brand)" : "var(--border-primary)",
+                        background: colorMode === mode ? "var(--brand-light)" : "var(--bg-secondary)",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {mode === "light" ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={1.5}/><path strokeLinecap="round" strokeWidth={1.5} d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                      )}
+                      {mode === "light" ? "Açık" : "Koyu"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-1" style={{ borderTop: "1px solid var(--border-primary)" }} />
+
+              <p className="text-sm mb-5 mt-5" style={{ color: "var(--text-secondary)" }}>Uygulamanın vurgu rengini seçin. Seçiminiz tarayıcıda kaydedilir.</p>
               <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 sm:gap-3">
                 {THEME_COLORS.map((color) => (
                   <button

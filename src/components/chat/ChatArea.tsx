@@ -54,7 +54,10 @@ function ShareButton({ conversationId }: { conversationId: string }) {
     <div className="relative">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+        className="p-1.5 rounded-lg transition-colors"
+        style={{ color: "var(--text-tertiary)" }}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
         title="Paylaş"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,8 +69,8 @@ function ShareButton({ conversationId }: { conversationId: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-4 w-72">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Sohbeti Paylaş</h3>
+          <div className="absolute right-0 top-full mt-1 z-50 rounded-xl shadow-lg p-4 w-72" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-primary)" }}>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Sohbeti Paylaş</h3>
 
             {shared && shareId ? (
               <div className="space-y-3">
@@ -648,8 +651,8 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
     <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
 
       {/* Conversation title bar — hidden on mobile (mobile has its own header in layout) */}
-      <div className="hidden md:flex border-b border-gray-200 px-6 py-3 items-center gap-2">
-        <h2 className="text-sm font-medium text-gray-800 truncate flex-1">
+      <div className="hidden md:flex px-6 py-3 items-center gap-2" style={{ borderBottom: "1px solid var(--border-primary)" }}>
+        <h2 className="text-sm font-medium truncate flex-1" style={{ color: "var(--text-primary)" }}>
           {conversation?.title ?? "Sohbet"}
         </h2>
         {generatingImage && (
@@ -682,7 +685,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
           </div>
         )}
         {messages.length === 0 && !streamingContent ? (
-          <div className="flex items-center justify-center h-full text-sm text-gray-400">
+          <div className="flex items-center justify-center h-full text-sm" style={{ color: "var(--text-tertiary)" }}>
             Bir şeyler yazın...
           </div>
         ) : (
@@ -714,7 +717,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
               // Typing indicator — shown while waiting for first chunk
               <div className="flex gap-3 py-4 justify-start">
                 <AssistantAvatar />
-                <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-sm text-gray-500">
+                <div className="px-4 py-3 rounded-2xl rounded-bl-sm text-sm" style={{ background: "var(--bubble-assistant)", color: "var(--text-secondary)" }}>
                   <TextType
                     text={["Düşünüyorum", "Yanıt hazırlıyorum", "Bir saniye"]}
                     typingSpeed={70}

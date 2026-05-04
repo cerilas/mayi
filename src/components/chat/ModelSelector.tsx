@@ -86,17 +86,19 @@ export default function ModelSelector({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute bottom-full left-0 mb-1.5 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[180px] z-50">
+        <div className="absolute bottom-full left-0 mb-1.5 rounded-xl shadow-lg py-1 min-w-[180px] z-50" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-primary)" }}>
           {geminiModels.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => { onModelChange(m.id); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between gap-2 ${
-                model === m.id
-                  ? "bg-gray-50 text-gray-900 font-medium"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between gap-2`}
+              style={model === m.id
+                ? { background: "var(--bg-hover)", color: "var(--text-primary)", fontWeight: 500 }
+                : { color: "var(--text-secondary)" }
+              }
+              onMouseEnter={e => { if (model !== m.id) e.currentTarget.style.background = "var(--bg-hover)"; }}
+              onMouseLeave={e => { if (model !== m.id) e.currentTarget.style.background = "transparent"; }}
             >
               <span>{m.label}</span>
               {model === m.id && (
