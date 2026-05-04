@@ -322,7 +322,7 @@ export default function LoginPage() {
               <span>MY<span style={{ background: "linear-gradient(90deg, #d22267, #3caade)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Fizyoterapi</span></span>
             </h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1.25rem" }}>
             {features.map((f) => (
               <div
                 key={f.id}

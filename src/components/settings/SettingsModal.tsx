@@ -519,7 +519,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   </div>
                 ) : smsHeaders.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {smsHeaders.map((header) => (
                         <button
                           key={header}
@@ -577,7 +577,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 </p>
                 {availableModels.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {availableModels.map((m) => (
                         <button
                           key={m.id}
@@ -935,7 +935,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   {formError && (
                     <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{formError}</p>
                   )}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Ad Soyad</label>
                       <input
@@ -1053,8 +1053,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       <div className="w-5 h-5 border-2 border-gray-200 border-t-[var(--brand)] rounded-full animate-spin" />
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-gray-100 overflow-hidden">
-                      <table className="w-full text-sm">
+                    <div className="rounded-xl border border-gray-100 overflow-x-auto">
+                      <table className="w-full text-sm min-w-[400px]">
                         <thead>
                           <tr className="bg-gray-50 text-xs text-gray-500 font-medium">
                             <th className="text-left px-4 py-3">Ad Soyad</th>

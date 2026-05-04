@@ -292,14 +292,14 @@ export default function PatientsPage() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50 overflow-y-auto">
-      <div className="max-w-6xl w-full mx-auto px-6 py-8">
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
         
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hastalarım</h1>
-            <p className="text-sm text-gray-500 mt-1">Hastalarınızı yönetin, listeleyin ve sisteme giriş yapmalarını sağlayın.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hastalarım</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Hastalarınızı yönetin, listeleyin ve sisteme giriş yapmalarını sağlayın.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
             <input 
               type="file" 
               accept=".xlsx, .xls" 
@@ -309,22 +309,22 @@ export default function PatientsPage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Excel İçe Aktar
+              İçe Aktar
             </button>
             <button
               onClick={handleExport}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Excel Dışa Aktar
+              Dışa Aktar
             </button>
             <button
               onClick={openAddForm}
-              className="px-4 py-2 text-sm font-medium text-white rounded-lg"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white rounded-lg"
               style={{ backgroundColor: "var(--brand)" }}
             >
-              Yeni Hasta
+              + Yeni Hasta
             </button>
           </div>
         </div>
@@ -342,7 +342,8 @@ export default function PatientsPage() {
           </button>
         </form>
 
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
+        {/* Desktop Table */}
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-xs text-gray-500 font-medium">
               <tr>
@@ -372,6 +373,33 @@ export default function PatientsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="sm:hidden space-y-3 mb-6">
+          {patients.map(p => (
+            <div key={p.id} className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  <div className="font-medium text-gray-900 text-sm truncate">{p.name}</div>
+                  <div className="text-xs text-gray-500 truncate">{p.email}</div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => openSmsModal(p)} className="text-green-600 text-xs font-medium">SMS</button>
+                  <button onClick={() => openEditForm(p)} className="text-blue-600 text-xs font-medium">Düzenle</button>
+                  <button onClick={() => handleDelete(p.id)} className="text-red-600 text-xs font-medium">Sil</button>
+                </div>
+              </div>
+              <div className="flex gap-4 text-xs text-gray-500">
+                <span>📞 {p.patientProfile?.phone || "-"}</span>
+                <span>🎂 {p.patientProfile?.age || "-"}</span>
+                <span>{p.patientProfile?.gender || "-"}</span>
+              </div>
+            </div>
+          ))}
+          {patients.length === 0 && !loading && (
+            <div className="text-center text-gray-500 text-sm py-8">Kayıt bulunamadı.</div>
+          )}
         </div>
 
         {/* Pagination */}
@@ -442,7 +470,7 @@ export default function PatientsPage() {
               {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
               <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-xs font-medium text-gray-700 mb-1">Ad Soyad *</label><input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div><label className="block text-xs font-medium text-gray-700 mb-1">E-posta *</label><input type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div><label className="block text-xs font-medium text-gray-700 mb-1">{editingPatient ? "Şifre (Değiştirmek için doldurun)" : "Şifre *"}</label><input type="password" required={!editingPatient} minLength={6} value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
@@ -454,7 +482,7 @@ export default function PatientsPage() {
                       <option value="">Seçiniz</option><option value="Erkek">Erkek</option><option value="Kadın">Kadın</option><option value="Diğer">Diğer</option>
                     </select>
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Hasta Fotoğrafı</label>
                     <div className="flex items-center gap-4">
                       {form.photo && (
@@ -488,10 +516,10 @@ export default function PatientsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Kısa Hastalık Tanıtımı</label><input value={form.shortDescription} onChange={e => setForm({...form, shortDescription: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
-                  <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Uzun Detaylar</label><textarea value={form.longDetails} onChange={e => setForm({...form, longDetails: e.target.value})} rows={3} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
-                  <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Klinik Görüş</label><textarea value={form.clinicalOpinion} onChange={e => setForm({...form, clinicalOpinion: e.target.value})} rows={2} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
-                  <div className="col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Video Linkleri (Virgülle ayırın)</label><textarea value={form.videoLinks} onChange={e => setForm({...form, videoLinks: e.target.value})} rows={2} placeholder="https://youtube.com/..., https://vimeo.com/..." className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Kısa Hastalık Tanıtımı</label><input value={form.shortDescription} onChange={e => setForm({...form, shortDescription: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Uzun Detaylar</label><textarea value={form.longDetails} onChange={e => setForm({...form, longDetails: e.target.value})} rows={3} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Klinik Görüş</label><textarea value={form.clinicalOpinion} onChange={e => setForm({...form, clinicalOpinion: e.target.value})} rows={2} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Video Linkleri (Virgülle ayırın)</label><textarea value={form.videoLinks} onChange={e => setForm({...form, videoLinks: e.target.value})} rows={2} placeholder="https://youtube.com/..., https://vimeo.com/..." className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                   <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">İptal</button>
