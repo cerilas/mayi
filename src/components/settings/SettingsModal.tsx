@@ -409,10 +409,10 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="rounded-2xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col max-h-[90vh]" style={{ minHeight: "520px", background: "var(--bg-primary)" }}>
+      <div className="rounded-none sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl sm:mx-4 flex flex-col h-full sm:h-auto sm:max-h-[90vh]" style={{ background: "var(--bg-primary)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--border-secondary)" }}>
-          <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Ayarlar</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 shrink-0" style={{ borderBottom: "1px solid var(--border-secondary)" }}>
+          <h2 className="text-sm sm:text-base font-semibold" style={{ color: "var(--text-primary)" }}>Ayarlar</h2>
           <button onClick={onClose} className="p-2 rounded-xl transition-all" style={{ color: "var(--text-tertiary)" }}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -420,10 +420,22 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </button>
         </div>
 
+        {/* Mobile: horizontal tab bar */}
+        <div className="sm:hidden shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid var(--border-secondary)", background: "var(--bg-secondary)" }}>
+          <div className="flex gap-1 px-3 py-2 min-w-max">
+            {isAdmin && <button onClick={() => setTab("users")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "users" ? "shadow-sm" : "opacity-60" }`} style={tab === "users" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Kullanıcılar</button>}
+            {isAdmin && <button onClick={() => setTab("apikey")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "apikey" ? "shadow-sm" : "opacity-60" }`} style={tab === "apikey" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>API</button>}
+            {isAdmin && <button onClick={() => setTab("sms_settings")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "sms_settings" ? "shadow-sm" : "opacity-60" }`} style={tab === "sms_settings" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Genel</button>}
+            {!isPatient && <button onClick={() => setTab("instructions")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "instructions" ? "shadow-sm" : "opacity-60" }`} style={tab === "instructions" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Talimatlar</button>}
+            <button onClick={() => setTab("theme")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "theme" ? "shadow-sm" : "opacity-60" }`} style={tab === "theme" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Görünüm</button>
+            <button onClick={() => setTab("account")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "account" ? "shadow-sm" : "opacity-60" }`} style={tab === "account" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Hesabım</button>
+          </div>
+        </div>
+
         {/* Sidebar + Content layout */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Sidebar */}
-          <div className="w-48 shrink-0 py-3 px-2 overflow-y-auto" style={{ borderRight: "1px solid var(--border-secondary)", background: "var(--bg-secondary)" }}>
+          <div className="hidden sm:block w-48 shrink-0 py-3 px-2 overflow-y-auto" style={{ borderRight: "1px solid var(--border-secondary)", background: "var(--bg-secondary)" }}>
             <nav className="flex flex-col gap-0.5">
               {isAdmin && (
                 <button onClick={() => setTab("users")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "users" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
@@ -462,7 +474,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
 
           {/* ── ACCOUNT TAB ── */}
           {tab === "account" && (

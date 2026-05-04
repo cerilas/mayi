@@ -327,7 +327,7 @@ export default function SharedChatPage() {
 
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 flex-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="MY Fizyoterapi" className="w-8 h-8 rounded-xl object-contain" />
           <div className="min-w-0 flex-1">
@@ -336,7 +336,7 @@ export default function SharedChatPage() {
               {data.userName} tarafından paylaşıldı · {formattedDate}
             </p>
           </div>
-          <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-[11px] text-gray-500">
+          <span className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-[11px] text-gray-500 shrink-0">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />

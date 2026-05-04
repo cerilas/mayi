@@ -57,7 +57,7 @@ export default function MessageBubble({
         <AssistantAvatar />
       )}
 
-      <div className={`max-w-[75%] min-w-0 ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}>
+      <div className={`max-w-[90%] sm:max-w-[75%] min-w-0 ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}>
         {/* Image attachments */}
         {attachments.filter((a) => a.mimeType.startsWith("image/")).length > 0 && (
           <div className="flex flex-wrap gap-2 mb-1 justify-end">

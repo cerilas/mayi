@@ -136,6 +136,13 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
+/* Hide scrollbar on horizontal tab bars (mobile) */
+.overflow-x-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.overflow-x-auto::-webkit-scrollbar { display: none; }
+
 /* ═══════════════════════════════════════════════
    PROSE / MARKDOWN (Chat bubbles)
    ═══════════════════════════════════════════════ */

@@ -366,7 +366,7 @@ export default function LoginPage() {
               innerGradient="linear-gradient(145deg, #0a112888 0%, #d2226633 50%, #3caade33 100%)"
               onContactClick={() => window.open("https://myfizyopilates.com", "_blank", "noopener,noreferrer")}
             />
-            <div style={{ position: "relative", width: "345px" }}>
+            <div style={{ position: "relative", width: "100%", maxWidth: "345px" }}>
               <div style={{ position: "absolute", inset: -1, borderRadius: "30px", overflow: "hidden" }}>
                 <div style={{ position: "absolute", inset: 0, animation: "spin 4s linear infinite", transformOrigin: "center", background: "conic-gradient(from 0deg, #d22267, #3caade, #7b2ff7, #d22267)", width: "150%", height: "150%", left: "-25%", top: "-25%" }} />
               </div>
