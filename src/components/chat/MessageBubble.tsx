@@ -190,12 +190,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Meta */}
-        {!isUser && model && !isStreaming && (
-          <span className="text-[11px] text-gray-400 px-1">
-            Gemini · {model}
-          </span>
-        )}
+
       </div>
 
       {/* User avatar */}

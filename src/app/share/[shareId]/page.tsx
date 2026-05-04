@@ -260,7 +260,6 @@ export default function SharedChatPage() {
         return {
           Rol: msg.role === "user" ? "Kullanıcı" : "Asistan",
           Mesaj: fullContent,
-          Model: msg.model || "-",
           Tarih: msg.createdAt
             ? new Date(msg.createdAt).toLocaleString("tr-TR")
             : "-",
@@ -275,7 +274,6 @@ export default function SharedChatPage() {
       ws["!cols"] = [
         { wch: 12 },
         { wch: 80 },
-        { wch: 25 },
         { wch: 20 },
         { wch: 60 },
         { wch: 90 },
@@ -392,7 +390,6 @@ export default function SharedChatPage() {
               key={msg.id}
               role={msg.role as "user" | "assistant"}
               content={msg.content}
-              model={msg.model}
               provider={msg.provider}
               status={msg.status}
               errorMessage={msg.errorMessage}
