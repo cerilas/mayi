@@ -121,23 +121,23 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  overflow: hidden; /* prevent body-level scroll — all scroll is inside containers */
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
-  /* Prevent overscroll bounce on iOS */
   overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Mobile: use dynamic viewport height for full-screen feel */
+/* Mobile: use dynamic viewport height */
 @supports (height: 100dvh) {
   html, body { height: 100dvh; }
 }
 
-/* Prevent iOS zoom on input focus — ensure minimum 16px font */
+/* Prevent iOS zoom on input focus — 16px minimum */
 @media screen and (max-width: 767px) {
   input, textarea, select {
     font-size: 16px !important;
