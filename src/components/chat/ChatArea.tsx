@@ -642,7 +642,6 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-6 h-6 border-2 brand-border-spinner rounded-full animate-spin" />
-        <div ref={bottomRef} />
       </div>
     );
   }
@@ -651,7 +650,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
     <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
 
       {/* Conversation title bar — hidden on mobile (mobile has its own header in layout) */}
-      <div className="hidden md:flex px-6 py-3 items-center gap-2" style={{ borderBottom: "1px solid var(--border-primary)" }}>
+      <div className="hidden md:flex px-6 py-3 items-center gap-2 shrink-0" style={{ borderBottom: "1px solid var(--border-primary)" }}>
         <h2 className="text-sm font-medium truncate flex-1" style={{ color: "var(--text-primary)" }}>
           {conversation?.title ?? "Sohbet"}
         </h2>
@@ -731,6 +730,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
                 </div>
               </div>
             ) : null}
+            <div ref={bottomRef} className="h-1" />
           </>
         )}
       </div>

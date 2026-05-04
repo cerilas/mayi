@@ -183,7 +183,7 @@ export default function MessageInput({
   }
 
   return (
-    <div className="px-4 py-3" style={{ borderTop: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
+    <div className="px-3 sm:px-4 py-2 sm:py-3 shrink-0" style={{ borderTop: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
       {/* Disclaimer */}
       {appConfig.disclaimer.enabled && (
         <div className="text-xs text-gray-400 text-center mb-2 flex items-center justify-center gap-1.5">
