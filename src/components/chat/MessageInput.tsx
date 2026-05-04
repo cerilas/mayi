@@ -35,6 +35,7 @@ interface MessageInputProps {
   onModelChange: (m: string) => void;
   editImage?: { mimeType: string; base64: string } | null;
   onClearEditImage?: () => void;
+  isPatient?: boolean;
 }
 
 export default function MessageInput({
@@ -45,6 +46,7 @@ export default function MessageInput({
   onModelChange,
   editImage,
   onClearEditImage,
+  isPatient,
 }: MessageInputProps) {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
@@ -382,7 +384,8 @@ export default function MessageInput({
         </button>
       </div>
 
-      {/* Model selector */}
+      {/* Model selector (hidden for patients) */}
+      {!isPatient && (
       <div className="flex justify-start mt-2">
         <ModelSelector
           model={model}
@@ -390,6 +393,7 @@ export default function MessageInput({
           disabled={disabled}
         />
       </div>
+      )}
     </div>
   );
 }

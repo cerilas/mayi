@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useTransition } from "react";
+import { useSession } from "next-auth/react";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import TextType from "./TextType";
@@ -146,6 +147,8 @@ interface ChatAreaProps {
 }
 
 export default function ChatArea({ conversationId }: ChatAreaProps) {
+  const { data: session } = useSession();
+  const isPatient = session?.user?.role === "patient";
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const provider = "gemini"; // Sadece Gemini kullan
@@ -162,6 +165,18 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const oldestMsgIdRef = useRef<string | null>(null);
+
+  // Fetch patient default model from admin settings
+  useEffect(() => {
+    if (isPatient) {
+      fetch("/api/settings/patient-model")
+        .then(r => r.json())
+        .then(data => {
+          if (data.model) setModel(data.model);
+        })
+        .catch(() => {});
+    }
+  }, [isPatient]);
 
   // Fetch conversation on mount
   useEffect(() => {
@@ -726,6 +741,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         onModelChange={setModel}
         editImage={editImage}
         onClearEditImage={() => setEditImage(null)}
+        isPatient={isPatient}
       />
 
       {/* Image edit hint banner */}
