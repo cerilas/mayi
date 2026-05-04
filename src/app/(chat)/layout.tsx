@@ -96,14 +96,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       >
         {/* Mobile top bar */}
         <div
-          className="md:hidden"
+          className="md:hidden flex items-center shrink-0"
           style={{
-            display: "flex",
-            alignItems: "center",
             gap: "0.75rem",
             padding: "0 1rem",
             height: "48px",
-            flexShrink: 0,
             borderBottom: "1px solid var(--border-primary)",
             background: "var(--bg-primary)",
             zIndex: 20,
