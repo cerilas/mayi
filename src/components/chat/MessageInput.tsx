@@ -325,7 +325,7 @@ export default function MessageInput({
             disabled={disabled}
             placeholder={imageMode ? "Görseli açıklayın..." : "Mesaj yazın..."}
             rows={1}
-            className="flex-1 self-center px-4 py-3 text-sm resize-none outline-none bg-transparent disabled:opacity-60 overflow-y-auto"
+            className="flex-1 self-center px-4 py-3 text-sm resize-none outline-none bg-transparent disabled:opacity-60 overflow-y-auto no-scrollbar"
             style={{ color: "var(--text-primary)", lineHeight: "1.4", maxHeight: "84px" }}
           />
 
