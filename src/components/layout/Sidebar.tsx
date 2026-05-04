@@ -425,9 +425,9 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* New folder input */}
+        {/* New folder input — full width below buttons */}
         {showNewFolder && (
-          <div className="mt-2 flex gap-1">
+          <div className="mt-2 flex gap-1 w-full overflow-hidden">
             <input
               ref={newFolderInputRef}
               value={newFolderName}
@@ -437,13 +437,21 @@ export default function Sidebar() {
                 if (e.key === "Escape") { setShowNewFolder(false); setNewFolderName(""); }
               }}
               placeholder="Klasör adı..."
-              className="flex-1 text-xs px-2 py-1.5 border border-gray-300 rounded-lg outline-none focus:border-blue-400"
+              className="flex-1 min-w-0 text-xs px-2 py-1.5 border border-gray-300 rounded-lg outline-none focus:border-blue-400"
+              style={{ color: "var(--text-primary)", background: "var(--bg-input)" }}
             />
             <button
               onClick={handleCreateFolder}
-              className="px-2 py-1.5 text-xs btn-brand rounded-lg"
+              className="shrink-0 px-2 py-1.5 text-xs btn-brand rounded-lg"
             >
               Ekle
+            </button>
+            <button
+              onClick={() => { setShowNewFolder(false); setNewFolderName(""); }}
+              className="shrink-0 px-2 py-1.5 text-xs rounded-lg"
+              style={{ color: "var(--text-secondary)", background: "var(--bg-hover)" }}
+            >
+              ✕
             </button>
           </div>
         )}

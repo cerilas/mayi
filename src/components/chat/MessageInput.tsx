@@ -314,7 +314,7 @@ export default function MessageInput({
           )}
         </div>
 
-        <input ref={fileInputRef} type="file" multiple accept={allowedTypes.join(",")} onChange={handleFileChange} className="hidden" />
+        <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="hidden" />
 
         {/* ── Unified pill: [ textarea ··· [▶] ] ── */}
         <div
