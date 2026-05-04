@@ -121,7 +121,6 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* prevent body-level scroll — all scroll is inside containers */
 }
 
 body {
