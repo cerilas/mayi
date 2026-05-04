@@ -265,7 +265,12 @@ export default function MessageInput({
                 </button>
               )}
               <button type="button"
-                onClick={() => { setImageMode(v => !v); if (!imageMode) { setAttachments([]); onClearEditImage?.(); } setToolsOpen(false); }}
+                onClick={() => {
+                  const next = !imageMode;
+                  setImageMode(next);
+                  if (next) { setWebSearch(false); setAttachments([]); onClearEditImage?.(); }
+                  setToolsOpen(false);
+                }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                 style={{ color: imageMode ? "rgb(126,34,206)" : "var(--text-secondary)", background: imageMode ? "rgba(126,34,206,0.06)" : "transparent" }}
                 onMouseEnter={e => { if (!imageMode) e.currentTarget.style.background = "var(--bg-hover)"; }}
@@ -279,7 +284,12 @@ export default function MessageInput({
               </button>
               {!imageMode && (
                 <button type="button"
-                  onClick={() => { setWebSearch(v => !v); setToolsOpen(false); }}
+                  onClick={() => {
+                    const next = !webSearch;
+                    setWebSearch(next);
+                    if (next) setImageMode(false);
+                    setToolsOpen(false);
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                   style={{ color: webSearch ? "rgb(29,78,216)" : "var(--text-secondary)", background: webSearch ? "rgba(29,78,216,0.06)" : "transparent" }}
                   onMouseEnter={e => { if (!webSearch) e.currentTarget.style.background = "var(--bg-hover)"; }}
