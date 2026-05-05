@@ -318,7 +318,7 @@ export default function MessageInput({
 
         {/* ── Unified pill: [ textarea ··· [▶] ] ── */}
         <div
-          className={`flex flex-1 items-center rounded-2xl border transition-colors ${
+          className={`flex flex-1 items-center rounded-2xl border transition-colors overflow-hidden ${
             imageMode
               ? "border-purple-400"
               : "border-[var(--border-primary)] focus-within:border-[var(--brand)]"
