@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import ModelSelector from "./ModelSelector";
-import Image from "next/image";
 import { appConfig } from "@/lib/config";
 
 interface PendingAttachment {
@@ -119,6 +118,7 @@ export default function MessageInput({
       if (!res.ok) { setUploadError(data.error || "Yükleme başarısız"); return; }
       const newAtts: PendingAttachment[] = (data.attachments || []).map((a: any) => ({
         id: a.id, fileName: a.fileName, mimeType: a.mimeType, filePath: a.filePath,
+        // Use API URL for preview (regular img tag handles this fine)
         preview: a.mimeType.startsWith("image/") ? `/api/files/${a.filePath}` : "",
       }));
       setAttachments(prev => [...prev, ...newAtts]);
@@ -166,7 +166,8 @@ export default function MessageInput({
       {editImage && imageMode && (
         <div className="flex items-center gap-2 mb-2 p-2 bg-purple-50 border border-purple-200 rounded-xl">
           <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
-            <Image src={`data:${editImage.mimeType};base64,${editImage.base64}`} alt="Düzenlenecek görsel" fill className="object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`data:${editImage.mimeType};base64,${editImage.base64}`} alt="Düzenlenecek görsel" className="w-full h-full object-cover" />
           </div>
           <span className="text-xs text-purple-700 flex-1">Düzenleme modu aktif</span>
           <button onClick={() => { onClearEditImage?.(); setImageMode(false); }} className="text-purple-400 hover:text-purple-700">
@@ -186,8 +187,9 @@ export default function MessageInput({
                 <button onClick={() => removeAttachment(att.id)} className="ml-1 w-4 h-4 bg-gray-500 text-white rounded-full text-xs flex items-center justify-center">×</button>
               </div>
             ) : (
-              <div key={att.id} className="relative w-14 h-14">
-                <Image src={att.preview} alt={att.fileName} fill className="object-cover rounded-lg border border-gray-200" />
+              <div key={att.id} className="relative w-14 h-14 shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={att.preview} alt={att.fileName} className="w-full h-full object-cover rounded-lg border border-gray-200" />
                 <button onClick={() => removeAttachment(att.id)} className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 text-white rounded-full text-xs flex items-center justify-center">×</button>
               </div>
             )
