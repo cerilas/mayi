@@ -529,8 +529,10 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             const imgAtt = msg.attachments.find((a) => a.mimeType.startsWith("image/"));
             if (imgAtt) {
               try {
-                const src = `/${imgAtt.filePath.replace("public/", "")}`;
-                const blob = await fetch(src).then((r) => r.blob());
+                const src = `/api/files/${imgAtt.filePath}`;
+                const r = await fetch(src);
+                if (!r.ok) throw new Error("Görsel yüklenemedi");
+                const blob = await r.blob();
                 const base64 = await new Promise<string>((resolve, reject) => {
                   const reader = new FileReader();
                   reader.onload = () => resolve((reader.result as string).split(",")[1]);
