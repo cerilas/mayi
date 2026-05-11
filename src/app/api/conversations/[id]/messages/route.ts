@@ -91,9 +91,11 @@ export async function POST(
     prisma.setting.findMany({
       where: {
         key: { in: settingsKeys },
-        // Patients read global admin settings (no userId filter).
-        // Admins/users read their own per-user settings.
-        ...(isPatient ? {} : { userId: session.user.id }),
+        // Patients read admin's global settings; admins/users read their own.
+        ...(isPatient
+          ? { user: { role: "admin" } }
+          : { userId: session.user.id }
+        ),
       },
       orderBy: { updatedAt: "desc" },
     }),
@@ -164,7 +166,11 @@ export async function POST(
   let customInstruction = "";
   let dbBaseInstruction = "";
 
-  const settingsMap = new Map(globalSettings.map((s) => [s.key, s.value]));
+  // Build map: updatedAt desc means index 0 = most recent; first-write wins per key.
+  const settingsMap = new Map<string, string>();
+  for (const s of [...globalSettings].reverse()) {
+    settingsMap.set(s.key, s.value);
+  }
 
   if (isPatient) {
     // Patient profile fetched only when needed
