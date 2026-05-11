@@ -446,10 +446,22 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         }
 
         // Finalise
-        const finalText = accumulated
+        let finalText = accumulated
           .replace(/__KEEPALIVE__/g, "")
           .replace(/\n\n__TITLE_B64__[A-Za-z0-9+/=]+/g, "")
           .replace(/\n\n__ERROR_B64__[A-Za-z0-9+/=]+/g, "");
+
+        // If stream completed but client couldn't parse text, fetch from DB as fallback
+        if (!finalText.trim()) {
+          try {
+            const fallback = await fetch(`/api/conversations/${conversationId}?limit=1`);
+            if (fallback.ok) {
+              const fbData = await fallback.json();
+              const lastMsg = (fbData.messages ?? []).findLast((m: Message) => m.role === "assistant" && m.status === "done");
+              if (lastMsg?.content) finalText = lastMsg.content;
+            }
+          } catch { /* ignore */ }
+        }
 
         if (!finalText.trim()) {
           throw new Error("Modelden boş yanıt alındı. Sağlayıcı/model ayarını kontrol edin.");
