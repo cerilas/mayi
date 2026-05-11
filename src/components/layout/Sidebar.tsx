@@ -251,11 +251,39 @@ export default function Sidebar() {
     setFolders(data);
   }, []);
 
+  // Fetch only on mount — NOT on every pathname change so the sidebar doesn't flash
   useEffect(() => {
     setLoading(true);
     fetchConversations();
     fetchFolders();
-  }, [fetchConversations, fetchFolders, pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When navigating to a different conversation, silently refresh the list
+  // in the background (no spinner, no reset) so title updates appear.
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    if (pathnameRef.current === pathname) return;
+    pathnameRef.current = pathname;
+    // Background refresh — don't reset loading or conversations state
+    fetch("/api/conversations?limit=30")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        setConversations((prev) => {
+          // Merge: keep existing order, update titles, add new items at top
+          const incoming = data.items as Conversation[];
+          const incomingMap = new Map(incoming.map((c: Conversation) => [c.id, c]));
+          const updated = prev.map((c) => incomingMap.has(c.id) ? { ...c, ...incomingMap.get(c.id) } : c);
+          const existingIds = new Set(prev.map((c) => c.id));
+          const newItems = incoming.filter((c: Conversation) => !existingIds.has(c.id));
+          return [...newItems, ...updated];
+        });
+        setHasMore(data.hasMore ?? false);
+        setNextCursor(data.nextCursor ?? null);
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   useEffect(() => {
     const el = listRef.current;
