@@ -64,6 +64,9 @@ export async function POST(req: Request) {
     // 2. Prepare and send SMS via NETGSM
     const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: my.cerilas.com\nE-posta: ${targetUser.email}\nSifre: ${newPassword}\nB021`;
 
+
+
+
     // Fetch active header from DB
     const headerSetting = await prisma.setting.findFirst({
       where: { key: "netgsm_active_header" },

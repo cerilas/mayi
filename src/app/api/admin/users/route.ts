@@ -16,6 +16,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const users = await prisma.user.findMany({
+    where: {
+      role: {
+        not: "hasta",
+      },
+    },
     orderBy: { createdAt: "asc" },
     select: { id: true, name: true, email: true, role: true, createdAt: true },
   });
