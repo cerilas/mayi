@@ -163,6 +163,12 @@ export async function POST(
       });
       const globalPatientInstruction = adminSetting?.value || "";
 
+      const baseInstSetting = await prisma.setting.findFirst({
+        where: { key: "base_instruction" },
+        orderBy: { updatedAt: "desc" }
+      });
+      dbBaseInstruction = baseInstSetting?.value || "";
+
       customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
 Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
 - Hasta Adı: ${patientUser?.name || 'Bilinmiyor'}
