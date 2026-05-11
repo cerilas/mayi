@@ -45,7 +45,11 @@ export async function POST(
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
-  const { id: conversationId } = await params;
+  // ── Paralel: conversation lookup + request body parse ──────────────────
+  const [{ id: conversationId }, body] = await Promise.all([
+    params,
+    req.json().catch(() => ({})),
+  ]);
 
   const conversation = await prisma.conversation.findFirst({
     where: { id: conversationId, userId: session.user.id, deletedAt: null },
@@ -53,7 +57,6 @@ export async function POST(
   if (!conversation)
     return NextResponse.json({ error: "Bulunamadı" }, { status: 404 });
 
-  const body = await req.json().catch(() => ({}));
   const userContent: string = (body.content ?? "").toString().trim();
   const attachmentIds: string[] = body.attachmentIds ?? [];
   const requestedProvider: AIProvider = body.provider ?? conversation.aiProvider;
@@ -73,29 +76,42 @@ export async function POST(
     return NextResponse.json({ error: "Mesaj boş olamaz" }, { status: 400 });
   }
 
-  const userMsg = await prisma.message.create({
-    data: { conversationId, role: "user", content: userContent, provider, model },
-    include: { attachments: true },
-  });
+  const isPatient = session.user.role === "patient";
 
-  if (attachmentIds.length > 0) {
-    await prisma.attachment.updateMany({
-      where: { id: { in: attachmentIds } },
-      data: { messageId: userMsg.id },
-    });
-  }
+  // ── Paralel: save user message + fetch settings ──────────────────────
+  const settingsKeys = isPatient
+    ? ["patient_system_instruction", "base_instruction"]
+    : ["system_instruction", "base_instruction"];
 
-  const history = await prisma.message.findMany({
-    where: { conversationId },
-    orderBy: { createdAt: "asc" },
-    include: { attachments: true },
-  });
+  const [userMsg, globalSettings] = await Promise.all([
+    prisma.message.create({
+      data: { conversationId, role: "user", content: userContent, provider, model },
+      include: { attachments: true },
+    }),
+    prisma.setting.findMany({
+      where: { key: { in: settingsKeys } },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
+  // ── Paralel: link attachments + fetch message history ────────────────
+  const [, history] = await Promise.all([
+    attachmentIds.length > 0
+      ? prisma.attachment.updateMany({
+          where: { id: { in: attachmentIds } },
+          data: { messageId: userMsg.id },
+        })
+      : Promise.resolve(null),
+    prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+      include: { attachments: true },
+    }),
+  ]);
 
   function buildContent(msgContent: string, attList: typeof history[0]["attachments"], role: string): string | AIMessageContent[] {
     const isUser = role === "user";
 
-    // Strip data: URI images from content string — Gemini rejects inlineData in model role.
-    // For user messages we want to keep them as inlineData parts instead.
     const inlineImageRegex = /!\[.*?\]\((data:([^;]+);base64,([A-Za-z0-9+/=]+))\)/g;
     const inlineImageParts: AIMessageContent[] = [];
     const strippedContent = msgContent.replace(inlineImageRegex, (_, url, mimeType) => {
@@ -103,7 +119,6 @@ export async function POST(
       return "";
     }).trim();
 
-    // File attachment images (only for user messages)
     const fileImageParts: AIMessageContent[] = [];
     if (isUser) {
       for (const att of attList.filter((a) => a.mimeType.startsWith("image/"))) {
@@ -115,7 +130,6 @@ export async function POST(
       }
     }
 
-    // PDF attachments (only for user messages, inline base64)
     const filePdfParts: AIMessageContent[] = [];
     if (isUser) {
       for (const att of attList.filter((a) => a.mimeType === "application/pdf")) {
@@ -128,12 +142,8 @@ export async function POST(
     }
 
     const hasData = inlineImageParts.length > 0 || fileImageParts.length > 0 || filePdfParts.length > 0;
-    if (!hasData) {
-      // No files to attach; return plain string (stripped for safety)
-      return strippedContent || msgContent;
-    }
+    if (!hasData) return strippedContent || msgContent;
 
-    // Build multi-part content for user messages with files
     const parts: AIMessageContent[] = [];
     if (strippedContent) parts.push({ type: "text", text: strippedContent });
     parts.push(...inlineImageParts, ...fileImageParts, ...filePdfParts);
@@ -145,29 +155,22 @@ export async function POST(
     hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul",
   });
 
-  // Fetch per-user base instruction + custom system instruction from DB
+  // ── Build system prompt ───────────────────────────────────────────────
   let customInstruction = "";
   let dbBaseInstruction = "";
-  
-  if (session.user.role === "patient") {
+
+  const settingsMap = new Map(globalSettings.map((s) => [s.key, s.value]));
+
+  if (isPatient) {
+    // Patient profile fetched only when needed
     try {
       const patientUser = await prisma.user.findUnique({
         where: { id: session.user.id },
         include: { patientProfile: true },
       });
       const p = patientUser?.patientProfile;
-
-      const adminSetting = await prisma.setting.findFirst({
-        where: { key: "patient_system_instruction" },
-        orderBy: { updatedAt: "desc" }
-      });
-      const globalPatientInstruction = adminSetting?.value || "";
-
-      const baseInstSetting = await prisma.setting.findFirst({
-        where: { key: "base_instruction" },
-        orderBy: { updatedAt: "desc" }
-      });
-      dbBaseInstruction = baseInstSetting?.value || "";
+      const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
+      dbBaseInstruction = settingsMap.get("base_instruction") || "";
 
       customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
 Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
@@ -183,15 +186,8 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
 `;
     } catch { /* ignore */ }
   } else {
-    try {
-      const settings = await prisma.setting.findMany({
-        where: { userId: session.user.id, key: { in: ["system_instruction", "base_instruction"] } },
-      });
-      for (const s of settings) {
-        if (s.key === "system_instruction") customInstruction = s.value;
-        if (s.key === "base_instruction") dbBaseInstruction = s.value;
-      }
-    } catch { /* ignore */ }
+    customInstruction = settingsMap.get("system_instruction") || "";
+    dbBaseInstruction = settingsMap.get("base_instruction") || "";
   }
 
   const defaultBase =
@@ -219,7 +215,6 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
     })),
   ];
 
-  // Attachments (PDF or images) need more time to process
   const hasHeavyAttachment = history.some((m) =>
     m.attachments.some((a) => a.mimeType === "application/pdf" || a.mimeType.startsWith("image/"))
   );
@@ -237,8 +232,6 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
         if (!controllerClosed) { controllerClosed = true; controller.close(); }
       }
 
-      // Send keep-alive immediately so the client watchdog doesn't fire
-      // while Gemini is processing (especially slow models like 3.1 Pro Preview)
       safeEnqueue(new TextEncoder().encode("__KEEPALIVE__"));
 
       try {
@@ -280,18 +273,19 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
         return;
       }
 
-      await prisma.message.create({
-        data: { conversationId, role: "assistant", content: fullResponse, provider, model, status: "done" },
-      });
-
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: { updatedAt: new Date(), aiProvider: provider, aiModel: model },
-      });
+      // ── Paralel: save assistant message + update conversation ────────
+      await Promise.all([
+        prisma.message.create({
+          data: { conversationId, role: "assistant", content: fullResponse, provider, model, status: "done" },
+        }),
+        prisma.conversation.update({
+          where: { id: conversationId },
+          data: { updatedAt: new Date(), aiProvider: provider, aiModel: model },
+        }),
+      ]);
 
       if (appConfig.ai.enableAutoTitle && history.length === 3 && conversation.title === "Yeni Sohbet" && userContent) {
         try {
-          // Pass both first and second user messages for a better title
           const firstUserMsg = history.find((m) => m.role === "user" && m.id !== userMsg.id);
           const titleContext = firstUserMsg
             ? `${firstUserMsg.content}\n${userContent}`
