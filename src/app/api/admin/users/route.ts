@@ -18,7 +18,7 @@ export async function GET() {
   const users = await prisma.user.findMany({
     where: {
       role: {
-        not: "hasta",
+        not: "patient",
       },
     },
     orderBy: { createdAt: "asc" },
