@@ -89,7 +89,12 @@ export async function POST(
       include: { attachments: true },
     }),
     prisma.setting.findMany({
-      where: { key: { in: settingsKeys } },
+      where: {
+        key: { in: settingsKeys },
+        // Patients read global admin settings (no userId filter).
+        // Admins/users read their own per-user settings.
+        ...(isPatient ? {} : { userId: session.user.id }),
+      },
       orderBy: { updatedAt: "desc" },
     }),
   ]);
