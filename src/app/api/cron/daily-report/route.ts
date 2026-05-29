@@ -95,16 +95,16 @@ export async function GET(req: Request) {
     `;
 
     // 6. E-postayı Gönder
-    const success = await sendCerilasMail(
+    const result = await sendCerilasMail(
       emailList, 
       `Günlük Sistem Raporu - ${now.toLocaleDateString('tr-TR')}`, 
       htmlTemplate
     );
 
-    if (success) {
+    if (result.success) {
       return NextResponse.json({ message: "Günlük rapor başarıyla gönderildi.", emails: emailList });
     } else {
-      return NextResponse.json({ error: "E-posta gönderilirken API'de hata oluştu." }, { status: 500 });
+      return NextResponse.json({ error: `E-posta API hatası: ${result.error}` }, { status: 500 });
     }
 
   } catch (err: any) {

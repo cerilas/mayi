@@ -1,14 +1,12 @@
-export async function sendCerilasMail(to: string[], subject: string, html: string) {
+export async function sendCerilasMail(to: string[], subject: string, html: string): Promise<{success: boolean, error?: string}> {
   const token = process.env.CERILAS_ADMIN_JWT_SECRET;
   
   if (!token) {
-    console.error("Cerilas Mail API hatası: CERILAS_ADMIN_JWT_SECRET bulunamadı.");
-    return false;
+    return { success: false, error: "CERILAS_ADMIN_JWT_SECRET çevresel değişkeni bulunamadı." };
   }
   
   if (!to || to.length === 0) {
-    console.log("Mail gönderilecek adres bulunamadı.");
-    return false;
+    return { success: false, error: "Mail gönderilecek adres bulunamadı." };
   }
 
   // Define primary recipient and Bcc for others
@@ -33,16 +31,13 @@ export async function sendCerilasMail(to: string[], subject: string, html: strin
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`Cerilas Mail API isteği başarısız: [${res.status}] ${errorText}`);
-      return false;
+      return { success: false, error: `[${res.status}] ${errorText}` };
     }
 
     const data = await res.json();
-    console.log("E-posta başarıyla gönderildi:", data);
-    return true;
+    return { success: true };
 
-  } catch (error) {
-    console.error("Cerilas Mail API bağlanırken hata:", error);
-    return false;
+  } catch (error: any) {
+    return { success: false, error: error.message || "Bilinmeyen bir ağ hatası oluştu." };
   }
 }
