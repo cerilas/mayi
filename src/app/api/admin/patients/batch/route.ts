@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 async function requireAdmin() {
   const session = await auth();
@@ -24,10 +25,13 @@ export async function POST(req: Request) {
   const results = {
     success: 0,
     failed: 0,
+    duplicate: 0,
     errors: [] as string[],
   };
 
-  const defaultPasswordHash = await bcrypt.hash("123456", 12);
+  // Fetch all admins for mapping Sorumlu column
+  const admins = await prisma.user.findMany({ where: { role: "admin" } });
+  const adminMap = new Map(admins.filter(a => a.name).map(a => [a.name!.toLowerCase(), a.id]));
 
   for (const patient of patients) {
     try {
@@ -40,7 +44,17 @@ export async function POST(req: Request) {
         shortDescription,
         longDetails,
         clinicalOpinion,
+        videoLinks,
+        responsibleAdminName,
       } = patient;
+
+      let assignedAdminId = session.user.id;
+      if (responsibleAdminName) {
+        const foundId = adminMap.get(String(responsibleAdminName).toLowerCase());
+        if (foundId) {
+          assignedAdminId = foundId;
+        }
+      }
 
       if (!name || !email) {
         results.failed++;
@@ -50,16 +64,20 @@ export async function POST(req: Request) {
 
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
-        results.failed++;
-        results.errors.push(`${email} adresi zaten mevcut.`);
+        results.duplicate++;
         continue;
       }
+
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const passwordHash = await bcrypt.hash(randomPassword, 12);
+      const passwordEncrypted = encryptPassword(randomPassword);
 
       await prisma.user.create({
         data: {
           name: String(name),
           email: String(email).toLowerCase(),
-          passwordHash: defaultPasswordHash,
+          passwordHash,
+          passwordEncrypted,
           role: "patient",
           patientProfile: {
             create: {
@@ -69,6 +87,8 @@ export async function POST(req: Request) {
               shortDescription: shortDescription ? String(shortDescription) : null,
               longDetails: longDetails ? String(longDetails) : null,
               clinicalOpinion: clinicalOpinion ? String(clinicalOpinion) : null,
+              videoLinks: Array.isArray(videoLinks) ? videoLinks : [],
+              responsibleAdminId: assignedAdminId,
             },
           },
         },

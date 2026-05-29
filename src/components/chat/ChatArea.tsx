@@ -362,7 +362,11 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             const contentType = res.headers.get("content-type") ?? "";
             if (contentType.includes("application/json")) {
               const data = await res.json();
-              serverErr = data?.error ?? serverErr;
+              if (data?.error === "usage_limit_exceeded") {
+                serverErr = "Kullanım hakkınız dolmuştur. Yeni soru sormak için lütfen kliniğiniz ile iletişime geçin.";
+              } else {
+                serverErr = data?.error ?? serverErr;
+              }
             } else {
               const text = await res.text();
               if (text.trim()) serverErr = text.slice(0, 300);
@@ -376,6 +380,11 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let accumulated = "";
+
+        // Tetikleyici: İlk mesaj atıldığında (ve backend tarafından başarıyla işleme alındığında) Sidebar'a haber ver ki sohbeti listeye eklesin.
+        if (history.length === 0) {
+          window.dispatchEvent(new CustomEvent("refreshSidebarConversations"));
+        }
 
         while (true) {
           const { done, value } = await reader.read();
@@ -392,8 +401,16 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
           const titleMatch = accumulated.match(/\n\n__TITLE_B64__([A-Za-z0-9+/=]+)/);
           if (titleMatch) {
             try {
-              const title = atob(titleMatch[1]);
+              const binString = atob(titleMatch[1]);
+              const bytes = new Uint8Array(binString.length);
+              for (let i = 0; i < binString.length; i++) {
+                bytes[i] = binString.charCodeAt(i);
+              }
+              const title = new TextDecoder("utf-8").decode(bytes);
               setConversation((prev) => (prev ? { ...prev, title } : prev));
+              
+              // Başlık değiştiğinde Sidebar'ın da güncellenmesi için sinyal gönder
+              window.dispatchEvent(new CustomEvent("refreshSidebarConversations"));
             } catch {}
             accumulated = accumulated.replace(/\n\n__TITLE_B64__[A-Za-z0-9+/=]+/, "");
           }

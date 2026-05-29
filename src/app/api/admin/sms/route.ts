@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 const NETGSM_USERCODE = process.env.NETGSM_USERCODE || "3423411000";
 const NETGSM_PASSWORD = process.env.NETGSM_PASSWORD || "Dnz.24232423";
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: { passwordHash, passwordEncrypted: encryptPassword(newPassword) },
     });
 
     // 2. Prepare and send SMS via NETGSM

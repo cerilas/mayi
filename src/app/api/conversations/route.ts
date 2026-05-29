@@ -25,6 +25,7 @@ export async function GET(req: Request) {
     where: {
       userId: session.user.id,
       deletedAt: null,
+      messages: { some: {} }, // Sadece en az 1 mesajı olan sohbetleri getir
       ...(cursorDate ? { updatedAt: { lt: cursorDate } } : {}),
     },
     orderBy: { updatedAt: "desc" },
@@ -55,6 +56,21 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const provider = body.aiProvider ?? "gemini";
   const model = body.aiModel ?? "gemini-2.5-flash";
+
+  // Veritabanının şişmesini önlemek için: 
+  // Bu kullanıcının 24 saatten eski ve HİÇ MESAJ ATILMAMIŞ "Yeni Sohbet"lerini temizle
+  try {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await prisma.conversation.deleteMany({
+      where: {
+        userId: session.user.id,
+        messages: { none: {} },
+        createdAt: { lt: yesterday }
+      }
+    });
+  } catch (err) {
+    console.error("Cleanup error:", err);
+  }
 
   const conversation = await prisma.conversation.create({
     data: {

@@ -32,6 +32,145 @@ interface UserFormData {
 
 const EMPTY_FORM: UserFormData = { name: "", email: "", password: "", role: "user" };
 
+interface UsageRights {
+  limit: number;
+  used: number;
+  remaining: number;
+  resetAt: string;
+  isExceeded: boolean;
+}
+
+function UsageProgress() {
+  const [usage, setUsage] = useState<UsageRights | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/users/usage")
+      .then(async (r) => {
+        if (!r.ok) {
+          const errText = await r.text();
+          throw new Error(`HTTP ${r.status}: ${errText}`);
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (data && !data.error) {
+          setUsage(data);
+        } else {
+          console.error("Usage API error:", data?.error);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load usage data:", err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3 py-4">
+        <div className="h-4 w-32 animate-pulse rounded-lg" style={{ background: "var(--bg-tertiary)" }} />
+        <div className="h-3 w-full animate-pulse rounded-full" style={{ background: "var(--bg-tertiary)" }} />
+        <div className="h-3 w-3/4 animate-pulse rounded-lg" style={{ background: "var(--bg-tertiary)" }} />
+      </div>
+    );
+  }
+
+  if (!usage) {
+    return (
+      <p className="text-xs" style={{ color: "var(--color-error, #ef4444)" }}>Kullanım verileri yüklenemedi.</p>
+    );
+  }
+
+  const percent = Math.min(100, Math.round((usage.used / usage.limit) * 100));
+  const isCloseToLimit = percent >= 80;
+  const isExceeded = usage.isExceeded;
+
+  const dateFormatted = new Date(usage.resetAt).toLocaleDateString("tr-TR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const barColor = isExceeded
+    ? "linear-gradient(to right, #ef4444, #e11d48)"
+    : isCloseToLimit
+    ? "linear-gradient(to right, #f59e0b, #f97316)"
+    : "linear-gradient(to right, var(--brand), var(--brand))";
+
+  return (
+    <div className="space-y-5">
+      {/* Label and numbers */}
+      <div className="flex justify-between items-end">
+        <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Aktif Kullanım</span>
+        <span className="text-xs font-mono" style={{ color: "var(--text-secondary)" }}>
+          <strong className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{usage.used}</strong>
+          {" "}/{" "}{usage.limit} Hak
+        </span>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="relative w-full h-4 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+        <div
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: `${percent}%`, background: barColor }}
+        />
+      </div>
+
+      {/* Stats */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)" }}
+      >
+        <div className="flex justify-between items-center text-xs">
+          <span style={{ color: "var(--text-tertiary)" }}>Kalan Kullanım Hakkı</span>
+          <span
+            className="font-bold text-sm"
+            style={{ color: isExceeded ? "#ef4444" : "var(--brand)" }}
+          >
+            {usage.remaining}
+          </span>
+        </div>
+        <div style={{ height: "1px", background: "var(--border-secondary)" }} />
+        <div className="flex justify-between items-center text-xs">
+          <span style={{ color: "var(--text-tertiary)" }}>Yenilenme Tarihi</span>
+          <span className="font-medium" style={{ color: "var(--text-primary)" }}>{dateFormatted}</span>
+        </div>
+      </div>
+
+      {/* Notice */}
+      <div
+        className="rounded-xl p-4 text-xs"
+        style={isExceeded
+          ? { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }
+          : { background: "var(--brand-light, rgba(99,102,241,0.07))", border: "1px solid var(--border-secondary)", color: "var(--text-secondary)" }
+        }
+      >
+        <div className="flex items-start gap-3">
+          <svg
+            className="w-4 h-4 mt-0.5 shrink-0"
+            style={{ color: isExceeded ? "#ef4444" : "var(--brand)" }}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="space-y-1">
+            <p className="font-semibold" style={{ color: isExceeded ? "#ef4444" : "var(--text-primary)" }}>
+              {isExceeded ? "Limitiniz Tükendi" : "Bilgilendirme"}
+            </p>
+            <p className="leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              Daha fazla kullanım hakkı almak ve tedavi takibinizi detaylandırmak için lütfen kliniğinize başvurun.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────
 // Settings Modal
 // ─────────────────────────────────────────────
@@ -44,7 +183,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const isAdmin = session?.user?.role === "admin";
   const isPatient = session?.user?.role === "patient";
   const defaultTab = isAdmin ? "users" : isPatient ? "account" : "instructions";
-  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey" | "sms_settings" | "account">(defaultTab);
+  const [tab, setTab] = useState<"users" | "theme" | "instructions" | "apikey" | "sms_settings" | "account" | "usage">(defaultTab);
 
   // ── Theme tab state ─────────────────────────
   const [activeTheme, setActiveTheme] = useState(loadSavedTheme());
@@ -262,6 +401,27 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [smsError, setSmsError] = useState("");
   const [smsSuccess, setSmsSuccess] = useState("");
 
+  // ── Password reveal state ──────────────────
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string | null>>({});
+  const [revealLoading, setRevealLoading] = useState<Record<string, boolean>>({});
+
+  async function handleRevealPassword(userId: string) {
+    if (revealedPasswords[userId] !== undefined) {
+      setRevealedPasswords(prev => { const n = { ...prev }; delete n[userId]; return n; });
+      return;
+    }
+    setRevealLoading(prev => ({ ...prev, [userId]: true }));
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/password`);
+      const data = await res.json();
+      setRevealedPasswords(prev => ({ ...prev, [userId]: data.password ?? data.message ?? "Bilinmiyor" }));
+    } catch {
+      setRevealedPasswords(prev => ({ ...prev, [userId]: "Hata" }));
+    } finally {
+      setRevealLoading(prev => ({ ...prev, [userId]: false }));
+    }
+  }
+
   // ── Account (password change) state ────────
   const [acCurrentPw, setAcCurrentPw] = useState("");
   const [acNewPw, setAcNewPw] = useState("");
@@ -429,6 +589,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {!isPatient && <button onClick={() => setTab("instructions")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "instructions" ? "shadow-sm" : "opacity-60" }`} style={tab === "instructions" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Talimatlar</button>}
             <button onClick={() => setTab("theme")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "theme" ? "shadow-sm" : "opacity-60" }`} style={tab === "theme" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Görünüm</button>
             <button onClick={() => setTab("account")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "account" ? "shadow-sm" : "opacity-60" }`} style={tab === "account" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Hesabım</button>
+            <button onClick={() => setTab("usage")} className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${ tab === "usage" ? "shadow-sm" : "opacity-60" }`} style={tab === "usage" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>Kullanım</button>
           </div>
         </div>
 
@@ -465,10 +626,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" /></svg>
                 Görünüm
               </button>
-              <div className="my-2 border-t border-gray-100" />
-              <button onClick={() => setTab("account")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "account" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`}>
+              <div className="my-2" style={{ height: "1px", background: "var(--border-secondary)" }} />
+              <button onClick={() => setTab("account")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "account" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`} style={tab === "account" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
                 Hesabım
+              </button>
+              <button onClick={() => setTab("usage")} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${ tab === "usage" ? "shadow-sm" : "opacity-70 hover:opacity-100" }`} style={tab === "usage" ? { background: "var(--bg-primary)", color: "var(--text-primary)" } : { color: "var(--text-secondary)" }}>
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                Kullanım Hakkı
               </button>
             </nav>
           </div>
@@ -478,30 +643,42 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
           {/* ── ACCOUNT TAB ── */}
           {tab === "account" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
+              {/* Password Change Form */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-800 mb-1">Şifre Değiştir</h3>
-                <p className="text-xs text-gray-500 mb-4">Mevcut şifrenizi girerek yeni bir şifre belirleyebilirsiniz.</p>
+                <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Şifre Değiştir</h3>
+                <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Mevcut şifrenizi girerek yeni bir şifre belirleyebilirsiniz.</p>
               </div>
-              {acError && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{acError}</p>}
-              {acSuccess && <p className="text-xs text-green-600 bg-green-50 rounded-xl px-4 py-2.5">{acSuccess}</p>}
+              {acError && <p className="text-xs rounded-xl px-4 py-2.5" style={{ color: "#dc2626", background: "rgba(220,38,38,0.08)" }}>{acError}</p>}
+              {acSuccess && <p className="text-xs rounded-xl px-4 py-2.5" style={{ color: "#16a34a", background: "rgba(22,163,74,0.08)" }}>{acSuccess}</p>}
               <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Mevcut Şifre</label>
-                  <input type="password" required value={acCurrentPw} onChange={e => setAcCurrentPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="••••••••" />
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Mevcut Şifre</label>
+                  <input type="password" required value={acCurrentPw} onChange={e => setAcCurrentPw(e.target.value)} className="w-full text-sm px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} placeholder="••••••••" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Yeni Şifre</label>
-                  <input type="password" required minLength={6} value={acNewPw} onChange={e => setAcNewPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="En az 6 karakter" />
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Yeni Şifre</label>
+                  <input type="password" required minLength={6} value={acNewPw} onChange={e => setAcNewPw(e.target.value)} className="w-full text-sm px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} placeholder="En az 6 karakter" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Yeni Şifre (Tekrar)</label>
-                  <input type="password" required minLength={6} value={acConfirmPw} onChange={e => setAcConfirmPw(e.target.value)} className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" placeholder="Tekrar girin" />
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Yeni Şifre (Tekrar)</label>
+                  <input type="password" required minLength={6} value={acConfirmPw} onChange={e => setAcConfirmPw(e.target.value)} className="w-full text-sm px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent" style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} placeholder="Tekrar girin" />
                 </div>
                 <button type="submit" disabled={acLoading} className="px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50" style={{ backgroundColor: "var(--brand)" }}>
                   {acLoading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* ── USAGE TAB ── */}
+          {tab === "usage" && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Kullanım Hakkı</h3>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Haftalık soru ve yapay zeka yanıt limiti durumunuz.</p>
+              </div>
+              <UsageProgress />
             </div>
           )}
 
@@ -1079,6 +1256,25 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1 justify-end">
+                                  {/* Password reveal */}
+                                  <button
+                                    onClick={() => handleRevealPassword(user.id)}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors relative group"
+                                    title="Şifreyi Göster/Gizle"
+                                  >
+                                    {revealLoading[user.id] ? (
+                                      <span className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin inline-block" />
+                                    ) : revealedPasswords[user.id] !== undefined ? (
+                                      <svg className="w-3.5 h-3.5 text-[var(--brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                    ) : (
+                                      <svg className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    )}
+                                    {revealedPasswords[user.id] !== undefined && (
+                                      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-xs font-mono whitespace-nowrap z-10" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border-secondary)" }}>
+                                        {revealedPasswords[user.id]}
+                                      </span>
+                                    )}
+                                  </button>
                                   <button
                                     onClick={() => openSmsModal(user)}
                                     className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors"

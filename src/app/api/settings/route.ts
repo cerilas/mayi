@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 const ALLOWED_KEYS = ["system_instruction", "base_instruction"];
 const ADMIN_KEYS = ["gemini_api_key"];
 // These are GLOBAL settings — shared across all admins, stored under primary admin
-const GLOBAL_ADMIN_KEYS = ["netgsm_active_header", "patient_default_model", "patient_system_instruction"];
+const GLOBAL_ADMIN_KEYS = ["netgsm_active_header", "patient_default_model", "patient_system_instruction", "daily_report_emails"];
 const ALL_KEYS = [...ALLOWED_KEYS, ...ADMIN_KEYS, ...GLOBAL_ADMIN_KEYS];
 
 /**

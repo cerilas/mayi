@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 async function requireAdmin() {
   const session = await auth();
@@ -37,7 +38,9 @@ export async function GET(req: Request) {
     prisma.user.findMany({
       where: whereClause,
       include: {
-        patientProfile: true,
+        patientProfile: {
+          include: { responsibleAdmin: { select: { id: true, name: true } } }
+        },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -71,6 +74,7 @@ export async function POST(req: Request) {
     longDetails,
     clinicalOpinion,
     videoLinks,
+    responsibleAdminId,
   } = body;
 
   if (!name || !email || !password) {
@@ -86,12 +90,14 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const passwordEncrypted = encryptPassword(password);
 
   const user = await prisma.user.create({
     data: {
       name,
       email,
       passwordHash,
+      passwordEncrypted,
       role: "patient",
       patientProfile: {
         create: {
@@ -103,11 +109,14 @@ export async function POST(req: Request) {
           longDetails: longDetails || null,
           clinicalOpinion: clinicalOpinion || null,
           videoLinks: videoLinks || [],
+          responsibleAdminId: responsibleAdminId || null,
         },
       },
     },
     include: {
-      patientProfile: true,
+      patientProfile: {
+        include: { responsibleAdmin: { select: { id: true, name: true } } }
+      },
     },
   });
 

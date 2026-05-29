@@ -6,6 +6,7 @@ import { appConfig } from "@/lib/config";
 import type { AIMessage, AIMessageContent, AIProvider } from "@/types";
 import path from "path";
 import fs from "fs";
+import { checkAndUpdateUsage, incrementUsage } from "@/lib/usage";
 
 function getUploadDir() {
   return process.env.UPLOAD_DIR
@@ -44,6 +45,19 @@ export async function POST(
   const session = await auth();
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+
+  // ── Usage limit validation ──────────────────────────────────────────
+  try {
+    const usage = await checkAndUpdateUsage(session.user.id);
+    if (usage.isExceeded) {
+      return NextResponse.json(
+        { error: "usage_limit_exceeded", message: "Kullanım hakkınız tükenmiştir. Yeni soru sormak için lütfen kliniğiniz ile iletişime geçin." },
+        { status: 403 }
+      );
+    }
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Kullanım hakları kontrol edilemedi." }, { status: 500 });
+  }
 
   // ── Paralel: conversation lookup + request body parse ──────────────────
   const [{ id: conversationId }, body] = await Promise.all([
@@ -284,7 +298,7 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
         return;
       }
 
-      // ── Paralel: save assistant message + update conversation ────────
+      // ── Paralel: save assistant message + update conversation + usage increment ──
       await Promise.all([
         prisma.message.create({
           data: { conversationId, role: "assistant", content: fullResponse, provider, model, status: "done" },
@@ -293,14 +307,12 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
           where: { id: conversationId },
           data: { updatedAt: new Date(), aiProvider: provider, aiModel: model },
         }),
+        incrementUsage(session.user.id),
       ]);
 
-      if (appConfig.ai.enableAutoTitle && history.length === 3 && conversation.title === "Yeni Sohbet" && userContent) {
+      if (appConfig.ai.enableAutoTitle && history.length === 1 && conversation.title === "Yeni Sohbet" && userContent) {
         try {
-          const firstUserMsg = history.find((m) => m.role === "user" && m.id !== userMsg.id);
-          const titleContext = firstUserMsg
-            ? `${firstUserMsg.content}\n${userContent}`
-            : userContent;
+          const titleContext = userContent;
           const title = await generateTitle(titleContext, provider, model);
           await prisma.conversation.update({ where: { id: conversationId }, data: { title } });
           const encodedTitle = Buffer.from(title, "utf8").toString("base64");

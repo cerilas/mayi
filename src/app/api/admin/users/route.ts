@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 async function requireAdmin() {
   const session = await auth();
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, role },
+    data: { name, email, passwordHash, passwordEncrypted: encryptPassword(password), role },
     select: { id: true, name: true, email: true, role: true, createdAt: true },
   });
 

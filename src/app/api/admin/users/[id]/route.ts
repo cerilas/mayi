@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 async function requireAdmin() {
   const session = await auth();
@@ -28,6 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
     }
     data.passwordHash = await bcrypt.hash(password, 12);
+    data.passwordEncrypted = encryptPassword(password);
   }
 
   // Prevent removing the last admin

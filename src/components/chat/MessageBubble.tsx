@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTypewriter } from "@/hooks/useTypewriter";
@@ -38,9 +38,63 @@ export default function MessageBubble({
   const isError = status === "error";
   const [lightbox, setLightbox] = useState<string | null>(null);
 
+  // TTS State
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [isSpeaking]);
+
+  const handleSpeak = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel(); // Stop anything else
+
+    // Sadece düz metni oku (görselleri ve markdown karakterlerini temizle)
+    const plainText = content
+      .replace(/!\[.*?\]\(data:image\/[^;]+;base64,[A-Za-z0-9+/=]+\)/g, "")
+      .replace(/([*#_`\[\]()])/g, "")
+      .trim();
+
+    if (!plainText) return;
+
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = "tr-TR";
+    utterance.rate = 1.0;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Typewriter effect: reveal streamed content character by character
   const typedContent = useTypewriter(isStreaming ? (content || '') : '', 14);
   const renderContent = isStreaming ? typedContent : (content || '');
+
+  // Long message expansion logic
+  const CHARACTER_LIMIT = 800;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setIsExpanded(true);
+    }
+  }, [isStreaming]);
+
+  // Görsel (Base64) içeren mesajların gereksiz yere uzun metin olarak algılanmasını ve 
+  // Devamını Gör butonu çıkarıp kasmaya neden olmasını engellemek için hızlı kontrol.
+  const hasBase64Image = content.includes("data:image/");
+  const showSeeMore = !isUser && !isError && !hasBase64Image && content.length > CHARACTER_LIMIT && !isExpanded;
 
   function downloadImage(src: string) {
     const a = document.createElement("a");
@@ -113,21 +167,22 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Bubble */}
+        {/* Bubble & Actions */}
         {(content || isStreaming || isError) && (
-          <div
-            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words [overflow-wrap:anywhere]
-              ${isUser
-                ? "user-bubble text-white rounded-br-sm"
-                : isError
-                  ? "rounded-bl-sm"
-                  : "rounded-bl-sm"
-              }`}
-            style={isUser ? undefined : isError
-              ? { background: "var(--bubble-error-bg)", border: "1px solid var(--bubble-error-border)", color: "var(--bubble-error-text)" }
-              : { background: "var(--bubble-assistant)", color: "var(--bubble-assistant-text)" }
-            }
-          >
+          <div className="group/message relative flex flex-col gap-1 items-start">
+            <div
+              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words [overflow-wrap:anywhere]
+                ${isUser
+                  ? "user-bubble text-white rounded-br-sm"
+                  : isError
+                    ? "rounded-bl-sm"
+                    : "rounded-bl-sm relative"
+                }`}
+              style={isUser ? undefined : isError
+                ? { background: "var(--bubble-error-bg)", border: "1px solid var(--bubble-error-border)", color: "var(--bubble-error-text)" }
+                : { background: "var(--bubble-assistant)", color: "var(--bubble-assistant-text)" }
+              }
+            >
             {isError ? (
               <div className="flex items-start gap-1.5 min-w-0">
                 <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,8 +194,16 @@ export default function MessageBubble({
                 </span>
               </div>
             ) : (
-              <div className={`prose-chat w-full min-w-0 ${isUser ? "prose-invert" : ""}`}>
-                <ReactMarkdown
+              <div className="relative">
+                <div 
+                  className={`prose-chat w-full min-w-0 ${isUser ? "prose-invert" : ""} ${showSeeMore ? "overflow-hidden" : ""}`}
+                  style={showSeeMore ? { 
+                    maxHeight: "250px", 
+                    WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)",
+                    maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)" 
+                  } : undefined}
+                >
+                  <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   urlTransform={(url) => url}
                   key={isStreaming ? undefined : content}
@@ -157,7 +220,7 @@ export default function MessageBubble({
                             onClick={() => setLightbox(srcStr)}
                           />
                           {/* Overlay buttons */}
-                          <span className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="absolute top-2 right-2 flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => setLightbox(srcStr)}
                               title="Büyüt"
@@ -182,6 +245,47 @@ export default function MessageBubble({
                         </span>
                       ) : null;
                     },
+                    a: ({ href, children }) => {
+                      if (!href) return <a>{children}</a>;
+                      
+                      const match = href.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                      if (match) {
+                        const videoId = match[1];
+                        return (
+                          <a 
+                            href={href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block my-3 max-w-[280px] sm:max-w-sm rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:opacity-90 transition-opacity no-underline"
+                          >
+                            <div className="relative aspect-video bg-black/10">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                                alt="Video Önizleme"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-red-600/90 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm">
+                                  <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <div className="text-sm font-medium text-[var(--bubble-assistant-text)] truncate">
+                                {children}
+                              </div>
+                              <div className="text-[11px] text-[var(--bubble-assistant-text)] opacity-70 mt-1 truncate">
+                                {href}
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      }
+                      return <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 opacity-90 hover:opacity-100">{children}</a>;
+                    },
                   }}
                 >
                   {renderContent}
@@ -189,6 +293,47 @@ export default function MessageBubble({
                 {isStreaming && (
                   <span className="inline-block w-0.5 h-[1em] bg-gray-500 ml-0.5 align-text-bottom" style={{ animation: 'blink 1s step-end infinite' }} />
                 )}
+                </div>
+                
+                {showSeeMore && (
+                  <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center pointer-events-none pb-4">
+                    <button 
+                      onClick={() => setIsExpanded(true)}
+                      className="pointer-events-auto px-6 py-2.5 btn-brand rounded-full text-xs font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95"
+                    >
+                      Devamını Gör
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
+
+            {/* AI Action Buttons (TTS vs) */}
+            {!isUser && !isError && content && !isStreaming && (
+              <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover/message:opacity-100 transition-opacity px-1 -mt-0.5">
+                <button
+                  onClick={handleSpeak}
+                  title={isSpeaking ? "Dinlemeyi Durdur" : "Sesli Oku"}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    isSpeaking 
+                      ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" 
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {isSpeaking ? (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             )}
           </div>

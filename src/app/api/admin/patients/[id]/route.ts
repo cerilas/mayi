@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { encryptPassword } from "@/lib/encryption";
 
 async function requireAdmin() {
   const session = await auth();
@@ -29,6 +30,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     longDetails,
     clinicalOpinion,
     videoLinks,
+    responsibleAdminId,
   } = body;
 
   const existing = await prisma.user.findUnique({
@@ -48,6 +50,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
     }
     updateData.passwordHash = await bcrypt.hash(password, 12);
+    updateData.passwordEncrypted = encryptPassword(password);
   }
 
   // Handle profile update
@@ -60,6 +63,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (longDetails !== undefined) profileUpdateData.longDetails = longDetails;
   if (clinicalOpinion !== undefined) profileUpdateData.clinicalOpinion = clinicalOpinion;
   if (videoLinks !== undefined) profileUpdateData.videoLinks = videoLinks;
+  if (responsibleAdminId !== undefined) profileUpdateData.responsibleAdminId = responsibleAdminId || null;
 
   if (Object.keys(profileUpdateData).length > 0) {
     updateData.patientProfile = {
@@ -73,7 +77,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const user = await prisma.user.update({
     where: { id },
     data: updateData,
-    include: { patientProfile: true },
+    include: {
+      patientProfile: {
+        include: { responsibleAdmin: { select: { id: true, name: true } } }
+      }
+    },
   });
 
   return NextResponse.json(user);
