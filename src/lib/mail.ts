@@ -1,8 +1,13 @@
 export async function sendCerilasMail(to: string[], subject: string, html: string): Promise<{success: boolean, error?: string}> {
-  const token = process.env.CERILAS_ADMIN_JWT_SECRET;
+  let token = process.env.CERILAS_ADMIN_JWT_SECRET?.trim() || "";
   
   if (!token) {
     return { success: false, error: "CERILAS_ADMIN_JWT_SECRET çevresel değişkeni bulunamadı." };
+  }
+
+  // Eğer kullanıcı yanlışlıkla "Bearer " kelimesini de kopyalayıp env'ye yapıştırdıysa temizleyelim
+  if (token.toLowerCase().startsWith("bearer ")) {
+    token = token.substring(7).trim();
   }
   
   if (!to || to.length === 0) {
