@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 export default auth((req: NextRequest & { auth: unknown }) => {
   const isAuthenticated = !!(req as { auth: unknown }).auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
-  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth");
+  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth") || req.nextUrl.pathname.startsWith("/api/cron");
 
   if (isPublicApi) return NextResponse.next();
 
