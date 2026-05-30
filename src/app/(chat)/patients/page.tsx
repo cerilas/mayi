@@ -693,22 +693,52 @@ export default function PatientsPage() {
                       <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                       Limitsiz Kullanım (Sınırsız)
                     </button>
-                    <div className="flex gap-4 mb-6">
-                      <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-center">
-                        <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{importResult.success}</div>
-                        <div className="text-xs text-green-700 dark:text-green-500 font-medium uppercase tracking-wider">Başarılı</div>
-                      </div>
-                      <div className="flex-1 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 text-center">
-                        <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">{importResult.duplicate}</div>
-                        <div className="text-xs text-orange-700 dark:text-orange-500 font-medium uppercase tracking-wider">Kopya / Es Geçildi</div>
-                      </div>
-                      <div className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 text-center">
-                        <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">{importResult.failed}</div>
-                        <div className="text-xs text-red-700 dark:text-red-500 font-medium uppercase tracking-wider">Hatalı</div>
-                      </div>
-                    </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        ) : importResult ? (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setImportResult(null)} />
+            <div className="bg-[var(--bg-primary)] rounded-3xl shadow-2xl w-full max-w-md p-8 relative border border-[var(--border-secondary)]">
+              <button onClick={() => setImportResult(null)} className="absolute top-6 right-6 text-[var(--text-secondary)] hover:text-[var(--text-primary)] z-10">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">İçe Aktarım Sonucu</h2>
+                <p className="text-sm text-[var(--text-secondary)] mb-6">Excel dosyanızdaki kayıtların sisteme aktarım özeti aşağıdadır.</p>
+                
+                <div className="flex gap-4 mb-6 w-full">
+                  <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{importResult.success}</div>
+                    <div className="text-[10px] text-green-700 dark:text-green-500 font-medium uppercase tracking-wider">Başarılı</div>
+                  </div>
+                  <div className="flex-1 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">{importResult.duplicate}</div>
+                    <div className="text-[10px] text-orange-700 dark:text-orange-500 font-medium uppercase tracking-wider">Kopya/Geçildi</div>
+                  </div>
+                  <div className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">{importResult.failed}</div>
+                    <div className="text-[10px] text-red-700 dark:text-red-500 font-medium uppercase tracking-wider">Hatalı</div>
+                  </div>
+                </div>
+                
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="w-full text-left bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-xl p-4 max-h-40 overflow-y-auto">
+                    <h4 className="text-xs font-semibold text-red-800 dark:text-red-400 mb-2">Hata Detayları:</h4>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {importResult.errors.map((err, i) => (
+                        <li key={i} className="text-xs text-red-600 dark:text-red-300">{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                <button onClick={() => setImportResult(null)} className="mt-6 w-full py-3 px-4 rounded-xl font-bold text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
+                  Tamam
+                </button>
               </div>
             </div>
           </div>
