@@ -1,13 +1,9 @@
 export async function sendCerilasMail(to: string[], subject: string, html: string): Promise<{success: boolean, error?: string}> {
-  let token = process.env.CERILAS_ADMIN_JWT_SECRET?.trim() || "";
+  const apiEmail = process.env.CERILAS_API_EMAIL?.trim();
+  const apiPassword = process.env.CERILAS_API_PASSWORD?.trim();
   
-  if (!token) {
-    return { success: false, error: "CERILAS_ADMIN_JWT_SECRET çevresel değişkeni bulunamadı." };
-  }
-
-  // Eğer kullanıcı yanlışlıkla "Bearer " kelimesini de kopyalayıp env'ye yapıştırdıysa temizleyelim
-  if (token.toLowerCase().startsWith("bearer ")) {
-    token = token.substring(7).trim();
+  if (!apiEmail || !apiPassword) {
+    return { success: false, error: "CERILAS_API_EMAIL veya CERILAS_API_PASSWORD çevresel değişkenleri eksik." };
   }
   
   if (!to || to.length === 0) {
@@ -19,6 +15,29 @@ export async function sendCerilasMail(to: string[], subject: string, html: strin
   const bcc = to.slice(1);
 
   try {
+    // 1. Önce Cerilas API'den Token Alalım
+    const authRes = await fetch('https://www.cerilas.com/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: apiEmail,
+        password: apiPassword
+      })
+    });
+
+    if (!authRes.ok) {
+      const authErr = await authRes.text();
+      return { success: false, error: `Login API Hatası [${authRes.status}]: ${authErr}` };
+    }
+
+    const authData = await authRes.json();
+    const token = authData.token;
+
+    if (!token) {
+      return { success: false, error: "Login başarılı oldu ancak JWT token dönmedi." };
+    }
+
+    // 2. Alınan token ile mail gönderim isteği yapalım
     const res = await fetch('https://www.cerilas.com/api/mail/send', {
       method: 'POST',
       headers: {
