@@ -65,7 +65,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // SMS Gönderme İşlemi
     let smsSent = false;
     let smsErrorMsg = "";
-    if (user.patientProfile?.phone) {
+    
+    // Sadece hak artırıldığında SMS gönder
+    const isIncrease = newLimit > (user.usageLimit ?? 15);
+    
+    if (isIncrease && user.patientProfile?.phone) {
       const formattedPhone = formatPhone(user.patientProfile.phone);
       if (formattedPhone.length === 10 && formattedPhone.startsWith("5")) {
         try {
@@ -108,7 +112,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       } else {
          smsErrorMsg = "Geçersiz telefon formatı";
       }
-    } else {
+    } else if (isIncrease) {
       smsErrorMsg = "Kullanıcının telefonu yok";
     }
 
