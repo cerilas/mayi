@@ -20,10 +20,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => ({}));
   const { name, email, password, role } = body;
 
-  const data: Record<string, string> = {};
+  const data: any = {};
   if (name) data.name = name;
   if (email) data.email = email;
-  if (role && ["admin", "user"].includes(role)) data.role = role;
+  if (role && ["admin", "user"].includes(role)) {
+    data.role = role;
+    if (role === "admin") data.usageLimit = 999999;
+  }
   if (password) {
     if (password.length < 6) {
       return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
