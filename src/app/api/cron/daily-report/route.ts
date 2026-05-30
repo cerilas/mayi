@@ -219,7 +219,7 @@ export async function GET(req: Request) {
             const activeHeader = headerSetting?.value || process.env.NETGSM_HEADER || "3423411000";
             const basicAuth = Buffer.from(`${NETGSM_USERCODE}:${NETGSM_PASSWORD}`).toString("base64");
             
-            const smsMessage = "MY Fizio AI platformunda gunluk raporunuz hazir";
+            const smsMessage = "MY Fizio AI platformunda gunluk raporunuz hazirdir. Epostaniza bakiniz veya https://my.cerilas.com/admin/stats";
             
             const messages = phoneList.map(phone => {
                const formattedPhone = formatPhone(phone);
