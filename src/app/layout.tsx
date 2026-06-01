@@ -5,6 +5,7 @@ import "./globals.css";
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
 import { SessionProvider } from "next-auth/react";
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import CookieConsent from "@/components/layout/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,31 +37,50 @@ export default function RootLayout({
   return (
     <html lang="tr" className="h-full">
       <head>
-        {/* Google Tag Manager */}
+        {/* Google Analytics Consent Mode */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-KNW9V5F4');`
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              
+              // Default ayar (reddedilmiş varsayılır, banner'da kabul edilene kadar)
+              gtag('consent', 'default', {
+                'analytics_storage': 'denied',
+                'ad_storage': 'denied',
+                'wait_for_update': 500
+              });
+
+              // Eğer önceden izin verdiyse, anında granted yap
+              if (typeof window !== 'undefined') {
+                if (localStorage.getItem('cookie_consent') === 'granted') {
+                  gtag('consent', 'update', {
+                    'analytics_storage': 'granted'
+                  });
+                }
+              }
+            `
           }}
         />
-        {/* End Google Tag Manager */}
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MEVKFFBN57"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-MEVKFFBN57');
+            `
+          }}
+        />
       </head>
       <body className={`${inter.className} ${montserrat.variable} h-full antialiased`}>
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe 
-            src="https://www.googletagmanager.com/ns.html?id=GTM-KNW9V5F4"
-            height="0" 
-            width="0" 
-            style={{ display: "none", visibility: "hidden" }}
-          ></iframe>
-        </noscript>
-        {/* End Google Tag Manager (noscript) */}
         <SessionProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            {children}
+            <CookieConsent />
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>
