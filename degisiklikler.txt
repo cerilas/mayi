@@ -1,0 +1,24 @@
+Bugün (30 Mayıs 2026) İtibarıyla Yapılan Tüm Değişiklikler ve Geliştirmeler:
+
+1. CRON (Zamanlanmış Görev) Yetkilendirme Yönlendirmesinin Çözülmesi:
+   - Sistemin ana proxy katmanında (src/proxy.ts), `/api/cron` adresine yetkisiz erişim izni verildi.
+   - Dışarıdan atılan otomatik isteklerin `/login` ekranına (307 Redirect) ve oradan da ana sayfaya fırlatılması engellendi.
+
+2. Dinamik JWT Token ile Mail Gönderimi:
+   - E-posta gönderme altyapısı (src/lib/mail.ts), sabit bir token yerine dinamik giriş mekanizmasına geçirildi.
+   - Sistem artık mail göndermeden hemen önce `CERILAS_API_EMAIL` ve `CERILAS_API_PASSWORD` bilgileriyle arka planda API'ye login oluyor, taze ve geçerli bir token alarak e-postayı bu token ile yolluyor.
+   - Ek olarak, "Bearer " kelimesinin yanlışlıkla environment (çevresel değişken) içine kopyalanması durumuna karşı metni otomatik temizleyen bir güvenlik filtresi eklendi.
+
+3. Cron API Güvenliği ve Karakter Kodlaması (Encoding):
+   - Türkçe karakterlerin (`GÃ¼nlÃ¼k` vb.) bozuk çıkmasına sebep olan başlık (header) sorunu çözüldü. Tüm NextResponse yanıtlarına `charset=utf-8` eklendi.
+   - Cron rotası (`/api/cron/daily-report`) dışarıdan gelebilecek saldırılara karşı korumaya alındı. `CRON_SECRET` şifrelemesi eklendi. (Kullanım: `?secret=sifre`).
+
+4. Rapor E-postası Tasarımının Modernizasyonu:
+   - Eski tip emojiler yerine modern CDN tabanlı (Lucide) şık ikonlar entegre edildi.
+   - Tasarıma `my.cerilas.com` logolu ve yönlendirmeli dinamik başlık eklendi.
+   - E-posta konu satırı "Mahmut Yücel AI Platformu Günlük Rapor - [Tarih]" şeklinde özelleştirildi ve içerik Türkçe karakterlerle zenginleştirildi.
+   - Mail şablonunun en altına teknik destek notu (`iletisim@cerilas.com` ve `www.cerilas.com`) zarif bir ayraç ile eklendi.
+
+5. "Hak Tanımlama" Ekranındaki Çökme (Crash) Sorununun Giderilmesi:
+   - Admin panelinde hastalar tablosundan "Hak Tanımla" butonuna basıldığında ortaya çıkan `null is not an object (evaluating 'importResult.success')` çökme hatası kalıcı olarak düzeltildi.
+   - İçe aktarım (Excel import) sonuç ekranı, hak tanımlama formunun içinden çıkarılarak kendi bağımsız, şık "İçe Aktarım Sonucu" ekranına dönüştürüldü. Artık hak tanımlama işlemleri anında ve sorunsuz açılıyor.

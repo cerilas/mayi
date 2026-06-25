@@ -4,15 +4,15 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-async function requireAdmin() {
+async function requireStaff() {
   const session = await auth();
   if (!session?.user?.id) return null;
-  if (session.user.role !== "admin") return null;
+  if (session.user.role !== "admin" && session.user.role !== "physiotherapist") return null;
   return session;
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
@@ -42,6 +42,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
   }
 
+  if (session.user.role === "physiotherapist" && existing.patientProfile?.responsibleAdminId !== session.user.id) {
+    return NextResponse.json({ error: "Bu hastayı düzenleme yetkiniz yok" }, { status: 403 });
+  }
+
   const updateData: any = {};
   if (name) updateData.name = name;
   if (email) updateData.email = email;
@@ -63,7 +67,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (longDetails !== undefined) profileUpdateData.longDetails = longDetails;
   if (clinicalOpinion !== undefined) profileUpdateData.clinicalOpinion = clinicalOpinion;
   if (videoLinks !== undefined) profileUpdateData.videoLinks = videoLinks;
-  if (responsibleAdminId !== undefined) profileUpdateData.responsibleAdminId = responsibleAdminId || null;
+  if (responsibleAdminId !== undefined && session.user.role === "admin") {
+    profileUpdateData.responsibleAdminId = responsibleAdminId || null;
+  }
 
   if (Object.keys(profileUpdateData).length > 0) {
     updateData.patientProfile = {
@@ -88,8 +94,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  const session = await requireStaff();
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler hasta silebilir" }, { status: 403 });
 
   const { id } = await params;
 

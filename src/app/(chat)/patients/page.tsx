@@ -245,7 +245,7 @@ export default function PatientsPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated") {
-      if (session.user.role !== "admin") {
+      if (session.user.role !== "admin" && session.user.role !== "physiotherapist") {
         router.push("/chat");
       } else {
         fetchPatients(page, search);
@@ -253,7 +253,7 @@ export default function PatientsPage() {
         fetch("/api/admin/users")
           .then(r => r.json())
           .then(data => {
-            if (Array.isArray(data)) setAdmins(data.filter((u: any) => u.role === "admin"));
+            if (Array.isArray(data)) setAdmins(data.filter((u: any) => u.role === "admin" || u.role === "physiotherapist"));
           })
           .catch(() => {});
       }
@@ -282,7 +282,10 @@ export default function PatientsPage() {
 
   function openAddForm() {
     setEditingPatient(null);
-    setForm(EMPTY_FORM);
+    setForm({
+      ...EMPTY_FORM,
+      responsibleAdminId: session?.user?.role === "physiotherapist" ? session.user.id : "",
+    });
     setError("");
     setShowForm(true);
   }
@@ -454,6 +457,7 @@ export default function PatientsPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hastalarım</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">Hastalarınızı yönetin, listeleyin ve sisteme giriş yapmalarını sağlayın.</p>
           </div>
+          {session?.user?.role === "admin" && (
           <div className="flex gap-2 sm:gap-3 flex-wrap">
             <input 
               type="file" 
@@ -491,6 +495,7 @@ export default function PatientsPage() {
               + Yeni Hasta
             </button>
           </div>
+          )}
         </div>
 
         <form onSubmit={handleSearchSubmit} className="mb-6 flex gap-2">
@@ -676,13 +681,22 @@ export default function PatientsPage() {
                         placeholder="Miktar giriniz"
                         className="w-full py-3 px-4 rounded-xl border border-[var(--border-secondary)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)] text-center font-medium"
                       />
-                      <button
-                        onClick={() => handleRightsSubmit(rightsAmount)}
-                        disabled={rightsLoading || !rightsAmount}
-                        className="w-full sm:w-auto py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-md shadow-purple-500/20 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
-                      >
-                        Ekle
-                      </button>
+                      <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                        <button
+                          onClick={() => handleRightsSubmit(Math.abs(Number(rightsAmount)))}
+                          disabled={rightsLoading || !rightsAmount}
+                          className="flex-1 sm:flex-none py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-md shadow-purple-500/20 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          + Ekle
+                        </button>
+                        <button
+                          onClick={() => handleRightsSubmit(-Math.abs(Number(rightsAmount)))}
+                          disabled={rightsLoading || !rightsAmount}
+                          className="flex-1 sm:flex-none py-3 px-4 rounded-xl font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          - Çıkar
+                        </button>
+                      </div>
                     </div>
                     
                     <button
@@ -797,7 +811,7 @@ export default function PatientsPage() {
               {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
               {/* Usage Rights Display in Edit Form */}
-              {editingPatient && (
+              {editingPatient && session?.user?.role === "admin" && (
                 <div className="mb-6 p-4 rounded-xl border border-[var(--border-secondary)] bg-[var(--bg-secondary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="w-full sm:w-auto">
                     <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2 mb-1">
@@ -828,12 +842,12 @@ export default function PatientsPage() {
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-xs font-medium text-gray-700 mb-1">Ad Soyad *</label><input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
-                  <div><label className="block text-xs font-medium text-gray-700 mb-1">E-posta *</label><input type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
-                  <div><label className="block text-xs font-medium text-gray-700 mb-1">{editingPatient ? "Şifre (Değiştirmek için doldurun)" : "Şifre *"}</label>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">E-posta</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">{editingPatient ? "Şifre (Değiştirmek için doldurun)" : "Şifre (Boş bırakılırsa otomatik üretilir)"}</label>
                     <div className="relative">
                       <input
                         type={formPasswordVisible ? "text" : "password"}
-                        required={!editingPatient}
+                        required={false}
                         minLength={6}
                         value={form.password}
                         onChange={e => setForm({...form, password: e.target.value})}
@@ -865,7 +879,7 @@ export default function PatientsPage() {
                       </button>
                     )}
                   </div>
-                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Telefon</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Telefon *</label><input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div><label className="block text-xs font-medium text-gray-700 mb-1">Yaş</label><input type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Cinsiyet</label>
@@ -892,6 +906,7 @@ export default function PatientsPage() {
                     <label className="block text-xs font-medium text-gray-700 mb-1">Sorumlu Admin (Fizyoterapist)</label>
                     <div className="relative">
                       <select
+                        disabled={session?.user?.role !== "admin"}
                         value={form.responsibleAdminId}
                         onChange={e => setForm({...form, responsibleAdminId: e.target.value})}
                         className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent pr-9"

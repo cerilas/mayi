@@ -27,7 +27,7 @@ interface UserFormData {
   name: string;
   email: string;
   password: string;
-  role: "admin" | "user";
+  role: "admin" | "user" | "physiotherapist";
 }
 
 const EMPTY_FORM: UserFormData = { name: "", email: "", password: "", role: "user" };
@@ -520,7 +520,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   function openEditForm(user: UserRow) {
     setEditingUser(user);
-    setForm({ name: user.name, email: user.email, password: "", role: user.role as "admin" | "user" });
+    setForm({ name: user.name, email: user.email, password: "", role: user.role as "admin" | "user" | "physiotherapist" });
     setFormError("");
     setShowForm(true);
   }
@@ -892,22 +892,39 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 </div>
               ) : (
                 <>
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-500 rounded-xl p-4 text-xs mb-4 shadow-sm">
+                    <strong className="block mb-1 text-sm flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Uzun Talimatların Etkileri
+                    </strong>
+                    Karakter limiti 10.000'e çıkarılmıştır ancak talimatların çok uzun tutulmasının bazı dezavantajları vardır:
+                    <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90">
+                      <li><strong>Maliyet:</strong> Yapay zeka her mesaja cevap verirken bu talimatları tekrar okur, bu da API (token) maliyetlerinizi doğrudan artırır.</li>
+                      <li><strong>Hafıza Sınırı:</strong> Sistemin hastanın eski sohbet mesajlarını hatırlama kapasitesini daraltır.</li>
+                      <li><strong>Odak Kaybı:</strong> Çok uzun talimatlarda yapay zeka bazı kuralları gözden kaçırabilir veya dikkate almayabilir. (Kısa ve öz talimatlar her zaman daha isabetlidir).</li>
+                    </ul>
+                  </div>
+
                   {/* Base instruction */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Temel Talimat</label>
-                    <p className="text-xs text-gray-400">
-                      AI&apos;ın kim olduğunu ve nasıl davranacağını tanımlayan ana talimat. Boş bırakırsanız varsayılan kullanılır.
+                    <p className="text-xs text-gray-400 flex flex-col gap-1">
+                      <span>AI&apos;ın kim olduğunu ve nasıl davranacağını tanımlayan ana talimat. Boş bırakırsanız varsayılan kullanılır.</span>
+                      <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Hastaları etkilemez)
+                      </span>
                     </p>
                     <textarea
                       value={baseInstruction}
                       onChange={(e) => setBaseInstruction(e.target.value)}
                       rows={5}
-                      maxLength={4000}
+                      maxLength={10000}
                       placeholder={"Örnek: Sen Mahmut Yücel'in fizyoterapi kliniğinin yapay zeka asistanısın. Türkçe cevap ver."}
                       className="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent resize-none font-mono leading-relaxed"
                     />
                     <span className="text-xs text-gray-400">
-                      {baseInstruction.length} / 4000 karakter
+                      {baseInstruction.length} / 10000 karakter
                     </span>
                   </div>
 
@@ -917,19 +934,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   {/* Custom instruction */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Ek Talimatlar</label>
-                    <p className="text-xs text-gray-400">
-                      Temel talimata ek olarak gönderilecek özel kurallar.
+                    <p className="text-xs text-gray-400 flex flex-col gap-1">
+                      <span>Temel talimata ek olarak gönderilecek özel kurallar.</span>
+                      <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Hastaları etkilemez)
+                      </span>
                     </p>
                     <textarea
                       value={sysInstruction}
                       onChange={(e) => setSysInstruction(e.target.value)}
                       rows={6}
-                      maxLength={4000}
+                      maxLength={10000}
                       placeholder={"Örnek:\n- Her zaman nazik ve profesyonel ol.\n- Yanıtlarını kısa tut.\n- Fizyoterapi dışı konularda yardım etme."}
                       className="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent resize-none font-mono leading-relaxed"
                     />
                     <span className="text-xs text-gray-400">
-                      {sysInstruction.length} / 4000 karakter
+                      {sysInstruction.length} / 10000 karakter
                     </span>
                   </div>
 
@@ -938,17 +959,24 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       <div className="border-t border-gray-100" />
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Genel Hasta Talimatı</label>
-                        <p className="text-xs text-gray-400">
-                          Tüm hastalar için geçerli olacak genel kurallar (Örn: Hastalarla ismiyle konuş, onlara moral ver).
+                        <p className="text-xs text-gray-400 flex flex-col gap-1">
+                          <span>Tüm hastalar için geçerli olacak genel kurallar (Örn: Hastalarla ismiyle konuş, onlara moral ver).</span>
+                          <span className="inline-flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            Dikkat: Bu ayar sistemdeki TÜM hastaların yapay zeka yanıtlarını doğrudan etkiler!
+                          </span>
                         </p>
                         <textarea
                           value={patientSysInstruction}
                           onChange={(e) => setPatientSysInstruction(e.target.value)}
                           rows={4}
-                          maxLength={4000}
+                          maxLength={10000}
                           placeholder={"Örnek:\n- Hastalara nazik davran, moral ver.\n- Hastalıklarıyla ilgili endişelendirecek yorumlardan kaçın."}
                           className="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent resize-none font-mono leading-relaxed"
                         />
+                        <span className="text-xs text-gray-400 mt-1 block">
+                          {patientSysInstruction.length} / 10000 karakter
+                        </span>
                       </div>
                     </>
                   )}
@@ -1152,7 +1180,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1.5">Rol</label>
                       <div className="flex gap-2">
-                        {(["user", "admin"] as const).map((r) => (
+                        {(["user", "physiotherapist", "admin"] as const).map((r) => (
                           <button
                             key={r}
                             type="button"
@@ -1163,7 +1191,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                                 : "border-gray-100 text-gray-500 hover:border-gray-200"
                             }`}
                           >
-                            {r === "admin" ? "Admin" : "Kullanıcı"}
+                            {r === "admin" ? "Admin" : r === "physiotherapist" ? "Fizyoterapist" : "Kullanıcı"}
                           </button>
                         ))}
                       </div>
@@ -1270,7 +1298,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                                       <svg className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                     )}
                                     {revealedPasswords[user.id] !== undefined && (
-                                      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-xs font-mono whitespace-nowrap z-10" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border-secondary)" }}>
+                                      <span className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 px-2 py-1 rounded-lg text-xs font-mono whitespace-nowrap z-10 shadow-lg" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border-secondary)" }}>
                                         {revealedPasswords[user.id]}
                                       </span>
                                     )}

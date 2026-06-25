@@ -4,15 +4,15 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-async function requireAdmin() {
+async function requireStaff() {
   const session = await auth();
   if (!session?.user?.id) return null;
-  if (session.user.role !== "admin") return null;
+  if (session.user.role !== "admin" && session.user.role !== "physiotherapist") return null;
   return session;
 }
 
 export async function GET(req: Request) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
@@ -22,17 +22,22 @@ export async function GET(req: Request) {
 
   const skip = (page - 1) * limit;
 
-  const whereClause = {
+  const whereClause: any = {
     role: "patient",
-    ...(search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { email: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
   };
+
+  if (session.user.role === "physiotherapist") {
+    whereClause.patientProfile = {
+      responsibleAdminId: session.user.id
+    };
+  }
+
+  if (search) {
+    whereClause.OR = [
+      { name: { contains: search, mode: "insensitive" as const } },
+      { email: { contains: search, mode: "insensitive" as const } },
+    ];
+  }
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
@@ -58,8 +63,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  const session = await requireStaff();
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler yeni hasta ekleyebilir" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const {
@@ -77,25 +82,46 @@ export async function POST(req: Request) {
     responsibleAdminId,
   } = body;
 
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: "Ad, e-posta ve şifre zorunludur" }, { status: 400 });
+  if (!name || !phone) {
+    return NextResponse.json({ error: "Ad ve telefon zorunludur" }, { status: 400 });
   }
-  if (password.length < 6) {
+
+  let finalPassword = password;
+  if (!finalPassword) {
+    // Generate a random 6-character alphanumeric password
+    finalPassword = Math.random().toString(36).slice(-6).padEnd(6, '0');
+  }
+
+  if (finalPassword.length < 6) {
     return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "Bu e-posta adresi zaten kayıtlı" }, { status: 409 });
+  let finalEmail = email;
+  if (!finalEmail) {
+    // Generate a dummy email based on phone to satisfy db uniqueness
+    let cleanPhone = phone.replace(/\D/g, "");
+    finalEmail = `${cleanPhone}@hasta.myfizyo.com`;
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
-  const passwordEncrypted = encryptPassword(password);
+  const existing = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: finalEmail },
+        { patientProfile: { phone } }
+      ]
+    }
+  });
+  if (existing) {
+    return NextResponse.json({ error: "Bu telefon veya e-posta adresi zaten kayıtlı" }, { status: 409 });
+  }
+
+  const passwordHash = await bcrypt.hash(finalPassword, 12);
+  const passwordEncrypted = encryptPassword(finalPassword);
 
   const user = await prisma.user.create({
     data: {
       name,
-      email,
+      email: finalEmail,
       passwordHash,
       passwordEncrypted,
       role: "patient",

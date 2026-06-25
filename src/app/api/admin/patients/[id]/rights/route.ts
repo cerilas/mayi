@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     const { amount, action } = await req.json();
     
-    if (typeof amount !== "number" || amount <= 0) {
+    if (typeof amount !== "number" || amount === 0) {
       return NextResponse.json({ error: "Geçersiz miktar" }, { status: 400 });
     }
 

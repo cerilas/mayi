@@ -195,7 +195,7 @@ export async function POST(
       });
       const p = patientUser?.patientProfile;
       const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
-      dbBaseInstruction = settingsMap.get("base_instruction") || "";
+      dbBaseInstruction = ""; // Hastalar temel talimatı (base_instruction) görmemeli, sadece hasta talimatı ve profilleri geçerli
 
       customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
 Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.

@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   if (password.length < 6) {
     return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
   }
-  if (!["admin", "user"].includes(role)) {
+  if (!["admin", "user", "physiotherapist"].includes(role)) {
     return NextResponse.json({ error: "Geçersiz rol" }, { status: 400 });
   }
 
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       passwordHash, 
       passwordEncrypted: encryptPassword(password), 
       role,
-      usageLimit: role === "admin" ? 999999 : 15
+      usageLimit: (role === "admin" || role === "physiotherapist") ? 999999 : 15
     },
     select: { id: true, name: true, email: true, role: true, createdAt: true },
   });
