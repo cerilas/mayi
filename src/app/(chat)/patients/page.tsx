@@ -35,6 +35,23 @@ interface AdminUser {
   name: string;
 }
 
+const DISEASES = [
+  "SKOLYOZ",
+  "KİFOZ",
+  "DURUŞ BOZUKLUĞU",
+  "BEL FITIĞI",
+  "BOYUN FITIĞI",
+  "MENİSKÜS",
+  "ÖN ÇAPRAZ BAĞ",
+  "DONUK OMUZ",
+  "FİBROMİYALJİ",
+  "TOPUK DİKENİ",
+  "TENİSÇİ DİRSEĞİ / GOLFÇÜ DİRSEĞİ",
+  "PELVİK TABAN PROBLEMİ",
+  "DİZDE SIVI KAYBI / KİREÇLENME",
+  "KULAK ÇINLAMASI"
+];
+
 const EMPTY_FORM = {
   name: "",
   email: "",
@@ -958,7 +975,42 @@ export default function PatientsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Kısa Hastalık Tanıtımı</label><input value={form.shortDescription} onChange={e => setForm({...form, shortDescription: e.target.value})} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Kısa Hastalık Tanıtımı</label>
+                    <div className="flex flex-col gap-2">
+                      <div className="relative">
+                        <select
+                          value={DISEASES.includes(form.shortDescription) ? form.shortDescription : (form.shortDescription ? "Diğer" : "")}
+                          onChange={e => {
+                            if (e.target.value === "Diğer") {
+                              setForm({...form, shortDescription: " "}); // Space triggers custom input
+                            } else {
+                              setForm({...form, shortDescription: e.target.value});
+                            }
+                          }}
+                          className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent pr-9"
+                          style={{ color: form.shortDescription ? "#111827" : "#9ca3af" }}
+                        >
+                          <option value="">Seçiniz</option>
+                          {DISEASES.map(d => <option key={d} value={d}>{d}</option>)}
+                          <option value="Diğer">Diğer (Özel Belirtin)</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                      </div>
+                      {(!DISEASES.includes(form.shortDescription) && form.shortDescription !== "") && (
+                        <input
+                          type="text"
+                          value={form.shortDescription.trim() === "" ? "" : form.shortDescription}
+                          onChange={e => setForm({...form, shortDescription: e.target.value})}
+                          placeholder="Lütfen hastalığı yazınız..."
+                          className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                          autoFocus
+                        />
+                      )}
+                    </div>
+                  </div>
                   <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Uzun Detaylar</label><textarea value={form.longDetails} onChange={e => setForm({...form, longDetails: e.target.value})} rows={3} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-700 mb-1">Klinik Görüş</label><textarea value={form.clinicalOpinion} onChange={e => setForm({...form, clinicalOpinion: e.target.value})} rows={2} className="w-full text-sm px-3 py-2 border rounded-lg" /></div>
                   <div className="sm:col-span-2">
