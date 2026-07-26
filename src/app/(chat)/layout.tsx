@@ -51,6 +51,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             inset: 0,
             zIndex: 40,
             background: "var(--overlay-bg)",
+            cursor: "pointer",
           }}
           className="md:hidden"
         />
@@ -61,7 +62,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           Mobile: fixed slide-in panel
       ── */}
       <div
-        className="hidden md:flex md:flex-col md:shrink-0"
+        className="hidden md:flex md:flex-col md:shrink-0 h-full"
         style={{ width: "var(--sidebar-width, 260px)" }}
       >
         <Sidebar />

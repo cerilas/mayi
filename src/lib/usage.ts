@@ -42,6 +42,7 @@ export async function checkAndUpdateUsage(userId: string): Promise<UsageStatus> 
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      role: true,
       usageLimit: true,
       usageUsed: true,
       usageResetAt: true,
@@ -52,10 +53,21 @@ export async function checkAndUpdateUsage(userId: string): Promise<UsageStatus> 
     throw new Error("Kullanıcı bulunamadı.");
   }
 
-  const limit = user.usageLimit ?? 15;
+  const isAdmin = user.role === "admin";
+  const limit = isAdmin ? Infinity : (user.usageLimit ?? 15);
   const used = user.usageUsed ?? 0;
   const resetAt = safeDate(user.usageResetAt);
   const now = new Date();
+
+  if (isAdmin) {
+    return {
+      limit: Infinity,
+      used,
+      remaining: Infinity,
+      resetAt,
+      isExceeded: false,
+    };
+  }
 
   // If we are past the reset date, reset usage and schedule next reset
   if (now >= resetAt) {

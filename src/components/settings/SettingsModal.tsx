@@ -569,7 +569,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="rounded-none sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl sm:mx-4 flex flex-col h-full sm:h-auto sm:max-h-[90vh]" style={{ background: "var(--bg-primary)" }}>
+      <div className="rounded-none sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl sm:mx-4 flex flex-col h-full sm:h-auto sm:max-h-[90vh]" style={{ background: "var(--bg-primary)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 shrink-0" style={{ borderBottom: "1px solid var(--border-secondary)" }}>
           <h2 className="text-sm sm:text-base font-semibold" style={{ color: "var(--text-primary)" }}>Ayarlar</h2>

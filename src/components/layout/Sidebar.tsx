@@ -583,7 +583,7 @@ export default function Sidebar() {
       </DndContext>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-3 shrink-0">
+      <div className="mt-auto border-t border-gray-200 px-4 pt-2 pb-0 shrink-0">
         <div className="flex items-center justify-between">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -644,7 +644,7 @@ export default function Sidebar() {
             </button>
           </div>
         </div>
-        <div className="mt-2 -mx-4 -mb-3 px-4 py-1 text-center text-[9px] leading-none brand-bg text-white">
+        <div className="mt-2 -mx-4 px-4 py-1 text-center text-[9px] leading-none brand-bg text-white">
           <span>Cerilas ♥ </span>
           <a
             href="https://www.cerilas.com"
