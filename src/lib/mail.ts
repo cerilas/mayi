@@ -16,7 +16,7 @@ export async function sendCerilasMail(to: string[], subject: string, html: strin
 
   try {
     // 1. Önce Cerilas API'den Token Alalım
-    const authRes = await fetch('https://www.cerilas.com/api/auth/login', {
+    const authRes = await fetch('https://cerilas.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -38,7 +38,7 @@ export async function sendCerilasMail(to: string[], subject: string, html: strin
     }
 
     // 2. Alınan token ile mail gönderim isteği yapalım
-    const res = await fetch('https://www.cerilas.com/api/mail/send', {
+    const res = await fetch('https://cerilas.com/api/mail/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
