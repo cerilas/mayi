@@ -34,7 +34,233 @@ const ROLE_META: Record<GuideRole, { label: string; description: string }> = {
   },
 };
 
+const PERMISSION_ROWS = [
+  {
+    capability: "Kendi sohbetini oluşturma, klasörleme ve paylaşma",
+    admin: "Tam",
+    physiotherapist: "Tam",
+    user: "Tam",
+    patient: "Tam",
+  },
+  {
+    capability: "Sohbet modelini seçme",
+    admin: "Kendi sohbetinde",
+    physiotherapist: "Kendi sohbetinde",
+    user: "Kendi sohbetinde",
+    patient: "Hayır · genel model",
+  },
+  {
+    capability: "Dosya yükleme, Web Araması ve Görsel Üret araçları",
+    admin: "Evet",
+    physiotherapist: "Evet",
+    user: "Evet",
+    patient: "Evet",
+  },
+  {
+    capability: "Kişisel temel ve ek talimatları değiştirme",
+    admin: "Evet",
+    physiotherapist: "Evet",
+    user: "Evet",
+    patient: "Hayır",
+  },
+  {
+    capability: "Hasta listesini görüntüleme",
+    admin: "Tüm hastalar",
+    physiotherapist: "Yalnızca atananlar",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Hasta profilini ve klinik bağlamı düzenleme",
+    admin: "Tüm hastalar",
+    physiotherapist: "Yalnızca atananlar",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Hasta oluşturma, silme ve toplu içe aktarma",
+    admin: "Evet",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Hastaya sorumlu atama veya sorumluyu değiştirme",
+    admin: "Evet",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Kullanıcı oluşturma, rol değiştirme ve silme",
+    admin: "Evet",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Genel hasta talimatı ve hasta modelini değiştirme",
+    admin: "Evet · global",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "API anahtarı, SMS ve rapor alıcılarını yönetme",
+    admin: "Evet",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Sistem istatistikleri ekranı",
+    admin: "Evet",
+    physiotherapist: "Hayır",
+    user: "Hayır",
+    patient: "Hayır",
+  },
+  {
+    capability: "Kendi görünümü, parolası ve kullanımını görüntüleme",
+    admin: "Evet",
+    physiotherapist: "Evet",
+    user: "Evet",
+    patient: "Evet",
+  },
+] as const;
+
+const INSTRUCTION_ROWS = [
+  {
+    name: "Varsayılan platform temel talimatı",
+    key: "Kod / ortam ayarı",
+    editor: "Arayüzden düzenlenmez",
+    scope: "Kişisel temel talimatı olmayan sohbetler; hastalarda her zaman temel katman",
+    effect:
+      "Asistanın Türkçe yanıt vermesi ve temel davranış çerçevesi. Kişisel temel talimat girilirse personel/kullanıcı sohbetinde onun yerini kişisel metin alır.",
+  },
+  {
+    name: "Temel Talimat",
+    key: "base_instruction",
+    editor: "Admin, Fizyoterapist, Kullanıcı",
+    scope: "Yalnızca kaydeden kişinin kendi sohbetleri",
+    effect:
+      "Asistanın ana kimliğini ve temel çalışma şeklini belirler. Hasta sohbetlerinde okunmaz ve hasta profilini etkilemez.",
+  },
+  {
+    name: "Ek Talimatlar",
+    key: "system_instruction",
+    editor: "Admin, Fizyoterapist, Kullanıcı",
+    scope: "Yalnızca kaydeden kişinin kendi sohbetleri",
+    effect:
+      "Temel talimatın sonuna “Özel Talimatlar” olarak eklenir; ton, format, kaynak kullanımı ve özel çalışma kurallarını daraltır.",
+  },
+  {
+    name: "Genel Hasta Talimatı",
+    key: "patient_system_instruction",
+    editor: "Yalnızca Admin",
+    scope: "Sistemdeki tüm hastaların tüm sohbetleri",
+    effect:
+      "Hasta iletişim dili, güvenlik sınırları ve klinik genel kurallarını belirler. Adminin kendi sohbetini veya fizyoterapist sohbetini etkilemez.",
+  },
+  {
+    name: "Hasta Profil Bağlamı",
+    key: "PatientProfile",
+    editor: "Admin; atanmış hasta için Fizyoterapist",
+    scope: "Yalnızca ilgili hastanın sohbetleri",
+    effect:
+      "Ad, yaş, cinsiyet, kısa/uzun detay, klinik görüş ve video bağlantılarını her yanıtta hastaya özel bağlam olarak ekler.",
+  },
+  {
+    name: "Bilgilendirme / feragat metni",
+    key: "ENABLE_DISCLAIMER",
+    editor: "Sistem yapılandırması",
+    scope: "Tüm rollerin sohbetleri",
+    effect:
+      "Temel talimata, içeriğin bilgilendirme amaçlı olduğu ve uzman değerlendirmesi gerektiği hatırlatmasını ekler.",
+  },
+] as const;
+
 const SECTIONS: GuideSection[] = [
+  {
+    id: "rol-hiyerarsisi",
+    eyebrow: "Rol mimarisi",
+    title: "Dört rol, üç çalışma alanı",
+    description:
+      "Rollerin sistemdeki yerini, birbirleriyle ilişkisini ve hasta atama hiyerarşisini anlayın.",
+    icon: "H1",
+    audience: "all",
+    duration: "4 rol",
+    items: [
+      {
+        title: "Admin · Sistem yöneticisi",
+        detail:
+          "Kullanıcı ve rol yönetimi, tüm hastalar, sorumlu atama, global yapay zekâ ayarları, SMS, kullanım hakları ve raporlama üzerinde en geniş yetkiye sahiptir.",
+        badge: "En geniş yetki",
+      },
+      {
+        title: "Fizyoterapist · Atanmış hasta sorumlusu",
+        detail:
+          "Kendi sohbetlerini ve kişisel talimatlarını yönetir. Yalnızca kendisine atanmış hastaları görür ve bu hastaların klinik bağlamını güncelleyebilir.",
+        badge: "Atama kapsamlı",
+      },
+      {
+        title: "Kullanıcı · Bağımsız sohbet kullanıcısı",
+        detail:
+          "Hasta profili olmayan standart kullanıcıdır. Kendi sohbet, model, temel ve ek talimatlarını yönetir; hasta ve sistem yönetimine erişemez.",
+      },
+      {
+        title: "Hasta · Klinik son kullanıcı",
+        detail:
+          "Kendi sohbetlerini kullanır. Yanıtları kendi hasta profili, tüm hastalara uygulanan genel hasta talimatı ve adminin seçtiği hasta modeliyle şekillenir.",
+        badge: "Kısıtlı ayarlar",
+      },
+    ],
+    note: {
+      tone: "info",
+      title: "Hiyerarşi kalıtım değildir",
+      text: "Fizyoterapist, Adminin alt rolüdür ancak Admin yetkilerini miras almaz. Kullanıcı rolü de Fizyoterapist ile Hasta arasında bir terfi basamağı değildir; hasta profili olmayan ayrı bir sohbet rolüdür.",
+    },
+    keywords: ["rol", "hiyerarşi", "admin", "fizyoterapist", "kullanıcı", "hasta", "atama"],
+  },
+  {
+    id: "yetki-matrisi",
+    eyebrow: "Yetki tablosu",
+    title: "Hangi rol ne yapabilir?",
+    description:
+      "Ekran, veri ve ayar yetkilerini rol bazında karşılaştırın. “Kendi” ve “atanmış” kapsamlarına özellikle dikkat edin.",
+    icon: "H2",
+    audience: "all",
+    duration: "13 yetki",
+    note: {
+      tone: "warning",
+      title: "En az yetki ilkesi",
+      text: "Günlük klinik çalışma için Fizyoterapist rolü kullanın. Admin rolünü yalnızca kullanıcı, global ayar, hasta yaşam döngüsü ve raporlama gibi yönetim işlemlerinde kullanın.",
+    },
+    keywords: ["yetki", "matris", "izin", "erişim", "kim ne yapar", "rol tablosu"],
+  },
+  {
+    id: "talimat-mimarisi",
+    eyebrow: "Yapay zekâ davranışı",
+    title: "Talimatlar hangi sırayla ve kimi etkiler?",
+    description:
+      "Kişisel, global ve hastaya özel katmanların farkını; bir mesaj gönderildiğinde nasıl birleştirildiklerini görün.",
+    icon: "H3",
+    audience: "all",
+    duration: "6 katman",
+    note: {
+      tone: "warning",
+      title: "En kritik ayrım",
+      text: "Temel Talimat ve Ek Talimatlar kullanıcıya özeldir. Genel Hasta Talimatı globaldir. Hasta Profil Bağlamı ise yalnızca tek bir hastaya özeldir. Bir Adminin kişisel temel talimatı hastalara aktarılmaz.",
+    },
+    keywords: [
+      "temel talimat",
+      "ek talimat",
+      "sistem talimatı",
+      "hasta talimatı",
+      "genel",
+      "kişisel",
+      "prompt sırası",
+    ],
+  },
   {
     id: "baslangic",
     eyebrow: "Hızlı başlangıç",
@@ -463,7 +689,7 @@ export default function AdminDocsPage() {
   const [roleOverride, setRoleOverride] = useState<GuideRole | null>(null);
   const [query, setQuery] = useState("");
   const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set(["baslangic", "sohbet"])
+    new Set(["rol-hiyerarsisi", "talimat-mimarisi", "baslangic"])
   );
   const [copied, setCopied] = useState(false);
 
@@ -493,7 +719,7 @@ export default function AdminDocsPage() {
   function selectRole(role: GuideRole) {
     setRoleOverride(role);
     setQuery("");
-    setOpenSections(new Set(["baslangic", "sohbet"]));
+    setOpenSections(new Set(["rol-hiyerarsisi", "talimat-mimarisi", "baslangic"]));
     document.getElementById("rehber-icerik")?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -730,6 +956,269 @@ export default function AdminDocsPage() {
                         id={`${section.id}-content`}
                         className="border-t border-[var(--border-secondary)] px-5 pb-6 pt-5 sm:px-6"
                       >
+                        {section.id === "rol-hiyerarsisi" && (
+                          <div className="mb-5 rounded-2xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4 sm:p-5">
+                            <div className="mx-auto max-w-md rounded-xl border-2 border-[var(--brand)] bg-[var(--bg-primary)] p-4 text-center shadow-sm">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">
+                                Yönetim katmanı
+                              </p>
+                              <p className="mt-1 text-base font-bold">Admin</p>
+                              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                Hesap ve rol oluşturur, global ayarları yönetir, hastayı
+                                sorumlu kişiye atar.
+                              </p>
+                            </div>
+                            <div className="mx-auto flex h-10 max-w-xl items-center justify-center">
+                              <span className="text-xl text-[var(--brand)]" aria-hidden="true">
+                                ↓
+                              </span>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-primary)] p-4 text-center">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                                  Klinik sorumluluk
+                                </p>
+                                <p className="mt-1 text-sm font-bold">Fizyoterapist</p>
+                                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                  Atanmış hasta kapsamıyla çalışır.
+                                </p>
+                                <div className="my-2 text-[var(--brand)]" aria-hidden="true">
+                                  ↓
+                                </div>
+                                <div className="rounded-lg bg-[var(--brand-light)] px-3 py-2 text-xs font-semibold text-[var(--brand)]">
+                                  Atanmış Hastalar
+                                </div>
+                              </div>
+                              <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-primary)] p-4 text-center">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                                  Bağımsız kullanım
+                                </p>
+                                <p className="mt-1 text-sm font-bold">Kullanıcı</p>
+                                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                  Kendi sohbet ve kişisel talimat alanında çalışır.
+                                </p>
+                                <div className="my-2 text-[var(--text-tertiary)]" aria-hidden="true">
+                                  ·
+                                </div>
+                                <div className="rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-xs font-semibold">
+                                  Hasta yönetimi yok
+                                </div>
+                              </div>
+                            </div>
+                            <p className="mt-4 text-center text-[11px] leading-5 text-[var(--text-secondary)]">
+                              Hasta bir Admin veya Fizyoterapiste sorumlu olarak atanabilir.
+                              Admin tüm hastaları görür; Fizyoterapist yalnızca kendisine
+                              atanmış hastaları görür. Hasta bu yapının son kullanıcı
+                              katmanıdır.
+                            </p>
+                          </div>
+                        )}
+
+                        {section.id === "yetki-matrisi" && (
+                          <div className="mb-5 overflow-x-auto rounded-xl border border-[var(--border-primary)]">
+                            <table className="min-w-[920px] w-full border-collapse text-left">
+                              <thead className="bg-[var(--bg-tertiary)]">
+                                <tr>
+                                  <th className="w-[32%] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                    İşlem / kapsam
+                                  </th>
+                                  <th className="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                    Admin
+                                  </th>
+                                  <th className="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                    Fizyoterapist
+                                  </th>
+                                  <th className="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                    Kullanıcı
+                                  </th>
+                                  <th className="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                    Hasta
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[var(--border-primary)] bg-[var(--bg-primary)]">
+                                {PERMISSION_ROWS.map((row) => (
+                                  <tr key={row.capability} className="align-top">
+                                    <th className="px-4 py-3 text-xs font-semibold leading-5">
+                                      {row.capability}
+                                    </th>
+                                    {(
+                                      [
+                                        row.admin,
+                                        row.physiotherapist,
+                                        row.user,
+                                        row.patient,
+                                      ] as const
+                                    ).map((value, index) => {
+                                      const denied = value.startsWith("Hayır");
+                                      return (
+                                        <td
+                                          key={`${row.capability}-${index}`}
+                                          className="px-3 py-3 text-[11px] leading-5"
+                                          style={{
+                                            color: denied
+                                              ? "var(--text-tertiary)"
+                                              : "var(--text-secondary)",
+                                          }}
+                                        >
+                                          <span
+                                            className="mr-1 font-bold"
+                                            style={{
+                                              color: denied
+                                                ? "var(--danger-text)"
+                                                : "var(--success-text)",
+                                            }}
+                                            aria-hidden="true"
+                                          >
+                                            {denied ? "—" : "✓"}
+                                          </span>
+                                          {value}
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {section.id === "talimat-mimarisi" && (
+                          <div className="mb-5 space-y-5">
+                            <div className="overflow-x-auto rounded-xl border border-[var(--border-primary)]">
+                              <table className="min-w-[900px] w-full border-collapse text-left">
+                                <thead className="bg-[var(--bg-tertiary)]">
+                                  <tr>
+                                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                      Katman
+                                    </th>
+                                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                      Kim düzenler?
+                                    </th>
+                                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                      Etki kapsamı
+                                    </th>
+                                    <th className="w-[37%] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                                      Tam olarak neyi etkiler?
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--border-primary)] bg-[var(--bg-primary)]">
+                                  {INSTRUCTION_ROWS.map((row) => (
+                                    <tr key={row.name} className="align-top">
+                                      <th className="px-4 py-3">
+                                        <span className="block text-xs font-bold">{row.name}</span>
+                                        <code className="mt-1 block text-[9px] font-normal text-[var(--text-tertiary)]">
+                                          {row.key}
+                                        </code>
+                                      </th>
+                                      <td className="px-4 py-3 text-[11px] leading-5 text-[var(--text-secondary)]">
+                                        {row.editor}
+                                      </td>
+                                      <td className="px-4 py-3 text-[11px] font-semibold leading-5 text-[var(--brand)]">
+                                        {row.scope}
+                                      </td>
+                                      <td className="px-4 py-3 text-[11px] leading-5 text-[var(--text-secondary)]">
+                                        {row.effect}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            <div className="grid gap-3 lg:grid-cols-2">
+                              <article className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                  <h3 className="text-sm font-bold">
+                                    Admin / Fizyoterapist / Kullanıcı sohbeti
+                                  </h3>
+                                  <span className="rounded-full bg-[var(--brand-light)] px-2 py-1 text-[9px] font-bold text-[var(--brand)]">
+                                    Kişisel
+                                  </span>
+                                </div>
+                                <ol className="mt-4 space-y-2">
+                                  {[
+                                    "Tarih ve saat",
+                                    "Kişisel Temel Talimat; boşsa platform varsayılanı",
+                                    "Global bilgilendirme metni",
+                                    "Aynı kullanıcının Ek Talimatları",
+                                    "Kullanıcının kendi sohbet geçmişi ve mesajı",
+                                  ].map((label, index) => (
+                                    <li key={label} className="flex items-center gap-2">
+                                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-[9px] font-bold text-white">
+                                        {index + 1}
+                                      </span>
+                                      <span className="text-[11px] leading-5 text-[var(--text-secondary)]">
+                                        {label}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ol>
+                                <p className="mt-3 border-t border-[var(--border-primary)] pt-3 text-[10px] leading-5 text-[var(--text-tertiary)]">
+                                  Başka bir Adminin veya Fizyoterapistin kişisel talimatı
+                                  bu sohbete karışmaz.
+                                </p>
+                              </article>
+
+                              <article className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                  <h3 className="text-sm font-bold">Hasta sohbeti</h3>
+                                  <span className="rounded-full bg-[var(--warning-bg)] px-2 py-1 text-[9px] font-bold text-[var(--warning-text)]">
+                                    Global + hastaya özel
+                                  </span>
+                                </div>
+                                <ol className="mt-4 space-y-2">
+                                  {[
+                                    "Tarih ve saat",
+                                    "Platform varsayılan temel talimatı",
+                                    "Global bilgilendirme metni",
+                                    "İlgili hastanın profil ve klinik bağlamı",
+                                    "Tüm hastalara uygulanan Genel Hasta Talimatı",
+                                    "Hastanın kendi sohbet geçmişi ve mesajı",
+                                  ].map((label, index) => (
+                                    <li key={label} className="flex items-center gap-2">
+                                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--warning-text)] text-[9px] font-bold text-white">
+                                        {index + 1}
+                                      </span>
+                                      <span className="text-[11px] leading-5 text-[var(--text-secondary)]">
+                                        {label}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ol>
+                                <p className="mt-3 border-t border-[var(--border-primary)] pt-3 text-[10px] leading-5 text-[var(--text-tertiary)]">
+                                  Admin, Fizyoterapist veya Kullanıcı hesabındaki kişisel
+                                  Temel/Ek Talimatlar hastaya aktarılmaz.
+                                </p>
+                              </article>
+                            </div>
+
+                            <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-primary)] p-4">
+                              <h3 className="text-xs font-bold">Talimat olmayan ama global etki yaratan ayarlar</h3>
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+                                  <p className="text-[11px] font-bold">Hasta Varsayılan Modeli</p>
+                                  <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                                    Admin tarafından seçilir ve tüm hastaların modelini
+                                    belirler. Hastalar model değiştiremez. Personelin
+                                    kişisel sohbet modelini etkilemez.
+                                  </p>
+                                </div>
+                                <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+                                  <p className="text-[11px] font-bold">Gemini API Anahtarı</p>
+                                  <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                                    Yalnızca Admin kaydedebilir. Arayüzde Admin hesabına
+                                    özel görünse de çalışma sırasında en son güncellenmiş
+                                    kayıt sistemin yapay zekâ çağrılarında kullanılır; bu
+                                    nedenle operasyonel etkisi sistem genelidir.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {section.steps && (
                           <ol className="space-y-5">
                             {section.steps.map((step, index) => (

@@ -82,9 +82,13 @@ export async function POST(
   const forceGemini = requestedProvider === "openai" && openAIKey.startsWith("AIza") && hasGeminiKey;
 
   const provider: AIProvider = forceGemini ? "gemini" : requestedProvider;
-  const model: string = forceGemini
+  let model: string = forceGemini
     ? appConfig.ai.providers.gemini.models[0].id
     : requestedModel;
+
+  if (model === "gemini-1.5-pro") {
+    model = "gemini-1.5-pro-latest";
+  }
 
   if (!userContent && attachmentIds.length === 0) {
     return NextResponse.json({ error: "Mesaj boş olamaz" }, { status: 400 });

@@ -28,7 +28,7 @@ export async function GET() {
           gemini: [
             { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
             { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-            { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+            { id: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
           ],
         },
         {
@@ -119,7 +119,7 @@ export async function GET() {
       geminiModels.push(
         { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", displayName: "Gemini 2.5 Pro", supportedMethods: [] },
         { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", displayName: "Gemini 2.5 Flash", supportedMethods: [] },
-        { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", displayName: "Gemini 1.5 Pro", supportedMethods: [] }
+        { id: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro", displayName: "Gemini 1.5 Pro", supportedMethods: [] }
       );
     }
 
@@ -152,7 +152,7 @@ export async function GET() {
         gemini: [
           { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
           { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-          { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+          { id: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
         ],
       },
       {
