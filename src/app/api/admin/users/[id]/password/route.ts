@@ -1,18 +1,18 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { decryptPassword } from "@/lib/encryption";
 
-async function requireAdmin() {
-  const session = await auth();
+async function requireAdmin(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin") return null;
   return session;
 }
 
 // GET /api/admin/users/[id]/password — returns decrypted password (admin only)
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;

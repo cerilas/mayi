@@ -1,9 +1,9 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { checkAndUpdateUsage } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const session = await auth();
+export async function GET(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }

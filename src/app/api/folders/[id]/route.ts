@@ -1,5 +1,5 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 
 // PATCH /api/folders/[id] — rename folder
@@ -7,7 +7,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { id } = await params;
@@ -25,10 +25,10 @@ export async function PATCH(
 
 // DELETE /api/folders/[id] — delete folder (conversations become unfoldered)
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { id } = await params;

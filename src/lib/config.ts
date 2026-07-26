@@ -28,7 +28,7 @@ export const appConfig = {
   upload: {
     maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB ?? "10", 10),
     allowedMimeTypes: (
-      process.env.ALLOWED_MIME_TYPES ?? "image/jpeg,image/png,image/gif,image/webp,application/pdf"
+      process.env.ALLOWED_MIME_TYPES ?? "image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf"
     ).split(","),
     uploadDir: process.env.UPLOAD_DIR ?? "public/uploads",
   },

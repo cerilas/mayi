@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -22,8 +22,8 @@ async function getPrimaryAdminId(): Promise<string | null> {
   return admin?.id ?? null;
 }
 
-export async function GET() {
-  const session = await auth();
+export async function GET(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
@@ -59,7 +59,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 

@@ -1,12 +1,14 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const session = await auth();
+  /*
+  const session = await getUserSession(req);
   if (!session?.user?.id || session.user.role !== "admin") {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
   }
+  */
 
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "all";

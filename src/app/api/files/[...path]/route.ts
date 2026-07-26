@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
@@ -19,10 +19,10 @@ function getUploadDir() {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }

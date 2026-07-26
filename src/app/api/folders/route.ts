@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 
 // GET /api/folders — list user's folders with conversation counts
-export async function GET() {
-  const session = await auth();
+export async function GET(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const folders = await prisma.folder.findMany({
@@ -20,7 +20,7 @@ export async function GET() {
 
 // POST /api/folders — create folder
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { name } = await req.json().catch(() => ({}));

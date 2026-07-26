@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getUserSession } from "@/lib/auth-utils";
 
 // GET /api/conversations/[id]
 // Query params: ?limit=N&before=<messageId>
@@ -8,7 +8,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { id } = await params;
@@ -66,7 +66,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { id } = await params;
@@ -93,10 +93,10 @@ export async function PATCH(
 
 // DELETE /api/conversations/[id] — soft delete
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { id } = await params;

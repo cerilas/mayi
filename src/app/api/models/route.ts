@@ -114,6 +114,15 @@ export async function GET() {
       return 0;
     });
 
+    // If Gemini fetch timed out or returned empty, use fallback
+    if (geminiModels.length === 0) {
+      geminiModels.push(
+        { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", displayName: "Gemini 2.5 Pro", supportedMethods: [] },
+        { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", displayName: "Gemini 2.5 Flash", supportedMethods: [] },
+        { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", displayName: "Gemini 1.5 Pro", supportedMethods: [] }
+      );
+    }
+
     return NextResponse.json(
       {
         openai: [

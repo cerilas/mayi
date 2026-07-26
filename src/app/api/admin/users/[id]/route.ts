@@ -1,11 +1,11 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-async function requireAdmin() {
-  const session = await auth();
+async function requireAdmin(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin") return null;
   return session;
@@ -13,7 +13,7 @@ async function requireAdmin() {
 
 // PATCH /api/admin/users/[id]
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
@@ -55,7 +55,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 // DELETE /api/admin/users/[id]
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;

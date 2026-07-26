@@ -463,7 +463,7 @@ export default function PatientsPage() {
     return <div className="p-8 flex justify-center"><div className="w-6 h-6 border-2 border-[var(--brand)] border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
-  if (session?.user?.role !== "admin") return null;
+  if (session?.user?.role !== "admin" && session?.user?.role !== "physiotherapist") return null;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50 overflow-y-auto">

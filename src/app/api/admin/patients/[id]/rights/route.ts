@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -16,7 +16,7 @@ function formatPhone(phone: string): string {
 }
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    const session = await getUserSession(req);
     if (!session?.user?.id || session.user.role !== "admin") {
       return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
     }

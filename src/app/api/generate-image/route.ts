@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "@/lib/prisma";
 
 const IMAGE_GEN_MODEL = "gemini-3.1-flash-image-preview";
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }

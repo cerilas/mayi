@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -13,7 +13,7 @@ function getUploadDir() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const formData = await req.formData();
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     const ext = path.extname(file.name).toLowerCase();
-    const safeExt = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"].includes(ext)
+    const safeExt = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".pdf"].includes(ext)
       ? ext
       : ".bin";
     const uniqueName = `${uuidv4()}${safeExt}`;

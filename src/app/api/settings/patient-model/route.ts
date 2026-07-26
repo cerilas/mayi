@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 // Returns the patient default model set by admin
-export async function GET() {
-  const session = await auth();
+export async function GET(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   // Find the admin user's setting for patient_default_model

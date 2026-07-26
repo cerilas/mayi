@@ -1,18 +1,18 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 
 const NETGSM_USERCODE = process.env.NETGSM_USERCODE || "3423411000";
 const NETGSM_PASSWORD = process.env.NETGSM_PASSWORD || "Dnz.24232423";
 
-async function requireAdmin() {
-  const session = await auth();
+async function requireAdmin(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin") return null;
   return session;
 }
 
-export async function GET() {
-  const session = await requireAdmin();
+export async function GET(req: Request) {
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   try {

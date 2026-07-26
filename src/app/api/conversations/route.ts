@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getUserSession } from "@/lib/auth-utils";
 
 // GET /api/conversations — list user's conversations
 export async function GET(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 
 // POST /api/conversations — create new conversation
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));

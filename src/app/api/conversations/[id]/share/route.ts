@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
@@ -8,7 +8,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
@@ -44,7 +44,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getUserSession(req);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 

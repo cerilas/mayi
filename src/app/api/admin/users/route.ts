@@ -1,19 +1,19 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-async function requireAdmin() {
-  const session = await auth();
+async function requireAdmin(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin") return null;
   return session;
 }
 
 // GET /api/admin/users
-export async function GET() {
-  const session = await requireAdmin();
+export async function GET(req: Request) {
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const users = await prisma.user.findMany({
@@ -31,7 +31,7 @@ export async function GET() {
 
 // POST /api/admin/users — create user
 export async function POST(req: Request) {
-  const session = await requireAdmin();
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));

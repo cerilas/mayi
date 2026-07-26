@@ -5,9 +5,10 @@ import type { NextRequest } from "next/server";
 export default auth((req: NextRequest & { auth: unknown }) => {
   const isAuthenticated = !!(req as { auth: unknown }).auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
-  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth") || req.nextUrl.pathname.startsWith("/api/cron");
+  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth") || req.nextUrl.pathname.startsWith("/api/cron") || req.nextUrl.pathname.startsWith("/api/mobile");
+  const hasBearerToken = req.headers.get("Authorization")?.startsWith("Bearer ");
 
-  if (isPublicApi) return NextResponse.next();
+  if (isPublicApi || hasBearerToken) return NextResponse.next();
 
   if (!isAuthenticated && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", req.url));

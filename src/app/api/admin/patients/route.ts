@@ -1,18 +1,18 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-async function requireStaff() {
-  const session = await auth();
+async function requireStaff(req: Request) {
+  const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin" && session.user.role !== "physiotherapist") return null;
   return session;
 }
 
 export async function GET(req: Request) {
-  const session = await requireStaff();
+  const session = await requireStaff(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await requireStaff();
+  const session = await requireStaff(req);
   if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler yeni hasta ekleyebilir" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
