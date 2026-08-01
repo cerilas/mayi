@@ -405,6 +405,10 @@ export default function LoginPage() {
           <p style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600, marginBottom: "0.5rem" }}>Bilgilendirme</p>
           <p style={{ margin: "0 0 0.5rem" }}>Bu site sağlık hizmeti vermemektedir, kişileri bilgilendirmek ve site sahibi hakkında bilgi vermek amacı ile hazırlanmıştır.</p>
           <p style={{ margin: "0 0 0.5rem" }}>Tanı ve tedaviler mutlaka bir hekim tarafından yapılması gereken işlemlerdir.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: "1rem", marginBottom: "1rem" }}>
+            <a href="/privacy" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }} onMouseOver={(e) => e.currentTarget.style.color = "#fff"} onMouseOut={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>Gizlilik Politikası</a>
+            <a href="/terms" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }} onMouseOver={(e) => e.currentTarget.style.color = "#fff"} onMouseOut={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>Kullanım Koşulları</a>
+          </div>
           <p style={{ margin: 0, color: "rgba(255,255,255,0.2)" }}>Copyright 2026 My FizyoPilates - Tüm Hakları Saklıdır</p>
         </div>
       </footer>
