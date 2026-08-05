@@ -119,20 +119,18 @@ export async function POST(
     }),
   ]);
 
-  // ── Paralel: link attachments + fetch message history ────────────────
-  const [, history] = await Promise.all([
-    attachmentIds.length > 0
-      ? prisma.attachment.updateMany({
-          where: { id: { in: attachmentIds } },
-          data: { messageId: userMsg.id },
-        })
-      : Promise.resolve(null),
-    prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "asc" },
-      include: { attachments: true },
-    }),
-  ]);
+  // ── Sıralı: link attachments then fetch message history ────────────────
+  if (attachmentIds.length > 0) {
+    await prisma.attachment.updateMany({
+      where: { id: { in: attachmentIds } },
+      data: { messageId: userMsg.id },
+    });
+  }
+  const history = await prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    include: { attachments: true },
+  });
 
   function buildContent(msgContent: string, attList: typeof history[0]["attachments"], role: string): string | AIMessageContent[] {
     const isUser = role === "user";

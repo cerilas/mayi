@@ -51,9 +51,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Kişisel Verilerin Aktarımı (Üçüncü Kişiler)</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Kişisel Verilerin Aktarımı (Üçüncü Kişiler ve Yapay Zeka Servisleri)</h2>
             <p>FizioAI, kullanıcılarının ve hastaların kişisel verilerini yasal zorunluluklar dışında kati suretle üçüncü şahıslara veya şirketlere pazarlama, reklam ya da ticari gelir elde etme amacıyla <strong>satmaz veya aktarmaz</strong>.</p>
-            <p className="mt-2">Verileriniz yalnızca sistemin düzgün çalışması için zorunlu olan hizmet sağlayıcılarıyla (güvenli bulut sunucu altyapıları, veri tabanı yönetim firmaları ve yetkili yasal merciler) gerekli güvenlik önlemleri alınarak paylaşılabilir. Yapay zeka sorgularına gönderilen veriler, analiz öncesinde anonimleştirme algoritmalarından geçirilerek işlenir.</p>
+            <p className="mt-2">Verileriniz yalnızca sistemin düzgün çalışması için zorunlu olan hizmet sağlayıcılarıyla (güvenli bulut sunucu altyapıları, veri tabanı yönetim firmaları ve yetkili yasal merciler) gerekli güvenlik önlemleri alınarak paylaşılabilir.</p>
+            <p className="mt-2"><strong>Yapay Zeka Servis Sağlayıcıları:</strong> Uygulamamız, kullanıcılara analiz ve öneriler sunabilmek amacıyla üçüncü taraf yapay zeka servis sağlayıcılarını (OpenAI ve Google Gemini vb.) kullanmaktadır. Kullanıcıların (fizyoterapistlerin) sisteme girdiği değerlendirme notları, semptomlar ve şikayetler gibi metin tabanlı veriler; hastanın kimliğini doğrudan açığa çıkaracak ad, soyad, iletişim bilgileri gibi veriler (PII - Kişisel Tanımlanabilir Bilgiler) <strong>hariç tutularak ve anonimleştirilerek</strong> bu yapay zeka servislerine iletilir. Bu veriler sadece anlık analiz üretmek amacıyla (örneğin egzersiz planı oluşturma) iletilir. İlgili yapay zeka sağlayıcıları ile veri gizliliği sözleşmeleri ve standartları (GDPR/KVKK uyumluluğu) gözetilerek çalışılmaktadır.</p>
           </section>
 
           <section>
