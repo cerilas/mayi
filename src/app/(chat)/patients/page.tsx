@@ -184,6 +184,60 @@ export default function PatientsPage() {
   const [rightsSuccess, setRightsSuccess] = useState("");
   const [rightsError, setRightsError] = useState("");
 
+  // ── Posture State ──
+  const [postureTarget, setPostureTarget] = useState<Patient | null>(null);
+  const [postureCode, setPostureCode] = useState<string | null>(null);
+  const [postureLoading, setPostureLoading] = useState(false);
+  const [postureError, setPostureError] = useState("");
+
+  async function openPostureModal(p: Patient) {
+    setPostureTarget(p);
+    setPostureCode(null);
+    setPostureError("");
+    setPostureLoading(true);
+
+    try {
+      // Önce mevcut bir kod var mı diye kontrol et (varsa en sonuncuyu göster)
+      const res = await fetch(`/api/posture/appointments?userId=${p.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Aktif ve süresi geçmemiş bir kod varsa göster
+        const activeCode = data.find((a: any) => !a.isUsed && new Date(a.expiresAt) > new Date());
+        if (activeCode) {
+          setPostureCode(activeCode.appointmentCode);
+        }
+      }
+    } catch {
+      // Hata olursa boş kalsın
+    } finally {
+      setPostureLoading(false);
+    }
+  }
+
+  async function generatePostureCode() {
+    if (!postureTarget) return;
+    setPostureLoading(true);
+    setPostureError("");
+    try {
+      const res = await fetch(`/api/posture/appointments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: postureTarget.id, expiresInDays: 7 })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPostureCode(data.appointmentCode);
+      } else {
+        setPostureError(data.error || "Kod üretilemedi.");
+      }
+    } catch {
+      setPostureError("Bir bağlantı hatası oluştu.");
+    } finally {
+      setPostureLoading(false);
+    }
+  }
+
+
   function openRightsModal(p: Patient) {
     setRightsTarget(p);
     setRightsAmount(10);
@@ -577,6 +631,7 @@ export default function PatientsPage() {
                         )}
                       </button>
                       <button onClick={() => openSmsModal(p)} className="text-green-600 hover:text-green-800 font-medium text-xs">SMS</button>
+                      <button onClick={() => openPostureModal(p)} className="text-indigo-600 hover:text-indigo-800 font-medium text-xs">Postür</button>
                       <button onClick={() => openEditForm(p)} className="text-blue-600 hover:text-blue-800 font-medium text-xs">Düzenle</button>
                       <button onClick={() => setDeleteTarget(p)} className="text-red-600 hover:text-red-800 font-medium text-xs">Sil</button>
                     </div>
@@ -608,6 +663,7 @@ export default function PatientsPage() {
                     )}
                   </button>
                   <button onClick={() => openSmsModal(p)} className="text-green-600 text-xs font-medium">SMS</button>
+                  <button onClick={() => openPostureModal(p)} className="text-indigo-600 text-xs font-medium">Postür</button>
                   <button onClick={() => openEditForm(p)} className="text-blue-600 text-xs font-medium">Düzenle</button>
                   <button onClick={() => setDeleteTarget(p)} className="text-red-600 text-xs font-medium">Sil</button>
                 </div>
@@ -769,6 +825,65 @@ export default function PatientsPage() {
                 
                 <button onClick={() => setImportResult(null)} className="mt-6 w-full py-3 px-4 rounded-xl font-bold text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
                   Tamam
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : postureTarget ? (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative text-center">
+              <h2 className="text-xl font-bold mb-2">Postür Analizi</h2>
+              <p className="text-sm text-gray-500 mb-6">{postureTarget.name} için postür analizi kodu üretin veya raporları görüntüleyin.</p>
+              
+              {postureError && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{postureError}</div>}
+
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Aktif Randevu Kodu</div>
+                {postureLoading ? (
+                  <div className="h-10 flex items-center justify-center">
+                    <span className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : postureCode ? (
+                  <div>
+                    <div className="text-4xl font-mono font-bold text-indigo-600 tracking-widest mb-3">
+                      {postureCode}
+                    </div>
+                    <button 
+                      onClick={() => navigator.clipboard.writeText(postureCode)}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center justify-center gap-1 mx-auto"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                      Kopyala
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-gray-400 text-sm italic">Aktif kod bulunmuyor.</div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {!postureCode && (
+                  <button 
+                    onClick={generatePostureCode}
+                    disabled={postureLoading}
+                    className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+                  >
+                    Yeni Kod Üret (7 Günlük)
+                  </button>
+                )}
+                
+                <button 
+                  onClick={() => router.push(`/patients/${postureTarget.id}/posture`)}
+                  className="w-full py-3 px-4 bg-white border-2 border-indigo-100 hover:border-indigo-200 text-indigo-600 rounded-xl font-medium transition-colors"
+                >
+                  Geçmiş Raporları Görüntüle
+                </button>
+                
+                <button 
+                  onClick={() => setPostureTarget(null)}
+                  className="w-full py-3 px-4 text-gray-500 hover:bg-gray-50 rounded-xl font-medium transition-colors mt-2"
+                >
+                  Kapat
                 </button>
               </div>
             </div>
