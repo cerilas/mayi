@@ -6,7 +6,7 @@ export default auth((req: NextRequest & { auth: unknown }) => {
   const isAuthenticated = !!(req as { auth: unknown }).auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
   const isPublicPage = req.nextUrl.pathname === "/privacy" || req.nextUrl.pathname === "/terms";
-  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth") || req.nextUrl.pathname.startsWith("/api/cron") || req.nextUrl.pathname.startsWith("/api/mobile");
+  const isPublicApi = req.nextUrl.pathname.startsWith("/api/auth") || req.nextUrl.pathname.startsWith("/api/cron") || req.nextUrl.pathname.startsWith("/api/mobile") || req.nextUrl.pathname.startsWith("/api/posture");
   const hasBearerToken = req.headers.get("Authorization")?.startsWith("Bearer ");
 
   if (isPublicApi || isPublicPage || hasBearerToken) return NextResponse.next();
