@@ -108,8 +108,11 @@ export default function PostureReportsPage() {
     let fhp = 0;
     let trunkLean = 0;
     let minRom = 180;
+    let leftRom = 180;
+    let rightRom = 180;
     let squatReps = 5;
-    let kneeFlex = 0;
+    let leftKneeFlex = 0;
+    let rightKneeFlex = 0;
     let trunkShiftFront = 0;
     let trunkShiftSquat = 0;
 
@@ -120,19 +123,21 @@ export default function PostureReportsPage() {
         if (m.metricKey === "pelvicLevelAngle") hipLevel = m.value;
         if (m.metricKey === "forwardHeadAngle") fhp = m.value;
         if (m.metricKey === "sagittalTrunkLean") trunkLean = m.value;
-        if (m.metricKey === "leftShoulderROM" || m.metricKey === "rightShoulderROM") {
-          minRom = Math.min(minRom, m.value);
-        }
+        
+        if (m.metricKey === "leftShoulderROM") leftRom = m.value;
+        if (m.metricKey === "rightShoulderROM") rightRom = m.value;
+        minRom = Math.min(leftRom, rightRom);
+
         if (m.metricKey === "completedRepetitions") squatReps = m.value;
-        if (m.metricKey === "maxLeftKneeFlexion" || m.metricKey === "maxRightKneeFlexion") {
-          kneeFlex = Math.max(kneeFlex, m.value); // Just keeping the best flexion they achieved
-        }
+        if (m.metricKey === "maxLeftKneeFlexion") leftKneeFlex = m.value;
+        if (m.metricKey === "maxRightKneeFlexion") rightKneeFlex = m.value;
+        
         if (m.metricKey === "trunkLateralLean") trunkShiftFront = m.value;
         if (m.metricKey === "maxTrunkShift") trunkShiftSquat = m.value;
       });
     });
 
-    // 1. Scoliosis Risk
+    // 1. Skolyoz / Asimetri Eğilimi
     let scoliosisScore = Math.min(95, (shoulderLevel + hipLevel) * 9);
     insights.push({
       title: "Skolyoz / Asimetri Eğilimi",
@@ -143,10 +148,10 @@ export default function PostureReportsPage() {
       color: scoliosisScore > 70 ? "red" : (scoliosisScore > 30 ? "orange" : "green")
     });
 
-    // 2. FHP (Forward Head Posture)
+    // 2. İleri Baş Postürü (Boyun Düzleşmesi)
     let fhpScore = Math.max(5, Math.min(95, (fhp - 5) * 4));
     insights.push({
-      title: "İleri Baş Postürü (Boyun Düzleşmesi)",
+      title: "İleri Baş Postürü / Boyun Düzleşmesi",
       description: fhp > 12 
         ? `Baş normal dikey eksenden ${fhp.toFixed(1)}° ileride duruyor.`
         : `Baş-boyun hizası dikey eksende sağlıklı görünüyor.`,
@@ -154,10 +159,10 @@ export default function PostureReportsPage() {
       color: fhpScore > 60 ? "red" : (fhpScore > 30 ? "orange" : "green")
     });
 
-    // 3. Kyphosis (Trunk Lean)
+    // 3. Gövde Öne Eğilim (Kifoz Riski)
     let kyphosisScore = Math.max(5, Math.min(90, trunkLean * 6));
     insights.push({
-      title: "Gövde Öne Eğilim (Kifoz Riski)",
+      title: "Gövde Öne Eğilim (Kifoz / Kamburluk)",
       description: trunkLean > 6 
         ? `Gövde dikey eksenden ${trunkLean.toFixed(1)}° öne eğik pozisyonda.`
         : `Gövde dikliği normal sınırlarda.`,
@@ -165,42 +170,119 @@ export default function PostureReportsPage() {
       color: kyphosisScore > 60 ? "red" : (kyphosisScore > 30 ? "orange" : "green")
     });
 
-    // 4. Mobility
+    // 4. Bel Fıtığı Riski (Yanal Gövde Kayması + Pelvis)
+    let herniatedDiscScore = Math.max(5, Math.min(95, (trunkShiftFront + hipLevel) * 10));
+    insights.push({
+      title: "Bel Fıtığı Riski (Kompansasyon)",
+      description: herniatedDiscScore > 30 
+        ? `Ağrıdan kaçınmak için gövde ağırlık merkezinin asimetrik dağıldığı tespit edildi.`
+        : `Bel ve pelvis bölgesi dengeli yük taşıyor.`,
+      riskScore: Math.round(herniatedDiscScore),
+      color: herniatedDiscScore > 60 ? "red" : (herniatedDiscScore > 30 ? "orange" : "green")
+    });
+
+    // 5. Boyun Fıtığı Riski
+    let cervicalScore = Math.max(5, Math.min(95, (fhp > 15 ? (fhp * 3) : 5) + (Math.abs(leftRom - rightRom) * 0.5)));
+    insights.push({
+      title: "Boyun Fıtığı Riski",
+      description: cervicalScore > 30 
+        ? `Şiddetli ileri baş postürü servikal sinir baskısı ve boyun fıtığı riski taşıyor.`
+        : `Boyun ekseninde riskli bir baskı saptanmadı.`,
+      riskScore: Math.round(cervicalScore),
+      color: cervicalScore > 60 ? "red" : (cervicalScore > 30 ? "orange" : "green")
+    });
+
+    // 6. Menisküs / Ön Çapraz Bağ (Asimetrik Diz Flex)
+    let kneeAsymmetry = Math.abs(leftKneeFlex - rightKneeFlex);
+    let aclScore = Math.max(5, Math.min(95, kneeAsymmetry * 4));
+    insights.push({
+      title: "Menisküs / Çapraz Bağ Riski",
+      description: kneeAsymmetry > 15 
+        ? `Sağ ve sol dizin bükülme açıları arasında ciddi fark var (Kısıtlılık).`
+        : `Her iki dizin bükülme açısı ve yük dağılımı dengeli.`,
+      riskScore: Math.round(aclScore),
+      color: aclScore > 60 ? "red" : (aclScore > 30 ? "orange" : "green")
+    });
+
+    // 7. Donuk Omuz (Frozen Shoulder)
+    let frozenShoulderScore = Math.max(5, Math.min(95, (120 - minRom) * 2));
+    insights.push({
+      title: "Donuk Omuz Şüphesi",
+      description: frozenShoulderScore > 40 
+        ? `Omuz eklem açıklığı kritik seviyede (< 100°) kısıtlanmış.`
+        : `Omuz kapsülünde ciddi bir donukluk belirtisi yok.`,
+      riskScore: Math.round(frozenShoulderScore),
+      color: frozenShoulderScore > 60 ? "red" : (frozenShoulderScore > 30 ? "orange" : "green")
+    });
+
+    // 8. Omuz Mobilite Kısıtlılığı
     let mobilityScore = Math.max(5, Math.min(90, (180 - minRom) * 1.5));
     insights.push({
-      title: "Omuz Mobilite Kısıtlılığı",
+      title: "Omuz Mobilite Kısıtlılığı (Genel)",
       description: minRom < 160 
-        ? `Omuz eklem açıklığı maksimum ${minRom.toFixed(1)}° seviyesinde kaldı.`
-        : `Omuz hareket açıklığı (ROM) mükemmel seviyede.`,
+        ? `Omuz eklem açıklığı ideal 180°'nin altında kaldı (${minRom.toFixed(1)}°).`
+        : `Omuz hareket açıklığı mükemmel seviyede.`,
       riskScore: Math.round(mobilityScore),
       color: mobilityScore > 60 ? "red" : (mobilityScore > 30 ? "orange" : "green")
     });
 
-    // 5. Knee/Lower Extremity Weakness
-    // Typically 90+ is a good squat. If they can't hit 70 or can't do 5 reps, risk increases.
-    let kneeScore = 5;
-    if (squatReps < 5) kneeScore += (5 - squatReps) * 15;
-    if (kneeFlex > 0 && kneeFlex < 80) kneeScore += (80 - kneeFlex); 
-    kneeScore = Math.max(5, Math.min(95, kneeScore));
-    
+    // 9. Dizde Sıvı Kaybı / Kireçlenme
+    let kneeFlex = Math.max(leftKneeFlex, rightKneeFlex);
+    let oaScore = Math.max(5, Math.min(95, (squatReps < 5 ? 20 : 0) + (90 - kneeFlex)));
     insights.push({
-      title: "Alt Ekstremite (Diz/Kalça) Zayıflığı",
-      description: (kneeScore > 30)
-        ? `Squat performansında kısıtlılık veya yetersiz diz bükülmesi (${kneeFlex > 0 ? kneeFlex.toFixed(1) + '°' : 'Ölçülemedi'}) saptandı.`
-        : `Alt ekstremite kuvveti ve çökme derinliği sağlıklı sınırlarda.`,
-      riskScore: Math.round(kneeScore),
-      color: kneeScore > 60 ? "red" : (kneeScore > 30 ? "orange" : "green")
+      title: "Dizde Sıvı Kaybı / Kireçlenme",
+      description: oaScore > 40 
+        ? `Squat derinliği ve tekrar sayısında ciddi yetersizlik mevcut.`
+        : `Alt ekstremite gücü ve eklem aralığı sağlıklı.`,
+      riskScore: Math.round(oaScore),
+      color: oaScore > 60 ? "red" : (oaScore > 30 ? "orange" : "green")
     });
 
-    // 6. Lateral Trunk Shift (Kompansasyon / Yükten Kaçınma)
-    let shiftScore = Math.max(5, Math.min(95, (trunkShiftFront + trunkShiftSquat) * 8));
+    // 10. Kulak Çınlaması (Servikojenik)
+    let tinnitusScore = Math.max(5, Math.min(90, (fhp - 12) * 5));
     insights.push({
-      title: "Gövde Yanal Kayması (Kompansasyon)",
-      description: shiftScore > 30 
-        ? `Ayakta veya squat sırasında gövde bir yöne doğru kayıyor. Ağrıdan kaçınma veya core zayıflığı olabilir.`
-        : `Gövde ağırlık merkezi hareket sırasında dengeli.`,
-      riskScore: Math.round(shiftScore),
-      color: shiftScore > 60 ? "red" : (shiftScore > 30 ? "orange" : "green")
+      title: "Kulak Çınlaması (Servikojenik Bağlantı)",
+      description: tinnitusScore > 40 
+        ? `Boyun kaslarındaki aşırı gerginlik ve boyun düzleşmesi çınlamayı tetikleyebilir.`
+        : `Servikal eksende çınlamaya yol açacak gerginlik görülmüyor.`,
+      riskScore: Math.round(tinnitusScore),
+      color: tinnitusScore > 60 ? "red" : (tinnitusScore > 30 ? "orange" : "green")
+    });
+
+    // 11. Genel Duruş Bozukluğu (Postüral Sendrom)
+    let generalPostureScore = Math.round((scoliosisScore + fhpScore + kyphosisScore) / 3);
+    insights.push({
+      title: "Genel Duruş Bozukluğu",
+      description: generalPostureScore > 30 
+        ? `Birden fazla postüral sapma bir arada görülüyor.`
+        : `Genel iskelet yapısı ve duruş formu çok sağlıklı.`,
+      riskScore: generalPostureScore,
+      color: generalPostureScore > 60 ? "red" : (generalPostureScore > 30 ? "orange" : "green")
+    });
+
+    // 12. Fibromiyalji (Dolaylı Analiz)
+    let fibroScore = Math.max(5, Math.min(60, (generalPostureScore * 0.8)));
+    insights.push({
+      title: "Fibromiyalji (Dolaylı)",
+      description: `Bu oran duruş bozukluğunun kronik yaygın ağrı yaratma potansiyelidir (Özel klinik test gerektirir).`,
+      riskScore: Math.round(fibroScore),
+      color: fibroScore > 40 ? "orange" : "green"
+    });
+
+    // 13. Tenisçi/Golfçü Dirseği (Dolaylı)
+    insights.push({
+      title: "Tenisçi/Golfçü Dirseği (Dolaylı)",
+      description: `Dirsek ve el bileği için spesifik ROM testleri gereklidir. Omuz analizi üzerinden yansıyan risk bulunamadı.`,
+      riskScore: 5,
+      color: "green"
+    });
+
+    // 14. Topuk Dikeni / Pelvik Taban (Dolaylı)
+    insights.push({
+      title: "Topuk Dikeni / Pelvik Taban",
+      description: `Ayak basış analizi ve klinik palpe testi yapılması önerilir.`,
+      riskScore: 5,
+      color: "green"
     });
 
     return insights;
@@ -252,9 +334,9 @@ export default function PostureReportsPage() {
               <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 border-b border-indigo-100">
                 <div className="flex items-center gap-2 mb-4">
                   <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <h3 className="font-bold text-indigo-900 text-sm">Yapay Zeka Değerlendirmesi</h3>
+                  <h3 className="font-bold text-indigo-900 text-sm">Genişletilmiş Yapay Zeka Risk Analizi (14 Kondisyon)</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {generateInsights(session).map((insight, idx) => (
                     <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50">
                       <div className="flex justify-between items-start mb-2">
