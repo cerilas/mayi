@@ -26,6 +26,11 @@ model User {
   usageLimit    Int            @default(15)
   usageUsed     Int            @default(0)
   usageResetAt  DateTime       @default(now())
+
+  // Posture App relations
+  postureAppointments PostureAppointment[]
+  postureSessions     PostureSession[]
+  postureTestResults  PostureTestResult[]
 }
 
 model Conversation {
@@ -107,3 +112,68 @@ model PatientProfile {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+// ── Posture App Models ─────────────────────────────────────────────────────
+
+/// Randevu kodu → User eşleştirmesi. Admin tarafından oluşturulur.
+model PostureAppointment {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentCode String    @unique
+  isUsed          Boolean   @default(false)
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([appointmentCode])
+}
+
+/// Bir değerlendirme oturumu (4 modülün tamamı = 1 session)
+model PostureSession {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentCode String?
+  deviceInfo      String?
+  completedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  testResults     PostureTestResult[]
+
+  @@index([userId])
+}
+
+/// Her modülün sonucu (front_static_posture, shoulder_flexion vb.)
+model PostureTestResult {
+  id             String               @id @default(cuid())
+  sessionId      String
+  session        PostureSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testType       String
+  overallQuality String
+  avgConfidence  Float                @default(0)
+  createdAt      DateTime             @default(now())
+  measurements   PostureMeasurement[]
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+/// Her test içindeki bireysel metrikler (shoulderLevelAngle, leftShoulderROM vb.)
+model PostureMeasurement {
+  id           String            @id @default(cuid())
+  testResultId String
+  testResult   PostureTestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  metricKey    String
+  value        Float
+  unit         String            @default("")
+  confidence   Float             @default(0)
+  quality      String            @default("acceptable")
+  createdAt    DateTime          @default(now())
+
+  @@index([testResultId])
+}
+
