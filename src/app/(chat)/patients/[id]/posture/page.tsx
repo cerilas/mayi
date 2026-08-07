@@ -176,7 +176,7 @@ export default function PostureReportsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-6xl mx-auto min-h-screen">
+    <div className="p-4 sm:p-8 w-full max-w-[1600px] mx-auto min-h-screen">
       <div className="flex items-center gap-4 mb-8">
         <button 
           onClick={() => router.back()}
