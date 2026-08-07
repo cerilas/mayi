@@ -55,6 +55,7 @@ export default function PostureReportsPage() {
   const formatTestType = (type: string) => {
     const map: Record<string, string> = {
       "front_static_posture": "Ön Postür Analizi",
+      "side_static_posture": "Yan Postür Analizi",
       "squat": "Squat Analizi",
       "shoulder_flexion": "Omuz Fleksiyonu",
       "shoulder_abduction": "Omuz Abdüksiyonu"
@@ -77,6 +78,8 @@ export default function PostureReportsPage() {
       "shoulderLevelAngle": "Omuz Denge Açısı",
       "hipLevelAngle": "Kalça Denge Açısı",
       "trunkSwayAngle": "Gövde Yana Eğilim",
+      "forwardHeadAngle": "İleri Baş Açısı (FHP)",
+      "sagittalTrunkLean": "Gövde Öne Eğilim",
       "kneeFlexionAngle": "Diz Fleksiyonu",
       "repsCompleted": "Tamamlanan Tekrar",
       "leftShoulderROM": "Sol Omuz ROM",
