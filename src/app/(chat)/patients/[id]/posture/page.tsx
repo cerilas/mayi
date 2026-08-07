@@ -71,11 +71,14 @@ export default function PostureReportsPage() {
   };
 
   const formatQuality = (quality: string) => {
-    switch (quality) {
-      case "excellent": return <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-medium border border-green-200">Mükemmel</span>;
+    switch (quality.toLowerCase()) {
+      case "high": 
+      case "excellent": return <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-medium border border-green-200">Yüksek / Mükemmel</span>;
       case "good": return <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs font-medium border border-blue-200">İyi</span>;
       case "acceptable": return <span className="text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded text-xs font-medium border border-yellow-200">Kabul Edilebilir</span>;
-      case "poor": return <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-medium border border-red-200">Zayıf</span>;
+      case "low":
+      case "poor": return <span className="text-orange-600 bg-orange-50 px-2 py-0.5 rounded text-xs font-medium border border-orange-200">Düşük Kalite</span>;
+      case "invalid": return <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-medium border border-red-200">Geçersiz / Hatalı Ölçüm</span>;
       default: return <span className="text-gray-600 bg-gray-50 px-2 py-0.5 rounded text-xs font-medium border border-gray-200">{quality}</span>;
     }
   };
@@ -83,14 +86,17 @@ export default function PostureReportsPage() {
   const formatMetricName = (key: string) => {
     const map: Record<string, string> = {
       "shoulderLevelAngle": "Omuz Denge Açısı",
-      "hipLevelAngle": "Kalça Denge Açısı",
-      "trunkSwayAngle": "Gövde Yana Eğilim",
+      "pelvicLevelAngle": "Kalça (Pelvis) Denge Açısı",
+      "trunkLateralLean": "Gövde Yana Eğilim",
       "forwardHeadAngle": "İleri Baş Açısı (FHP)",
       "sagittalTrunkLean": "Gövde Öne Eğilim",
-      "kneeFlexionAngle": "Diz Fleksiyonu",
-      "repsCompleted": "Tamamlanan Tekrar",
+      "completedRepetitions": "Tamamlanan Tekrar",
+      "maxLeftKneeFlexion": "Maks. Sol Diz Fleksiyonu",
+      "maxRightKneeFlexion": "Maks. Sağ Diz Fleksiyonu",
+      "maxTrunkShift": "Gövde Yanal Kayması",
       "leftShoulderROM": "Sol Omuz ROM",
       "rightShoulderROM": "Sağ Omuz ROM",
+      "difference": "Sağ/Sol Farkı"
     };
     return map[key] || key;
   };
@@ -108,13 +114,13 @@ export default function PostureReportsPage() {
     session.testResults.forEach(test => {
       test.measurements.forEach(m => {
         if (m.metricKey === "shoulderLevelAngle") shoulderLevel = m.value;
-        if (m.metricKey === "hipLevelAngle") hipLevel = m.value;
+        if (m.metricKey === "pelvicLevelAngle") hipLevel = m.value;
         if (m.metricKey === "forwardHeadAngle") fhp = m.value;
         if (m.metricKey === "sagittalTrunkLean") trunkLean = m.value;
         if (m.metricKey === "leftShoulderROM" || m.metricKey === "rightShoulderROM") {
           minRom = Math.min(minRom, m.value);
         }
-        if (m.metricKey === "repsCompleted") squatReps = m.value;
+        if (m.metricKey === "completedRepetitions") squatReps = m.value;
       });
     });
 
