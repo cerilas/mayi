@@ -125,58 +125,48 @@ export default function PostureReportsPage() {
     });
 
     // 1. Scoliosis Risk
-    if (shoulderLevel > 2 || hipLevel > 2) {
-      let score = Math.min(95, (shoulderLevel + hipLevel) * 9);
-      insights.push({
-        title: "Skolyoz / Asimetri Şüphesi",
-        description: `Omuz (${shoulderLevel.toFixed(1)}°) ve kalça (${hipLevel.toFixed(1)}°) seviyelerinde asimetri tespit edildi.`,
-        riskScore: Math.round(score),
-        color: score > 70 ? "red" : "orange"
-      });
-    }
+    let scoliosisScore = Math.min(95, (shoulderLevel + hipLevel) * 9);
+    insights.push({
+      title: "Skolyoz / Asimetri Eğilimi",
+      description: (shoulderLevel > 2 || hipLevel > 2) 
+        ? `Omuz (${shoulderLevel.toFixed(1)}°) ve kalça (${hipLevel.toFixed(1)}°) seviyelerinde asimetri tespit edildi.`
+        : `Omuz ve kalça hizası normal sınırlarda.`,
+      riskScore: Math.round(scoliosisScore),
+      color: scoliosisScore > 70 ? "red" : (scoliosisScore > 30 ? "orange" : "green")
+    });
 
     // 2. FHP (Forward Head Posture)
-    if (fhp > 12) {
-      let score = Math.min(95, (fhp - 10) * 4);
-      insights.push({
-        title: "İleri Baş Postürü (Boyun Düzleşmesi)",
-        description: `Baş normal dikey eksenden ${fhp.toFixed(1)}° ileride duruyor.`,
-        riskScore: Math.round(score),
-        color: score > 60 ? "red" : (score > 40 ? "orange" : "yellow")
-      });
-    }
+    let fhpScore = Math.max(5, Math.min(95, (fhp - 5) * 4));
+    insights.push({
+      title: "İleri Baş Postürü (Boyun Düzleşmesi)",
+      description: fhp > 12 
+        ? `Baş normal dikey eksenden ${fhp.toFixed(1)}° ileride duruyor.`
+        : `Baş-boyun hizası dikey eksende sağlıklı görünüyor.`,
+      riskScore: Math.round(fhpScore),
+      color: fhpScore > 60 ? "red" : (fhpScore > 30 ? "orange" : "green")
+    });
 
     // 3. Kyphosis (Trunk Lean)
-    if (trunkLean > 6) {
-      let score = Math.min(90, trunkLean * 6);
-      insights.push({
-        title: "Gövde Öne Eğilim (Kifoz Riski)",
-        description: `Gövde dikey eksenden ${trunkLean.toFixed(1)}° öne eğik pozisyonda.`,
-        riskScore: Math.round(score),
-        color: score > 60 ? "red" : "orange"
-      });
-    }
+    let kyphosisScore = Math.max(5, Math.min(90, trunkLean * 6));
+    insights.push({
+      title: "Gövde Öne Eğilim (Kifoz Riski)",
+      description: trunkLean > 6 
+        ? `Gövde dikey eksenden ${trunkLean.toFixed(1)}° öne eğik pozisyonda.`
+        : `Gövde dikliği normal sınırlarda.`,
+      riskScore: Math.round(kyphosisScore),
+      color: kyphosisScore > 60 ? "red" : (kyphosisScore > 30 ? "orange" : "green")
+    });
 
     // 4. Mobility
-    if (minRom < 160) {
-      let score = Math.min(90, (180 - minRom) * 1.5);
-      insights.push({
-        title: "Omuz Mobilite Kısıtlılığı",
-        description: `Omuz eklem açıklığı maksimum ${minRom.toFixed(1)}° seviyesinde kaldı.`,
-        riskScore: Math.round(score),
-        color: score > 60 ? "red" : "orange"
-      });
-    }
-
-    // Fill with good news if empty
-    if (insights.length === 0) {
-      insights.push({
-        title: "Genel Postür Sağlıklı",
-        description: "Temel testlerde belirgin bir duruş bozukluğu veya kısıtlılık saptanmadı.",
-        riskScore: 10,
-        color: "green"
-      });
-    }
+    let mobilityScore = Math.max(5, Math.min(90, (180 - minRom) * 1.5));
+    insights.push({
+      title: "Omuz Mobilite Kısıtlılığı",
+      description: minRom < 160 
+        ? `Omuz eklem açıklığı maksimum ${minRom.toFixed(1)}° seviyesinde kaldı.`
+        : `Omuz hareket açıklığı (ROM) mükemmel seviyede.`,
+      riskScore: Math.round(mobilityScore),
+      color: mobilityScore > 60 ? "red" : (mobilityScore > 30 ? "orange" : "green")
+    });
 
     return insights;
   };
