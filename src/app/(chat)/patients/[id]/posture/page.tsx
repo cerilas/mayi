@@ -176,8 +176,9 @@ export default function PostureReportsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8 w-full max-w-[1600px] mx-auto min-h-screen">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="flex-1 h-full overflow-y-auto bg-gray-50">
+      <div className="p-4 sm:p-8 w-full max-w-[1600px] mx-auto pb-24">
+        <div className="flex items-center gap-4 mb-8">
         <button 
           onClick={() => router.back()}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
