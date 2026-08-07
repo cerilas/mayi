@@ -103,42 +103,50 @@ export default function PostureReportsPage() {
 
   const generateInsights = (session: Session): Insight[] => {
     const insights: Insight[] = [];
-    let shoulderLevel = 0;
+    let shoulderLevel = 0; // degrees, always positive from iOS
     let hipLevel = 0;
     let fhp = 0;
     let trunkLean = 0;
-    let minRom = 180;
-    let leftRom = 180;
-    let rightRom = 180;
-    let squatReps = 5;
+    let leftRom = 0;  // 0 means no data (not 180)
+    let rightRom = 0; // 0 means no data
+    let squatReps = -1; // -1 = no squat data
     let leftKneeFlex = 0;
     let rightKneeFlex = 0;
     let trunkShiftFront = 0;
     let trunkShiftSquat = 0;
+    let hasSquatData = false;
+    let hasRomData = false;
 
     // Extract all metrics from this session
     session.testResults.forEach(test => {
       test.measurements.forEach(m => {
-        if (m.metricKey === "shoulderLevelAngle") shoulderLevel = m.value;
-        if (m.metricKey === "pelvicLevelAngle") hipLevel = m.value;
-        if (m.metricKey === "forwardHeadAngle") fhp = m.value;
-        if (m.metricKey === "sagittalTrunkLean") trunkLean = m.value;
+        if (m.metricKey === "shoulderLevelAngle") (shoulderLevel as any) = Math.abs(m.value);
+        if (m.metricKey === "pelvicLevelAngle") (hipLevel as any) = Math.abs(m.value);
+        if (m.metricKey === "forwardHeadAngle") (fhp as any) = Math.abs(m.value);
+        if (m.metricKey === "sagittalTrunkLean") (trunkLean as any) = Math.abs(m.value);
         
-        if (m.metricKey === "leftShoulderROM") leftRom = m.value;
-        if (m.metricKey === "rightShoulderROM") rightRom = m.value;
-        minRom = Math.min(leftRom, rightRom);
+        if (m.metricKey === "leftShoulderROM") { (leftRom as any) = m.value; (hasRomData as any) = true; }
+        if (m.metricKey === "rightShoulderROM") { (rightRom as any) = m.value; (hasRomData as any) = true; }
 
-        if (m.metricKey === "completedRepetitions") squatReps = m.value;
-        if (m.metricKey === "maxLeftKneeFlexion") leftKneeFlex = m.value;
-        if (m.metricKey === "maxRightKneeFlexion") rightKneeFlex = m.value;
+        if (m.metricKey === "completedRepetitions") { (squatReps as any) = m.value; (hasSquatData as any) = true; }
+        if (m.metricKey === "maxLeftKneeFlexion") { (leftKneeFlex as any) = m.value; (hasSquatData as any) = true; }
+        if (m.metricKey === "maxRightKneeFlexion") { (rightKneeFlex as any) = m.value; (hasSquatData as any) = true; }
         
-        if (m.metricKey === "trunkLateralLean") trunkShiftFront = m.value;
-        if (m.metricKey === "maxTrunkShift") trunkShiftSquat = m.value;
+        if (m.metricKey === "trunkLateralLean") (trunkShiftFront as any) = Math.abs(m.value);
+        if (m.metricKey === "maxTrunkShift") (trunkShiftSquat as any) = m.value;
       });
     });
 
+    // Derived: min ROM (only if ROM data exists)
+    const minRom = hasRomData ? Math.min(
+      leftRom > 0 ? leftRom : 180,
+      rightRom > 0 ? rightRom : 180
+    ) : 180;
+
     // 1. Skolyoz / Asimetri Eğilimi
-    let scoliosisScore = Math.min(95, (shoulderLevel + hipLevel) * 9);
+    // shoulderLevel and hipLevel are always positive (abs applied above)
+    // Normal range: < 2°. Significant: 3-5°. Severe: > 5°.
+    let scoliosisScore = Math.max(5, Math.min(95, (shoulderLevel + hipLevel) * 8));
     insights.push({
       title: "Skolyoz / Asimetri Eğilimi",
       description: (shoulderLevel > 2 || hipLevel > 2) 
@@ -204,8 +212,14 @@ export default function PostureReportsPage() {
       color: aclScore > 60 ? "red" : (aclScore > 30 ? "orange" : "green")
     });
 
-    // 7. Donuk Omuz (Frozen Shoulder)
-    let frozenShoulderScore = Math.max(5, Math.min(95, (120 - minRom) * 2));
+    // 7. Donuk Omuz (Frozen Shoulder) — only score if ROM data present
+    // Clinical cutoff: ROM < 90° = clear frozen shoulder. 90-120° = suspicious. > 120° = likely OK.
+    let frozenShoulderScore: number;
+    if (!hasRomData) {
+      frozenShoulderScore = 5;
+    } else {
+      frozenShoulderScore = Math.max(5, Math.min(95, (110 - minRom) * 2.2));
+    }
     insights.push({
       title: "Donuk Omuz Şüphesi",
       description: frozenShoulderScore > 40 
@@ -216,7 +230,13 @@ export default function PostureReportsPage() {
     });
 
     // 8. Omuz Mobilite Kısıtlılığı
-    let mobilityScore = Math.max(5, Math.min(90, (180 - minRom) * 1.5));
+    // Normal shoulder flexion: 150-180°. Below 150° = notable restriction.
+    let mobilityScore: number;
+    if (!hasRomData) {
+      mobilityScore = 5;
+    } else {
+      mobilityScore = Math.max(5, Math.min(90, (175 - minRom) * 1.2));
+    }
     insights.push({
       title: "Omuz Mobilite Kısıtlılığı (Genel)",
       description: minRom < 160 
@@ -227,8 +247,19 @@ export default function PostureReportsPage() {
     });
 
     // 9. Dizde Sıvı Kaybı / Kireçlenme
-    let kneeFlex = Math.max(leftKneeFlex, rightKneeFlex);
-    let oaScore = Math.max(5, Math.min(95, (squatReps < 5 ? 20 : 0) + (90 - kneeFlex)));
+    // Only score if squat data is present
+    const kneeFlex = Math.max(leftKneeFlex, rightKneeFlex);
+    let oaScore: number;
+    if (!hasSquatData) {
+      // No squat data — cannot assess, show neutral
+      oaScore = 5;
+    } else {
+      // kneeFlex should be 60-120° normally (deep squat ≈ 60°, shallow ≈ 100°+)
+      // Lower flex angle = deeper squat = better. 60° is excellent, 100° is poor.
+      const flexPenalty = Math.max(0, (kneeFlex - 60) * 1.2); // 0 if deep, up to ~48 if very shallow
+      const repPenalty = squatReps < 5 ? (5 - squatReps) * 8 : 0;
+      oaScore = Math.max(5, Math.min(95, flexPenalty + repPenalty));
+    }
     insights.push({
       title: "Dizde Sıvı Kaybı / Kireçlenme",
       description: oaScore > 40 
