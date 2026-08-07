@@ -294,6 +294,7 @@ export default function PostureReportsPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
