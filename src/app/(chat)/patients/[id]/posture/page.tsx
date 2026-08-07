@@ -338,32 +338,41 @@ export default function PostureReportsPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {generateInsights(session).map((insight, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-gray-800 text-sm">{insight.title}</h4>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-md ${
-                          insight.color === 'red' ? 'bg-red-100 text-red-700' :
-                          insight.color === 'orange' ? 'bg-orange-100 text-orange-700' :
-                          insight.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
+                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50 flex gap-4 items-center">
+                      
+                      {/* Circular Progress Bar */}
+                      <div className="relative flex items-center justify-center w-12 h-12 shrink-0">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                          <circle cx="18" cy="18" r="15" fill="none" className="stroke-gray-100" strokeWidth="3" />
+                          <circle 
+                            cx="18" cy="18" r="15" fill="none" 
+                            className={`transition-all duration-1000 ease-out ${
+                              insight.color === 'red' ? 'stroke-red-500' :
+                              insight.color === 'orange' ? 'stroke-orange-400' :
+                              insight.color === 'yellow' ? 'stroke-yellow-400' :
+                              'stroke-green-500'
+                            }`}
+                            strokeWidth="3" 
+                            strokeDasharray="94.2" /* 2 * pi * r (15) = 94.2 */
+                            strokeDashoffset={94.2 - (94.2 * insight.riskScore) / 100}
+                            strokeLinecap="round" 
+                          />
+                        </svg>
+                        <span className={`absolute text-[10px] font-bold ${
+                          insight.color === 'red' ? 'text-red-700' :
+                          insight.color === 'orange' ? 'text-orange-700' :
+                          insight.color === 'yellow' ? 'text-yellow-700' :
+                          'text-green-700'
                         }`}>
-                          % {insight.riskScore} Risk
+                          %{insight.riskScore}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mb-3">{insight.description}</p>
-                      
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div 
-                          className={`h-1.5 rounded-full ${
-                            insight.color === 'red' ? 'bg-red-500' :
-                            insight.color === 'orange' ? 'bg-orange-400' :
-                            insight.color === 'yellow' ? 'bg-yellow-400' :
-                            'bg-green-500'
-                          }`} 
-                          style={{ width: `${insight.riskScore}%` }}
-                        ></div>
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-800 text-sm truncate mb-1" title={insight.title}>{insight.title}</h4>
+                        <p className="text-xs text-gray-500 leading-snug line-clamp-2" title={insight.description}>{insight.description}</p>
                       </div>
+                      
                     </div>
                   ))}
                 </div>
