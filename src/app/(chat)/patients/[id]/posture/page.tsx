@@ -63,7 +63,7 @@ export default function PostureReportsPage() {
     const map: Record<string, string> = {
       "front_static_posture": "Ön Postür Analizi",
       "side_static_posture": "Yan Postür Analizi",
-      "squat": "Squat Analizi",
+      "squat_5_reps": "Squat Analizi (5 Tekrar)",
       "shoulder_flexion": "Omuz Fleksiyonu",
       "shoulder_abduction": "Omuz Abdüksiyonu"
     };
