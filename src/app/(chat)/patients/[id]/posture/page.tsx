@@ -109,6 +109,9 @@ export default function PostureReportsPage() {
     let trunkLean = 0;
     let minRom = 180;
     let squatReps = 5;
+    let kneeFlex = 0;
+    let trunkShiftFront = 0;
+    let trunkShiftSquat = 0;
 
     // Extract all metrics from this session
     session.testResults.forEach(test => {
@@ -121,6 +124,11 @@ export default function PostureReportsPage() {
           minRom = Math.min(minRom, m.value);
         }
         if (m.metricKey === "completedRepetitions") squatReps = m.value;
+        if (m.metricKey === "maxLeftKneeFlexion" || m.metricKey === "maxRightKneeFlexion") {
+          kneeFlex = Math.max(kneeFlex, m.value); // Just keeping the best flexion they achieved
+        }
+        if (m.metricKey === "trunkLateralLean") trunkShiftFront = m.value;
+        if (m.metricKey === "maxTrunkShift") trunkShiftSquat = m.value;
       });
     });
 
@@ -166,6 +174,33 @@ export default function PostureReportsPage() {
         : `Omuz hareket açıklığı (ROM) mükemmel seviyede.`,
       riskScore: Math.round(mobilityScore),
       color: mobilityScore > 60 ? "red" : (mobilityScore > 30 ? "orange" : "green")
+    });
+
+    // 5. Knee/Lower Extremity Weakness
+    // Typically 90+ is a good squat. If they can't hit 70 or can't do 5 reps, risk increases.
+    let kneeScore = 5;
+    if (squatReps < 5) kneeScore += (5 - squatReps) * 15;
+    if (kneeFlex > 0 && kneeFlex < 80) kneeScore += (80 - kneeFlex); 
+    kneeScore = Math.max(5, Math.min(95, kneeScore));
+    
+    insights.push({
+      title: "Alt Ekstremite (Diz/Kalça) Zayıflığı",
+      description: (kneeScore > 30)
+        ? `Squat performansında kısıtlılık veya yetersiz diz bükülmesi (${kneeFlex > 0 ? kneeFlex.toFixed(1) + '°' : 'Ölçülemedi'}) saptandı.`
+        : `Alt ekstremite kuvveti ve çökme derinliği sağlıklı sınırlarda.`,
+      riskScore: Math.round(kneeScore),
+      color: kneeScore > 60 ? "red" : (kneeScore > 30 ? "orange" : "green")
+    });
+
+    // 6. Lateral Trunk Shift (Kompansasyon / Yükten Kaçınma)
+    let shiftScore = Math.max(5, Math.min(95, (trunkShiftFront + trunkShiftSquat) * 8));
+    insights.push({
+      title: "Gövde Yanal Kayması (Kompansasyon)",
+      description: shiftScore > 30 
+        ? `Ayakta veya squat sırasında gövde bir yöne doğru kayıyor. Ağrıdan kaçınma veya core zayıflığı olabilir.`
+        : `Gövde ağırlık merkezi hareket sırasında dengeli.`,
+      riskScore: Math.round(shiftScore),
+      color: shiftScore > 60 ? "red" : (shiftScore > 30 ? "orange" : "green")
     });
 
     return insights;
