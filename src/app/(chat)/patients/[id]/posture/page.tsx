@@ -27,6 +27,13 @@ interface Session {
   testResults: TestResult[];
 }
 
+interface Insight {
+  title: string;
+  description: string;
+  riskScore: number; // 0-100
+  color: "red" | "orange" | "yellow" | "green";
+}
+
 export default function PostureReportsPage() {
   const { id: userId } = useParams();
   const router = useRouter();
@@ -88,6 +95,86 @@ export default function PostureReportsPage() {
     return map[key] || key;
   };
 
+  const generateInsights = (session: Session): Insight[] => {
+    const insights: Insight[] = [];
+    let shoulderLevel = 0;
+    let hipLevel = 0;
+    let fhp = 0;
+    let trunkLean = 0;
+    let minRom = 180;
+    let squatReps = 5;
+
+    // Extract all metrics from this session
+    session.testResults.forEach(test => {
+      test.measurements.forEach(m => {
+        if (m.metricKey === "shoulderLevelAngle") shoulderLevel = m.value;
+        if (m.metricKey === "hipLevelAngle") hipLevel = m.value;
+        if (m.metricKey === "forwardHeadAngle") fhp = m.value;
+        if (m.metricKey === "sagittalTrunkLean") trunkLean = m.value;
+        if (m.metricKey === "leftShoulderROM" || m.metricKey === "rightShoulderROM") {
+          minRom = Math.min(minRom, m.value);
+        }
+        if (m.metricKey === "repsCompleted") squatReps = m.value;
+      });
+    });
+
+    // 1. Scoliosis Risk
+    if (shoulderLevel > 2 || hipLevel > 2) {
+      let score = Math.min(95, (shoulderLevel + hipLevel) * 9);
+      insights.push({
+        title: "Skolyoz / Asimetri Şüphesi",
+        description: `Omuz (${shoulderLevel.toFixed(1)}°) ve kalça (${hipLevel.toFixed(1)}°) seviyelerinde asimetri tespit edildi.`,
+        riskScore: Math.round(score),
+        color: score > 70 ? "red" : "orange"
+      });
+    }
+
+    // 2. FHP (Forward Head Posture)
+    if (fhp > 12) {
+      let score = Math.min(95, (fhp - 10) * 4);
+      insights.push({
+        title: "İleri Baş Postürü (Boyun Düzleşmesi)",
+        description: `Baş normal dikey eksenden ${fhp.toFixed(1)}° ileride duruyor.`,
+        riskScore: Math.round(score),
+        color: score > 60 ? "red" : (score > 40 ? "orange" : "yellow")
+      });
+    }
+
+    // 3. Kyphosis (Trunk Lean)
+    if (trunkLean > 6) {
+      let score = Math.min(90, trunkLean * 6);
+      insights.push({
+        title: "Gövde Öne Eğilim (Kifoz Riski)",
+        description: `Gövde dikey eksenden ${trunkLean.toFixed(1)}° öne eğik pozisyonda.`,
+        riskScore: Math.round(score),
+        color: score > 60 ? "red" : "orange"
+      });
+    }
+
+    // 4. Mobility
+    if (minRom < 160) {
+      let score = Math.min(90, (180 - minRom) * 1.5);
+      insights.push({
+        title: "Omuz Mobilite Kısıtlılığı",
+        description: `Omuz eklem açıklığı maksimum ${minRom.toFixed(1)}° seviyesinde kaldı.`,
+        riskScore: Math.round(score),
+        color: score > 60 ? "red" : "orange"
+      });
+    }
+
+    // Fill with good news if empty
+    if (insights.length === 0) {
+      insights.push({
+        title: "Genel Postür Sağlıklı",
+        description: "Temel testlerde belirgin bir duruş bozukluğu veya kısıtlılık saptanmadı.",
+        riskScore: 10,
+        color: "green"
+      });
+    }
+
+    return insights;
+  };
+
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto min-h-screen">
       <div className="flex items-center gap-4 mb-8">
@@ -129,6 +216,45 @@ export default function PostureReportsPage() {
                 </div>
               </div>
               
+              {/* AI Insights Section */}
+              <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 border-b border-indigo-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <h3 className="font-bold text-indigo-900 text-sm">Yapay Zeka Değerlendirmesi</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {generateInsights(session).map((insight, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-800 text-sm">{insight.title}</h4>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-md ${
+                          insight.color === 'red' ? 'bg-red-100 text-red-700' :
+                          insight.color === 'orange' ? 'bg-orange-100 text-orange-700' :
+                          insight.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          % {insight.riskScore} Risk
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3">{insight.description}</p>
+                      
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div 
+                          className={`h-1.5 rounded-full ${
+                            insight.color === 'red' ? 'bg-red-500' :
+                            insight.color === 'orange' ? 'bg-orange-400' :
+                            insight.color === 'yellow' ? 'bg-yellow-400' :
+                            'bg-green-500'
+                          }`} 
+                          style={{ width: `${insight.riskScore}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {session.testResults.map((test) => (
