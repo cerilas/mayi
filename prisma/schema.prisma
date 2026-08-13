@@ -137,6 +137,7 @@ model PostureSession {
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   appointmentCode String?
   deviceInfo      String?
+  clinicalOpinion String?
   completedAt     DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -155,6 +156,7 @@ model PostureTestResult {
   testType       String
   overallQuality String
   avgConfidence  Float                @default(0)
+  snapshotUrl    String?
   createdAt      DateTime             @default(now())
   measurements   PostureMeasurement[]
 

@@ -21,6 +21,7 @@ interface TestResultPayload {
   testType: string;
   overallQuality: string;
   avgConfidence: number;
+  snapshotUrl?: string;
   measurements: MeasurementPayload[];
 }
 
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
             testType: tr.testType,
             overallQuality: tr.overallQuality,
             avgConfidence: tr.avgConfidence,
+            snapshotUrl: tr.snapshotUrl || null,
             measurements: {
               create: tr.measurements.map((m) => ({
                 metricKey: m.metricKey,
