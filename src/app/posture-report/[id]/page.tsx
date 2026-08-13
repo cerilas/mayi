@@ -655,7 +655,7 @@ function ReportInner() {
             <div className="rpt-patient-avatar">
               {patient.profile?.photo ? (
                 <img 
-                  src={patient.profile.photo.startsWith('http') ? patient.profile.photo : `/${patient.profile.photo}`} 
+                  src={patient.profile.photo.startsWith('http') || patient.profile.photo.startsWith('/') ? patient.profile.photo : `/${patient.profile.photo}`} 
                   alt={patient.name} 
                   onError={(e) => {
                     // Resim yüklenemezse placeholder'ı göster

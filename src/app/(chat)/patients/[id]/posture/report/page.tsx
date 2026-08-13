@@ -620,7 +620,7 @@ export default function PostureReportPage() {
             {/* Avatar */}
             <div className="rpt-patient-avatar">
               {patient.profile?.photo
-                ? <img src={`/${patient.profile.photo}`} alt={patient.name} />
+                ? <img src={patient.profile.photo.startsWith('http') || patient.profile.photo.startsWith('/') ? patient.profile.photo : `/${patient.profile.photo}`} alt={patient.name} />
                 : <User size={48} />
               }
             </div>
