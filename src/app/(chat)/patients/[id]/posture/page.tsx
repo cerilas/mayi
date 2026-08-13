@@ -530,9 +530,12 @@ export default function PostureReportsPage() {
                       
                       <div className="p-4 space-y-3">
                         {test.snapshotUrl && (
-                          <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 bg-black flex justify-center">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`/${test.snapshotUrl}`} alt={formatTestType(test.testType)} className="w-full h-48 object-contain" />
+                          <div className="mb-4 bg-gray-50 rounded-lg p-2 border border-gray-100 flex justify-center">
+                            <img 
+                              src={test.snapshotUrl.startsWith('http') ? test.snapshotUrl : (test.snapshotUrl.startsWith('uploads/') ? `/api/${test.snapshotUrl}` : `/${test.snapshotUrl}`)} 
+                              alt={formatTestType(test.testType)} 
+                              className="w-full h-48 object-contain" 
+                            />
                           </div>
                         )}
                         {test.measurements.map((m) => (
