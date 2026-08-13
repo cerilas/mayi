@@ -528,16 +528,17 @@ export default function PostureReportsPage() {
                         {formatQuality(test.overallQuality)}
                       </div>
                       
-                      <div className="p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row p-4 gap-4">
                         {test.snapshotUrl && (
-                          <div className="mb-4 bg-gray-50 rounded-lg p-2 border border-gray-100 flex justify-center">
+                          <div className="w-full sm:w-2/5 bg-gray-50 rounded-lg p-2 border border-gray-100 flex justify-center h-[280px]">
                             <img 
                               src={test.snapshotUrl.startsWith('http') ? test.snapshotUrl : (test.snapshotUrl.startsWith('uploads/') ? `/api/${test.snapshotUrl}` : `/${test.snapshotUrl}`)} 
                               alt={formatTestType(test.testType)} 
-                              className="w-full h-48 object-contain" 
+                              className="w-full h-full object-contain" 
                             />
                           </div>
                         )}
+                        <div className="w-full sm:w-3/5 flex flex-col justify-center space-y-3">
                         {test.measurements.map((m) => (
                           <div key={m.id} className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-600">{formatMetricName(m.metricKey)}</span>
@@ -554,6 +555,7 @@ export default function PostureReportsPage() {
                         {test.measurements.length === 0 && (
                           <p className="text-sm text-gray-400 italic">Ölçüm verisi yok.</p>
                         )}
+                        </div>
                       </div>
                     </div>
                   ))}

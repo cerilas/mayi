@@ -472,22 +472,28 @@ function ReportInner() {
           border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden;
           background: rgba(255,255,255,0.7); backdrop-filter: blur(20px);
           box-shadow: 0 8px 32px rgba(0,0,0,0.03);
+          display: flex; flex-direction: column;
         }
         .rpt-test-header {
-          padding: 16px 24px; background: rgba(255,255,255,0.9);
-          border-bottom: 1px solid rgba(0,0,0,0.05);
+          padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
           display: flex; justify-content: space-between; align-items: center;
+          background: rgba(255,255,255,0.8);
         }
         .rpt-test-header h4 { font-size: 15px; font-weight: 700; color: #0f172a; }
-        .rpt-test-snapshot {
-          width: 100%; height: 240px; object-fit: cover; display: block;
+        
+        .rpt-test-content {
+          display: flex; flex-direction: row; flex: 1;
         }
         .rpt-test-snapshot-wrap {
-          background: #f8fafc; display: flex; align-items: center; justify-content: center;
-          height: 240px; border-bottom: 1px solid rgba(0,0,0,0.05);
+          width: 40%; background: #f8fafc; border-right: 1px solid rgba(0,0,0,0.05);
+          display: flex; align-items: center; justify-content: center;
           color: #cbd5e1;
         }
-        .rpt-test-body { padding: 20px 24px; }
+        .rpt-test-snapshot {
+          width: 100%; height: 100%; object-fit: contain; display: block;
+          max-height: 280px;
+        }
+        .rpt-test-body { width: 60%; padding: 20px 24px; display: flex; flex-direction: column; justify-content: center; }
         .rpt-metric-row {
           display: flex; justify-content: space-between; align-items: center;
           padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
