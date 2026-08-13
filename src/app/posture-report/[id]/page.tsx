@@ -585,9 +585,12 @@ function ReportInner() {
             break-inside: avoid !important; page-break-inside: avoid !important;
           }
           
-          /* 3-Column layout enforced in print */
-          .rpt-insights-grid, .rpt-test-grid, .rpt-rec-grid {
+          /* Layouts enforced in print */
+          .rpt-insights-grid, .rpt-rec-grid {
             display: grid !important; grid-template-columns: repeat(3, 1fr) !important;
+          }
+          .rpt-test-grid {
+            display: grid !important; grid-template-columns: repeat(2, 1fr) !important;
           }
           
           /* Keep sections together */
