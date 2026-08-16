@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { 
-  ArrowLeft, Download, Activity, Target, RotateCw, Fingerprint, 
-  Heart, Navigation, Move, ZoomIn, Bone, Info, Stethoscope, 
+import {
+  ArrowLeft, Download, Activity, Target, RotateCw, Fingerprint,
+  Heart, Navigation, Move, ZoomIn, Bone, Info, Stethoscope,
   ClipboardList, CheckCircle2, AlertTriangle, ShieldAlert, Image as ImageIcon
 } from "lucide-react";
 
@@ -571,12 +571,13 @@ function ReportInner() {
           @page { size: A4 portrait; margin: 10mm; }
           html, body, .min-h-screen, .rpt-canvas { 
             background: white !important; min-height: 0 !important; height: auto !important; display: block !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
           }
           .rpt-toolbar { display: none !important; }
           
           /* AGGRESSIVE SHRINKING */
-          .rpt-canvas { padding: 0 !important; max-width: 100% !important; zoom: 0.55 !important; }
+          .rpt-canvas { padding: 0 !important; max-width: 100% !important; }
           
           /* Strip heavy effects for crisp printing */
           .rpt-cover, .rpt-risk-card, .rpt-insight-card, .rpt-test-card, .rpt-clinical-box, .rpt-patient-note, .rpt-disclaimer, .rpt-rec-card, .rpt-contact-card {
@@ -604,7 +605,7 @@ function ReportInner() {
           <ArrowLeft size={16} /> Geri
         </button>
         <span className="rpt-toolbar-title">
-          <ClipboardList size={18} className="text-indigo-600" /> 
+          <ClipboardList size={18} className="text-indigo-600" />
           Postür Analiz Raporu — <strong className="text-indigo-900">{patient.name}</strong>
         </span>
 
@@ -654,9 +655,9 @@ function ReportInner() {
             {/* Avatar */}
             <div className="rpt-patient-avatar">
               {patient.profile?.photo ? (
-                <img 
-                  src={patient.profile.photo.startsWith('http') || patient.profile.photo.startsWith('/') ? patient.profile.photo : `/${patient.profile.photo}`} 
-                  alt={patient.name} 
+                <img
+                  src={patient.profile.photo.startsWith('http') || patient.profile.photo.startsWith('/') ? patient.profile.photo : `/${patient.profile.photo}`}
+                  alt={patient.name}
                   onError={(e) => {
                     // Resim yüklenemezse placeholder'ı göster
                     e.currentTarget.style.display = 'none';
@@ -666,18 +667,18 @@ function ReportInner() {
                   }}
                 />
               ) : null}
-              <svg 
-                viewBox="0 0 110 110" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="110" 
-                height="110" 
+              <svg
+                viewBox="0 0 110 110"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                width="110"
+                height="110"
                 style={{ display: patient.profile?.photo ? "none" : "block" }}
               >
-                <rect width="110" height="110" fill="#e2e8f0"/>
-                <circle cx="55" cy="40" r="20" fill="#94a3b8"/>
-                <ellipse cx="55" cy="95" rx="34" ry="26" fill="#94a3b8"/>
-                <ellipse cx="55" cy="76" rx="11" ry="9" fill="#e2e8f0"/>
+                <rect width="110" height="110" fill="#e2e8f0" />
+                <circle cx="55" cy="40" r="20" fill="#94a3b8" />
+                <ellipse cx="55" cy="95" rx="34" ry="26" fill="#94a3b8" />
+                <ellipse cx="55" cy="76" rx="11" ry="9" fill="#e2e8f0" />
               </svg>
             </div>
 
@@ -776,7 +777,7 @@ function ReportInner() {
           {/* Short desc */}
           {patient.profile?.shortDescription && (
             <div className="rpt-patient-note">
-              <strong><Info size={16} style={{ color: "var(--brand)" }} /> Hasta Notu:</strong> 
+              <strong><Info size={16} style={{ color: "var(--brand)" }} /> Hasta Notu:</strong>
               <p>{patient.profile.shortDescription}</p>
             </div>
           )}
@@ -979,7 +980,7 @@ function ReportInner() {
             </div>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0, opacity: 0.9 }}>
-             <img src="/logo.png" alt="MyFizyoTerapi" style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "6px" }} />
+            <img src="/logo.png" alt="MyFizyoTerapi" style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "6px" }} />
           </div>
         </div>
       </div>
