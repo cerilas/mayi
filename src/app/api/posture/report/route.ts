@@ -48,6 +48,7 @@ export async function GET(req: Request) {
           include: { measurements: true },
           orderBy: { createdAt: "asc" },
         },
+        insightOverrides: true,
       },
     });
 

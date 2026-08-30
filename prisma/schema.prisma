@@ -31,6 +31,8 @@ model User {
   postureAppointments PostureAppointment[]
   postureSessions     PostureSession[]
   postureTestResults  PostureTestResult[]
+  insightOverrides    PostureInsightOverride[]
+  insightOverrideLogs PostureInsightOverrideHistory[]
 }
 
 model Conversation {
@@ -141,9 +143,46 @@ model PostureSession {
   completedAt     DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  testResults     PostureTestResult[]
+  testResults      PostureTestResult[]
+  insightOverrides PostureInsightOverride[]
+  insightHistory   PostureInsightOverrideHistory[]
 
   @@index([userId])
+}
+
+/// Fizyoterapistin 14 AI risk kriteri üzerindeki güncel yüzdelik override'ı
+model PostureInsightOverride {
+  id             String         @id @default(cuid())
+  sessionId      String
+  session        PostureSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  insightKey     String
+  aiScore        Float
+  clinicianScore Float
+  clinicianId    String?
+  clinician      User?          @relation(fields: [clinicianId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([sessionId, insightKey])
+  @@index([sessionId])
+  @@index([clinicianId])
+}
+
+/// Her override değişiminin denetim kaydı
+model PostureInsightOverrideHistory {
+  id             String         @id @default(cuid())
+  sessionId      String
+  session        PostureSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  insightKey     String
+  aiScore        Float
+  previousScore  Float?
+  clinicianScore Float
+  clinicianId    String?
+  clinician      User?          @relation(fields: [clinicianId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+
+  @@index([sessionId, insightKey])
+  @@index([clinicianId])
 }
 
 /// Her modülün sonucu (front_static_posture, shoulder_flexion vb.)

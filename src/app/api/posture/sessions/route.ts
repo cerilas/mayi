@@ -113,6 +113,7 @@ export async function GET(req: Request) {
         testResults: {
           include: { measurements: true },
         },
+        insightOverrides: true,
       },
     });
 

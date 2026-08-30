@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import {
+  generateInsights,
+  applyInsightOverrides,
+  colorFromScore,
+  type InsightColor,
+} from "@/lib/posture-report-data";
 
 interface Measurement {
   id: string;
@@ -10,6 +15,7 @@ interface Measurement {
   value: number;
   unit: string;
   quality: string;
+  confidence?: number;
 }
 
 interface TestResult {
@@ -27,13 +33,11 @@ interface Session {
   createdAt: string;
   clinicalOpinion?: string;
   testResults: TestResult[];
-}
-
-interface Insight {
-  title: string;
-  description: string;
-  riskScore: number; // 0-100
-  color: "red" | "orange" | "yellow" | "green";
+  insightOverrides?: Array<{
+    insightKey: string;
+    aiScore: number;
+    clinicianScore: number;
+  }>;
 }
 
 export default function PostureReportsPage() {
@@ -44,22 +48,33 @@ export default function PostureReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [opinions, setOpinions] = useState<Record<string, string>>({});
+  const [clinicianScores, setClinicianScores] = useState<Record<string, Record<string, number>>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saveStatus, setSaveStatus] = useState<Record<string, { type: "success" | "error", message: string } | null>>({});
 
   const handleSaveOpinion = async (sessionId: string) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
     setSaving(prev => ({ ...prev, [sessionId]: true }));
     setSaveStatus(prev => ({ ...prev, [sessionId]: null }));
     try {
+      const aiInsights = generateInsights(session);
+      const insightOverrides = aiInsights.map((insight) => ({
+        insightKey: insight.key,
+        aiScore: insight.aiScore,
+        clinicianScore: clinicianScores[sessionId]?.[insight.key] ?? insight.aiScore,
+      }));
       const res = await fetch(`/api/posture/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clinicalOpinion: opinions[sessionId] || "" })
+        body: JSON.stringify({
+          clinicalOpinion: opinions[sessionId] || "",
+          insightOverrides,
+        })
       });
-      if (!res.ok) throw new Error("Görüş kaydedilemedi, tekrar deneyin.");
-      // Update session locally so the PDF button becomes enabled
-      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, clinicalOpinion: opinions[sessionId] } : s));
-      setSaveStatus(prev => ({ ...prev, [sessionId]: { type: "success", message: "Görüş başarıyla kaydedildi!" } }));
+      if (!res.ok) throw new Error("Kayıt başarısız, tekrar deneyin.");
+      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, clinicalOpinion: opinions[sessionId], insightOverrides } : s));
+      setSaveStatus(prev => ({ ...prev, [sessionId]: { type: "success", message: "Görüş ve risk yüzdeleri kaydedildi!" } }));
       
       setTimeout(() => {
         setSaveStatus(prev => ({ ...prev, [sessionId]: null }));
@@ -79,10 +94,16 @@ export default function PostureReportsPage() {
         const data = await res.json();
         setSessions(data);
         const initialOpinions: Record<string, string> = {};
+        const initialScores: Record<string, Record<string, number>> = {};
         data.forEach((s: Session) => {
           if (s.clinicalOpinion) initialOpinions[s.id] = s.clinicalOpinion;
+          const applied = applyInsightOverrides(generateInsights(s), s.insightOverrides);
+          initialScores[s.id] = Object.fromEntries(
+            applied.map((i) => [i.key, i.clinicianScore ?? i.aiScore])
+          );
         });
         setOpinions(initialOpinions);
+        setClinicianScores(initialScores);
       } catch (err: any) {
         setError(err.message || "Bir hata oluştu");
       } finally {
@@ -133,224 +154,6 @@ export default function PostureReportsPage() {
       "difference": "Sağ/Sol Farkı"
     };
     return map[key] || key;
-  };
-
-  const generateInsights = (session: Session): Insight[] => {
-    const insights: Insight[] = [];
-    let shoulderLevel = 0; // degrees, always positive from iOS
-    let hipLevel = 0;
-    let fhp = 0;
-    let trunkLean = 0;
-    let leftRom = 0;  // 0 means no data (not 180)
-    let rightRom = 0; // 0 means no data
-    let squatReps = -1; // -1 = no squat data
-    let leftKneeFlex = 0;
-    let rightKneeFlex = 0;
-    let trunkShiftFront = 0;
-    let trunkShiftSquat = 0;
-    let hasSquatData = false;
-    let hasRomData = false;
-
-    // Extract all metrics from this session
-    session.testResults.forEach(test => {
-      test.measurements.forEach(m => {
-        if (m.metricKey === "shoulderLevelAngle") (shoulderLevel as any) = Math.abs(m.value);
-        if (m.metricKey === "pelvicLevelAngle") (hipLevel as any) = Math.abs(m.value);
-        if (m.metricKey === "forwardHeadAngle") (fhp as any) = Math.abs(m.value);
-        if (m.metricKey === "sagittalTrunkLean") (trunkLean as any) = Math.abs(m.value);
-        
-        if (m.metricKey === "leftShoulderROM") { (leftRom as any) = m.value; (hasRomData as any) = true; }
-        if (m.metricKey === "rightShoulderROM") { (rightRom as any) = m.value; (hasRomData as any) = true; }
-
-        if (m.metricKey === "completedRepetitions") { (squatReps as any) = m.value; (hasSquatData as any) = true; }
-        if (m.metricKey === "maxLeftKneeFlexion") { (leftKneeFlex as any) = m.value; (hasSquatData as any) = true; }
-        if (m.metricKey === "maxRightKneeFlexion") { (rightKneeFlex as any) = m.value; (hasSquatData as any) = true; }
-        
-        if (m.metricKey === "trunkLateralLean") (trunkShiftFront as any) = Math.abs(m.value);
-        if (m.metricKey === "maxTrunkShift") (trunkShiftSquat as any) = m.value;
-      });
-    });
-
-    // Derived: min ROM (only if ROM data exists)
-    const minRom = hasRomData ? Math.min(
-      leftRom > 0 ? leftRom : 180,
-      rightRom > 0 ? rightRom : 180
-    ) : 180;
-
-    // 1. Skolyoz / Asimetri Eğilimi
-    // shoulderLevel and hipLevel are always positive (abs applied above)
-    // Normal range: < 2°. Significant: 3-5°. Severe: > 5°.
-    let scoliosisScore = Math.max(5, Math.min(95, (shoulderLevel + hipLevel) * 8));
-    insights.push({
-      title: "Skolyoz / Asimetri Eğilimi",
-      description: (shoulderLevel > 2 || hipLevel > 2) 
-        ? `Omuz (${shoulderLevel.toFixed(1)}°) ve kalça (${hipLevel.toFixed(1)}°) seviyelerinde asimetri tespit edildi.`
-        : `Omuz ve kalça hizası normal sınırlarda.`,
-      riskScore: Math.round(scoliosisScore),
-      color: scoliosisScore > 70 ? "red" : (scoliosisScore > 30 ? "orange" : "green")
-    });
-
-    // 2. İleri Baş Postürü (Boyun Düzleşmesi)
-    let fhpScore = Math.max(5, Math.min(95, (fhp - 5) * 4));
-    insights.push({
-      title: "İleri Baş Postürü / Boyun Düzleşmesi",
-      description: fhp > 12 
-        ? `Baş normal dikey eksenden ${fhp.toFixed(1)}° ileride duruyor.`
-        : `Baş-boyun hizası dikey eksende sağlıklı görünüyor.`,
-      riskScore: Math.round(fhpScore),
-      color: fhpScore > 60 ? "red" : (fhpScore > 30 ? "orange" : "green")
-    });
-
-    // 3. Gövde Öne Eğilim (Kifoz Riski)
-    let kyphosisScore = Math.max(5, Math.min(90, trunkLean * 6));
-    insights.push({
-      title: "Gövde Öne Eğilim (Kifoz / Kamburluk)",
-      description: trunkLean > 6 
-        ? `Gövde dikey eksenden ${trunkLean.toFixed(1)}° öne eğik pozisyonda.`
-        : `Gövde dikliği normal sınırlarda.`,
-      riskScore: Math.round(kyphosisScore),
-      color: kyphosisScore > 60 ? "red" : (kyphosisScore > 30 ? "orange" : "green")
-    });
-
-    // 4. Bel Fıtığı Riski (Yanal Gövde Kayması + Pelvis)
-    let herniatedDiscScore = Math.max(5, Math.min(95, (trunkShiftFront + hipLevel) * 10));
-    insights.push({
-      title: "Bel Fıtığı Riski (Kompansasyon)",
-      description: herniatedDiscScore > 30 
-        ? `Ağrıdan kaçınmak için gövde ağırlık merkezinin asimetrik dağıldığı tespit edildi.`
-        : `Bel ve pelvis bölgesi dengeli yük taşıyor.`,
-      riskScore: Math.round(herniatedDiscScore),
-      color: herniatedDiscScore > 60 ? "red" : (herniatedDiscScore > 30 ? "orange" : "green")
-    });
-
-    // 5. Boyun Fıtığı Riski
-    let cervicalScore = Math.max(5, Math.min(95, (fhp > 15 ? (fhp * 3) : 5) + (Math.abs(leftRom - rightRom) * 0.5)));
-    insights.push({
-      title: "Boyun Fıtığı Riski",
-      description: cervicalScore > 30 
-        ? `Şiddetli ileri baş postürü servikal sinir baskısı ve boyun fıtığı riski taşıyor.`
-        : `Boyun ekseninde riskli bir baskı saptanmadı.`,
-      riskScore: Math.round(cervicalScore),
-      color: cervicalScore > 60 ? "red" : (cervicalScore > 30 ? "orange" : "green")
-    });
-
-    // 6. Menisküs / Ön Çapraz Bağ (Asimetrik Diz Flex)
-    let kneeAsymmetry = Math.abs(leftKneeFlex - rightKneeFlex);
-    let aclScore = Math.max(5, Math.min(95, kneeAsymmetry * 4));
-    insights.push({
-      title: "Menisküs / Çapraz Bağ Riski",
-      description: kneeAsymmetry > 15 
-        ? `Sağ ve sol dizin bükülme açıları arasında ciddi fark var (Kısıtlılık).`
-        : `Her iki dizin bükülme açısı ve yük dağılımı dengeli.`,
-      riskScore: Math.round(aclScore),
-      color: aclScore > 60 ? "red" : (aclScore > 30 ? "orange" : "green")
-    });
-
-    // 7. Donuk Omuz (Frozen Shoulder) — only score if ROM data present
-    // Clinical cutoff: ROM < 90° = clear frozen shoulder. 90-120° = suspicious. > 120° = likely OK.
-    let frozenShoulderScore: number;
-    if (!hasRomData) {
-      frozenShoulderScore = 5;
-    } else {
-      frozenShoulderScore = Math.max(5, Math.min(95, (110 - minRom) * 2.2));
-    }
-    insights.push({
-      title: "Donuk Omuz Şüphesi",
-      description: frozenShoulderScore > 40 
-        ? `Omuz eklem açıklığı kritik seviyede (< 100°) kısıtlanmış.`
-        : `Omuz kapsülünde ciddi bir donukluk belirtisi yok.`,
-      riskScore: Math.round(frozenShoulderScore),
-      color: frozenShoulderScore > 60 ? "red" : (frozenShoulderScore > 30 ? "orange" : "green")
-    });
-
-    // 8. Omuz Mobilite Kısıtlılığı
-    // Normal shoulder flexion: 150-180°. Below 150° = notable restriction.
-    let mobilityScore: number;
-    if (!hasRomData) {
-      mobilityScore = 5;
-    } else {
-      mobilityScore = Math.max(5, Math.min(90, (175 - minRom) * 1.2));
-    }
-    insights.push({
-      title: "Omuz Mobilite Kısıtlılığı (Genel)",
-      description: minRom < 160 
-        ? `Omuz eklem açıklığı ideal 180°'nin altında kaldı (${minRom.toFixed(1)}°).`
-        : `Omuz hareket açıklığı mükemmel seviyede.`,
-      riskScore: Math.round(mobilityScore),
-      color: mobilityScore > 60 ? "red" : (mobilityScore > 30 ? "orange" : "green")
-    });
-
-    // 9. Dizde Sıvı Kaybı / Kireçlenme
-    // Only score if squat data is present
-    const kneeFlex = Math.max(leftKneeFlex, rightKneeFlex);
-    let oaScore: number;
-    if (!hasSquatData) {
-      // No squat data — cannot assess, show neutral
-      oaScore = 5;
-    } else {
-      // kneeFlex should be 60-120° normally (deep squat ≈ 60°, shallow ≈ 100°+)
-      // Lower flex angle = deeper squat = better. 60° is excellent, 100° is poor.
-      const flexPenalty = Math.max(0, (kneeFlex - 60) * 1.2); // 0 if deep, up to ~48 if very shallow
-      const repPenalty = squatReps < 5 ? (5 - squatReps) * 8 : 0;
-      oaScore = Math.max(5, Math.min(95, flexPenalty + repPenalty));
-    }
-    insights.push({
-      title: "Dizde Sıvı Kaybı / Kireçlenme",
-      description: oaScore > 40 
-        ? `Squat derinliği ve tekrar sayısında ciddi yetersizlik mevcut.`
-        : `Alt ekstremite gücü ve eklem aralığı sağlıklı.`,
-      riskScore: Math.round(oaScore),
-      color: oaScore > 60 ? "red" : (oaScore > 30 ? "orange" : "green")
-    });
-
-    // 10. Kulak Çınlaması (Servikojenik)
-    let tinnitusScore = Math.max(5, Math.min(90, (fhp - 12) * 5));
-    insights.push({
-      title: "Kulak Çınlaması (Servikojenik Bağlantı)",
-      description: tinnitusScore > 40 
-        ? `Boyun kaslarındaki aşırı gerginlik ve boyun düzleşmesi çınlamayı tetikleyebilir.`
-        : `Servikal eksende çınlamaya yol açacak gerginlik görülmüyor.`,
-      riskScore: Math.round(tinnitusScore),
-      color: tinnitusScore > 60 ? "red" : (tinnitusScore > 30 ? "orange" : "green")
-    });
-
-    // 11. Genel Duruş Bozukluğu (Postüral Sendrom)
-    let generalPostureScore = Math.round((scoliosisScore + fhpScore + kyphosisScore) / 3);
-    insights.push({
-      title: "Genel Duruş Bozukluğu",
-      description: generalPostureScore > 30 
-        ? `Birden fazla postüral sapma bir arada görülüyor.`
-        : `Genel iskelet yapısı ve duruş formu çok sağlıklı.`,
-      riskScore: generalPostureScore,
-      color: generalPostureScore > 60 ? "red" : (generalPostureScore > 30 ? "orange" : "green")
-    });
-
-    // 12. Fibromiyalji (Dolaylı Analiz)
-    let fibroScore = Math.max(5, Math.min(60, (generalPostureScore * 0.8)));
-    insights.push({
-      title: "Fibromiyalji (Dolaylı)",
-      description: `Bu oran duruş bozukluğunun kronik yaygın ağrı yaratma potansiyelidir (Özel klinik test gerektirir).`,
-      riskScore: Math.round(fibroScore),
-      color: fibroScore > 40 ? "orange" : "green"
-    });
-
-    // 13. Tenisçi/Golfçü Dirseği (Dolaylı)
-    insights.push({
-      title: "Tenisçi/Golfçü Dirseği (Dolaylı)",
-      description: `Dirsek ve el bileği için spesifik ROM testleri gereklidir. Omuz analizi üzerinden yansıyan risk bulunamadı.`,
-      riskScore: 5,
-      color: "green"
-    });
-
-    // 14. Topuk Dikeni / Pelvik Taban (Dolaylı)
-    insights.push({
-      title: "Topuk Dikeni / Pelvik Taban",
-      description: `Ayak basış analizi ve klinik palpe testi yapılması önerilir.`,
-      riskScore: 5,
-      color: "green"
-    });
-
-    return insights;
   };
 
   return (
@@ -422,51 +225,42 @@ export default function PostureReportsPage() {
                 </div>
               </div>
               
-              {/* AI Insights Section */}
+              {/* AI + clinician risk scores */}
               <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 border-b border-indigo-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <h3 className="font-bold text-indigo-900 text-sm">Genişletilmiş Yapay Zeka Risk Analizi (14 Kondisyon)</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <h3 className="font-bold text-indigo-900 text-sm">Risk Analizi (14 Kondisyon)</h3>
+                  </div>
+                  <p className="text-[11px] text-indigo-700/80">
+                    Çubuğu kaydırarak klinisyen yüzdesini değiştirin. Dikey çizgi yapay zeka skorudur. PDF klinisyen değerini kullanır.
+                  </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {generateInsights(session).map((insight, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50 flex gap-4 items-center">
-                      
-                      {/* Circular Progress Bar */}
-                      <div className="relative flex items-center justify-center w-12 h-12 shrink-0">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                          <circle cx="18" cy="18" r="15" fill="none" className="stroke-gray-100" strokeWidth="3" />
-                          <circle 
-                            cx="18" cy="18" r="15" fill="none" 
-                            className={`transition-all duration-1000 ease-out ${
-                              insight.color === 'red' ? 'stroke-red-500' :
-                              insight.color === 'orange' ? 'stroke-orange-400' :
-                              insight.color === 'yellow' ? 'stroke-yellow-400' :
-                              'stroke-green-500'
-                            }`}
-                            strokeWidth="3" 
-                            strokeDasharray="94.2" /* 2 * pi * r (15) = 94.2 */
-                            strokeDashoffset={94.2 - (94.2 * insight.riskScore) / 100}
-                            strokeLinecap="round" 
-                          />
-                        </svg>
-                        <span className={`absolute text-[10px] font-bold ${
-                          insight.color === 'red' ? 'text-red-700' :
-                          insight.color === 'orange' ? 'text-orange-700' :
-                          insight.color === 'yellow' ? 'text-yellow-700' :
-                          'text-green-700'
-                        }`}>
-                          %{insight.riskScore}
-                        </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+                  {generateInsights(session).map((insight) => {
+                    const clinic = clinicianScores[session.id]?.[insight.key] ?? insight.aiScore;
+                    const tone = colorFromScore(clinic);
+                    return (
+                      <div key={insight.key} className="bg-white p-3.5 rounded-xl shadow-sm border border-indigo-50/50">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <h4 className="font-semibold text-gray-800 text-sm leading-snug" title={insight.title}>{insight.title}</h4>
+                          <span className={`shrink-0 text-xs font-bold ${scoreTextClass(tone)}`}>%{clinic}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-snug line-clamp-2 mb-2.5" title={insight.description}>{insight.description}</p>
+                        <DualRiskBar
+                          aiScore={insight.aiScore}
+                          clinicianScore={clinic}
+                          tone={tone}
+                          onChange={(value) =>
+                            setClinicianScores((prev) => ({
+                              ...prev,
+                              [session.id]: { ...(prev[session.id] || {}), [insight.key]: value },
+                            }))
+                          }
+                        />
                       </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-800 text-sm truncate mb-1" title={insight.title}>{insight.title}</h4>
-                        <p className="text-xs text-gray-500 leading-snug line-clamp-2" title={insight.description}>{insight.description}</p>
-                      </div>
-                      
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -513,7 +307,7 @@ export default function PostureReportsPage() {
                       ) : (
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                       )}
-                      {saving[session.id] ? "Kaydediliyor..." : "Kaydet"}
+                      {saving[session.id] ? "Kaydediliyor..." : "Görüş ve yüzdeleri kaydet"}
                     </button>
                   </div>
                 </div>
@@ -568,6 +362,70 @@ export default function PostureReportsPage() {
           ))}
         </div>
       )}
+      </div>
+    </div>
+  );
+}
+
+function scoreTextClass(tone: InsightColor) {
+  if (tone === "red") return "text-red-700";
+  if (tone === "orange") return "text-orange-700";
+  if (tone === "yellow") return "text-yellow-700";
+  return "text-emerald-700";
+}
+
+function DualRiskBar({
+  aiScore,
+  clinicianScore,
+  tone,
+  onChange,
+}: {
+  aiScore: number;
+  clinicianScore: number;
+  tone: InsightColor;
+  onChange: (value: number) => void;
+}) {
+  const fill =
+    tone === "red"
+      ? "bg-red-500"
+      : tone === "orange"
+        ? "bg-orange-400"
+        : tone === "yellow"
+          ? "bg-yellow-400"
+          : "bg-emerald-500";
+  const ai = Math.max(0, Math.min(100, aiScore));
+  const clinic = Math.max(0, Math.min(100, clinicianScore));
+
+  return (
+    <div>
+      <div className="relative h-3 rounded-full bg-slate-100">
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full ${fill}`}
+          style={{ width: `${clinic}%` }}
+        />
+        <div
+          className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-800"
+          style={{ left: `${ai}%` }}
+          title={`Yapay zeka: %${ai}`}
+        />
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={clinic}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 z-20 w-full cursor-pointer opacity-0"
+          aria-label="Klinisyen risk yüzdesi"
+        />
+      </div>
+      <div className="mt-1.5 flex items-center justify-between text-[10px] font-medium text-slate-500">
+        <span>
+          AI <strong className="text-slate-800">%{ai}</strong>
+        </span>
+        <span>
+          Klinisyen <strong className="text-slate-800">%{clinic}</strong>
+        </span>
       </div>
     </div>
   );

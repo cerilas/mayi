@@ -6,6 +6,12 @@ import { getUserSession } from "@/lib/auth-utils";
  * PATCH /api/posture/sessions/[sessionId]
  * Admin tarafından bir oturumun (raporun) klinik görüşünü kaydetmek için kullanılır.
  */
+function clampScore(n: unknown) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
@@ -23,14 +29,86 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { clinicalOpinion } = body;
+    const { clinicalOpinion, insightOverrides } = body as {
+      clinicalOpinion?: string;
+      insightOverrides?: Array<{
+        insightKey: string;
+        aiScore: number;
+        clinicianScore: number;
+      }>;
+    };
 
-    // Yalnızca metin alanını güncelliyoruz
-    const updatedSession = await prisma.postureSession.update({
+    const existing = await prisma.postureSession.findUnique({
       where: { id: sessionId },
-      data: {
-        clinicalOpinion: clinicalOpinion !== undefined ? clinicalOpinion : null,
-      },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Oturum bulunamadı" }, { status: 404 });
+    }
+
+    const clinicianId = session.user.id;
+
+    const updatedSession = await prisma.$transaction(async (tx) => {
+      if (clinicalOpinion !== undefined) {
+        await tx.postureSession.update({
+          where: { id: sessionId },
+          data: { clinicalOpinion: clinicalOpinion || null },
+        });
+      }
+
+      if (Array.isArray(insightOverrides)) {
+        const previous = await tx.postureInsightOverride.findMany({
+          where: { sessionId },
+        });
+        const prevByKey = new Map(previous.map((p) => [p.insightKey, p]));
+
+        for (const item of insightOverrides) {
+          if (!item?.insightKey) continue;
+          const aiScore = clampScore(item.aiScore);
+          const clinicianScore = clampScore(item.clinicianScore);
+          const prev = prevByKey.get(item.insightKey);
+
+          await tx.postureInsightOverride.upsert({
+            where: {
+              sessionId_insightKey: { sessionId, insightKey: item.insightKey },
+            },
+            create: {
+              sessionId,
+              insightKey: item.insightKey,
+              aiScore,
+              clinicianScore,
+              clinicianId,
+            },
+            update: {
+              aiScore,
+              clinicianScore,
+              clinicianId,
+            },
+          });
+
+          const changed =
+            !prev ||
+            prev.clinicianScore !== clinicianScore ||
+            prev.aiScore !== aiScore;
+          if (changed) {
+            await tx.postureInsightOverrideHistory.create({
+              data: {
+                sessionId,
+                insightKey: item.insightKey,
+                aiScore,
+                previousScore: prev?.clinicianScore ?? null,
+                clinicianScore,
+                clinicianId,
+              },
+            });
+          }
+        }
+      }
+
+      return tx.postureSession.findUnique({
+        where: { id: sessionId },
+        include: { insightOverrides: true },
+      });
     });
 
     return NextResponse.json(updatedSession);
