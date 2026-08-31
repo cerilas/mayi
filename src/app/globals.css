@@ -285,7 +285,9 @@ body {
    ═══════════════════════════════════════════════ */
 
 .dark .bg-white        { background-color: var(--bg-primary) !important; }
+.dark .bg-white\/90    { background-color: color-mix(in srgb, var(--bg-primary) 92%, transparent) !important; }
 .dark .bg-gray-50      { background-color: var(--bg-secondary) !important; }
+.dark .bg-gray-50\/50  { background-color: color-mix(in srgb, var(--bg-secondary) 70%, transparent) !important; }
 .dark .bg-gray-100     { background-color: var(--bg-tertiary) !important; }
 .dark .bg-gray-200     { background-color: var(--bg-hover) !important; }
 
@@ -295,10 +297,59 @@ body {
 .dark .text-gray-600   { color: var(--text-secondary) !important; }
 .dark .text-gray-500   { color: var(--text-secondary) !important; }
 .dark .text-gray-400   { color: var(--text-tertiary) !important; }
+.dark .text-gray-300   { color: var(--text-tertiary) !important; }
 
 .dark .border-gray-100 { border-color: var(--border-secondary) !important; }
 .dark .border-gray-200 { border-color: var(--border-primary) !important; }
 .dark .border-gray-300 { border-color: var(--border-primary) !important; }
+
+/* Slate utilities used by posture report / heatmap */
+.dark .bg-slate-50     { background-color: var(--bg-secondary) !important; }
+.dark .bg-slate-100    { background-color: var(--bg-secondary) !important; }
+.dark .bg-slate-200    { background-color: var(--bg-tertiary) !important; }
+
+.dark .text-slate-900  { color: var(--text-primary) !important; }
+.dark .text-slate-800  { color: var(--text-primary) !important; }
+.dark .text-slate-700  { color: var(--text-primary) !important; }
+.dark .text-slate-600  { color: var(--text-secondary) !important; }
+.dark .text-slate-500  { color: var(--text-secondary) !important; }
+.dark .text-slate-400  { color: var(--text-tertiary) !important; }
+
+.dark .border-slate-100 { border-color: var(--border-secondary) !important; }
+.dark .border-slate-200 { border-color: var(--border-primary) !important; }
+
+.dark .hover\:bg-slate-50:hover { background-color: var(--bg-hover) !important; }
+
+/* Soft brand / status tints (posture badges, banners) */
+.dark .bg-indigo-50,
+.dark .bg-blue-50 { background-color: rgba(99, 102, 241, 0.14) !important; }
+.dark .bg-emerald-50 { background-color: var(--success-bg) !important; }
+.dark .bg-amber-50 { background-color: var(--warning-bg) !important; }
+
+.dark .border-indigo-50,
+.dark .border-indigo-100,
+.dark .border-indigo-200 { border-color: rgba(99, 102, 241, 0.28) !important; }
+.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.3) !important; }
+.dark .border-green-200 { border-color: rgba(74, 222, 128, 0.25) !important; }
+.dark .border-yellow-200,
+.dark .border-orange-200,
+.dark .border-amber-200 { border-color: rgba(251, 191, 36, 0.28) !important; }
+.dark .border-red-200 { border-color: rgba(248, 113, 113, 0.28) !important; }
+
+.dark .text-indigo-950,
+.dark .text-indigo-900,
+.dark .text-indigo-800 { color: #c7d2fe !important; }
+.dark .text-indigo-700 { color: #a5b4fc !important; }
+.dark .text-blue-600 { color: #60a5fa !important; }
+.dark .text-orange-600,
+.dark .text-orange-700 { color: var(--warning-text) !important; }
+.dark .text-yellow-600,
+.dark .text-yellow-700 { color: #fbbf24 !important; }
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-amber-900 { color: var(--warning-text) !important; }
+.dark .text-emerald-600,
+.dark .text-emerald-700 { color: var(--success-text) !important; }
 
 /* Status colors in dark */
 .dark .bg-red-50       { background-color: var(--danger-bg) !important; }

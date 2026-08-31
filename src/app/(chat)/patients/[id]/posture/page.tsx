@@ -226,13 +226,13 @@ export default function PostureReportsPage() {
               </div>
               
               {/* AI + clinician risk scores */}
-              <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 border-b border-indigo-100">
+              <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/20 border-b border-indigo-100">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                   <div className="flex items-center gap-2">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     <h3 className="font-bold text-indigo-900 text-sm">Risk Analizi (14 Kondisyon)</h3>
                   </div>
-                  <p className="text-[11px] text-indigo-700/80">
+                  <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80">
                     Çubuğu kaydırarak klinisyen yüzdesini değiştirin. Dikey çizgi yapay zeka skorudur. PDF klinisyen değerini kullanır.
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function PostureReportsPage() {
                     const clinic = clinicianScores[session.id]?.[insight.key] ?? insight.aiScore;
                     const tone = colorFromScore(clinic);
                     return (
-                      <div key={insight.key} className="bg-white p-3.5 rounded-xl shadow-sm border border-indigo-50/50">
+                      <div key={insight.key} className="bg-white p-3.5 rounded-xl shadow-sm border border-indigo-100">
                         <div className="flex items-start justify-between gap-2 mb-1.5">
                           <h4 className="font-semibold text-gray-800 text-sm leading-snug" title={insight.title}>{insight.title}</h4>
                           <span className={`shrink-0 text-xs font-bold ${scoreTextClass(tone)}`}>%{clinic}</span>
@@ -300,7 +300,7 @@ export default function PostureReportsPage() {
                     <button 
                       onClick={() => handleSaveOpinion(session.id)}
                       disabled={saving[session.id]}
-                      className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shrink-0"
+                      className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:bg-[var(--text-primary)] dark:text-[var(--bg-primary)] dark:hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shrink-0"
                     >
                       {saving[session.id] ? (
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -337,7 +337,7 @@ export default function PostureReportsPage() {
                           <div key={m.id} className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-600">{formatMetricName(m.metricKey)}</span>
                             <div className="flex items-center gap-3">
-                              <span className="text-sm font-bold text-indigo-900">
+                              <span className="text-sm font-bold text-indigo-900 dark:text-indigo-300">
                                 {m.value.toFixed(1)} {m.unit}
                               </span>
                               {m.quality !== "acceptable" && m.quality !== "good" && m.quality !== "excellent" && (
@@ -368,10 +368,10 @@ export default function PostureReportsPage() {
 }
 
 function scoreTextClass(tone: InsightColor) {
-  if (tone === "red") return "text-red-700";
-  if (tone === "orange") return "text-orange-700";
-  if (tone === "yellow") return "text-yellow-700";
-  return "text-emerald-700";
+  if (tone === "red") return "text-red-700 dark:text-red-400";
+  if (tone === "orange") return "text-orange-700 dark:text-orange-400";
+  if (tone === "yellow") return "text-yellow-700 dark:text-yellow-400";
+  return "text-emerald-700 dark:text-emerald-400";
 }
 
 function DualRiskBar({
@@ -398,13 +398,13 @@ function DualRiskBar({
 
   return (
     <div>
-      <div className="relative h-3 rounded-full bg-slate-100">
+      <div className="relative h-3 rounded-full bg-slate-100 dark:bg-[var(--bg-tertiary)]">
         <div
           className={`absolute inset-y-0 left-0 rounded-full ${fill}`}
           style={{ width: `${clinic}%` }}
         />
         <div
-          className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-800"
+          className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-800 dark:bg-white"
           style={{ left: `${ai}%` }}
           title={`Yapay zeka: %${ai}`}
         />
@@ -421,10 +421,10 @@ function DualRiskBar({
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] font-medium text-slate-500">
         <span>
-          AI <strong className="text-slate-800">%{ai}</strong>
+          AI <strong className="text-slate-800 dark:text-[var(--text-primary)]">%{ai}</strong>
         </span>
         <span>
-          Klinisyen <strong className="text-slate-800">%{clinic}</strong>
+          Klinisyen <strong className="text-slate-800 dark:text-[var(--text-primary)]">%{clinic}</strong>
         </span>
       </div>
     </div>

@@ -33,6 +33,7 @@ import {
   riskSeverity,
 } from "@/lib/posture-report-data";
 import { generateAndDownloadPosturePdf } from "@/lib/posture-pdf";
+import { BodyRiskHeatmap } from "@/components/posture/BodyRiskHeatmap";
 
 function ReportInner() {
   const { id: userId } = useParams<{ id: string }>();
@@ -343,39 +344,51 @@ function ReportInner() {
           icon={<Activity size={18} />}
           title="Yapay Zeka Risk Stratifikasyonu"
         >
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <div className="hidden grid-cols-[1.4fr_80px_90px_2fr] bg-slate-800 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:grid">
-              <span>Kondisyon</span>
-              <span>Risk</span>
-              <span>Şiddet</span>
-              <span>Klinik bulgu</span>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_200px]">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="hidden grid-cols-[1.4fr_80px_90px_2fr] bg-slate-800 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:grid">
+                <span>Kondisyon</span>
+                <span>Risk</span>
+                <span>Şiddet</span>
+                <span>Klinik bulgu</span>
+              </div>
+              {insights.map((insight, idx) => {
+                const sev = riskSeverity(insight.color);
+                const pal = severityPalette(sev);
+                return (
+                  <div
+                    key={idx}
+                    className={`grid gap-2 px-4 py-2.5 text-sm sm:grid-cols-[1.4fr_80px_90px_2fr] ${
+                      idx % 2 ? "bg-slate-50" : "bg-white"
+                    }`}
+                  >
+                    <div className="font-semibold text-slate-900">{insight.title}</div>
+                    <div className="font-bold" style={{ color: pal.color }}>
+                      {insight.riskScore}
+                    </div>
+                    <div>
+                      <span
+                        className="inline-block rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        style={{ color: pal.color, background: pal.bgSoft }}
+                      >
+                        {pal.label}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500">{insight.description}</div>
+                  </div>
+                );
+              })}
             </div>
-            {insights.map((insight, idx) => {
-              const sev = riskSeverity(insight.color);
-              const pal = severityPalette(sev);
-              return (
-                <div
-                  key={idx}
-                  className={`grid gap-2 px-4 py-2.5 text-sm sm:grid-cols-[1.4fr_80px_90px_2fr] ${
-                    idx % 2 ? "bg-slate-50" : "bg-white"
-                  }`}
-                >
-                  <div className="font-semibold text-slate-900">{insight.title}</div>
-                  <div className="font-bold" style={{ color: pal.color }}>
-                    {insight.riskScore}
-                  </div>
-                  <div>
-                    <span
-                      className="inline-block rounded-full px-2 py-0.5 text-[11px] font-bold"
-                      style={{ color: pal.color, background: pal.bg }}
-                    >
-                      {pal.label}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500">{insight.description}</div>
-                </div>
-              );
-            })}
+            <div className="lg:sticky lg:top-20">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Bölgesel risk haritası
+              </div>
+              <BodyRiskHeatmap insights={insights} />
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                Renk ve sayı, o vücut bölgesindeki güncel risk yüzdesini gösterir
+                (klinisyen düzeltmesi varsa o kullanılır).
+              </p>
+            </div>
           </div>
         </Section>
 
@@ -447,7 +460,7 @@ function ReportInner() {
                               </span>
                               <span
                                 className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                style={{ color: pal.color, background: pal.bg }}
+                                style={{ color: pal.color, background: pal.bgSoft }}
                               >
                                 {a.status}
                               </span>

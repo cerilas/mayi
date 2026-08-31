@@ -5,6 +5,7 @@
  */
 
 import type { jsPDF as JsPdfInstance } from "jspdf";
+import { renderBodyHeatmapPng } from "./body-heatmap";
 
 type PdfGStateCtor = new (params: { opacity?: number }) => object;
 let PdfGState: PdfGStateCtor | null = null;
@@ -429,6 +430,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
   const totalMetrics = session.testResults.reduce((s, t) => s + t.measurements.length, 0);
 
   const logo = await loadImageAsDataUrl("/logo.png", 160);
+  const bodyHeat = await renderBodyHeatmapPng(insights);
 
   const MODULE_REF: Record<string, string> = {
     front_static_posture: "/module-refs/front_static_posture.jpg",
@@ -642,14 +644,41 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
     y += boxH + 4;
   }
 
-  // ── AI risk stratification table ──
+  // ── AI risk stratification + regional heatmap ──
   y = drawSectionHeader(
     doc,
     "Yapay Zeka Risk Stratifikasyonu",
     y,
-    `${insights.length} kondisyon`
+    `${insights.length} kondisyon  ·  bölgesel ısıl harita`
   );
-  drawRiskTable(doc, insights, y);
+  const heatW = 46;
+  const tableW = CONTENT_W - heatW - 3;
+  const tableBottom = drawRiskTable(doc, insights, y, M, tableW);
+  const heatH = tableBottom - y;
+  const heatX = M + tableW + 3;
+  const titleH = 5;
+  doc.setFillColor(WHITE);
+  doc.rect(heatX, y, heatW, heatH, "F");
+  doc.setFillColor(BRAND);
+  doc.rect(heatX, y, heatW, titleH, "F");
+  setText(doc, 5.2, "#d6e4f5", true);
+  doc.text("BÖLGESEL RİSK", heatX + heatW / 2, rowBaseline(y, titleH, 5.2), {
+    align: "center",
+  });
+  if (bodyHeat) {
+    drawContainedImage(
+      doc,
+      { ...bodyHeat, format: "PNG" },
+      heatX,
+      y + titleH,
+      heatW,
+      heatH - titleH,
+      1
+    );
+  }
+  doc.setDrawColor("#1e3a54");
+  doc.setLineWidth(0.25);
+  doc.rect(heatX, y, heatW, heatH, "S");
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 2
@@ -798,16 +827,26 @@ function drawKpiCard(doc: JsPdfInstance, x: number, y: number, w: number, h: num
   doc.rect(x, y, w, 0.8, "F");
 }
 
-function drawRiskTable(doc: JsPdfInstance, insights: Insight[], y: number): number {
+function drawRiskTable(
+  doc: JsPdfInstance,
+  insights: Insight[],
+  y: number,
+  boxX = M,
+  boxW = CONTENT_W
+): number {
   const rowH = 5.6;
   const headerH = 5.5;
-  const C_NAME = { x: M + 2, w: 50 };
-  const C_RISK = { x: M + 54, w: 30 };
-  const C_SEV = { x: M + 86, w: 22 };
-  const C_FIND = { x: M + 110, w: CONTENT_W - 110 - 2 };
+  const scale = boxW / CONTENT_W;
+  const C_NAME = { x: boxX + 2, w: 50 * scale };
+  const C_RISK = { x: boxX + 52 * scale, w: 28 * scale };
+  const C_SEV = { x: boxX + 82 * scale, w: 20 * scale };
+  const C_FIND = {
+    x: boxX + 104 * scale,
+    w: boxX + boxW - 2 - (boxX + 104 * scale),
+  };
 
   doc.setFillColor(BRAND);
-  doc.rect(M, y, CONTENT_W, headerH, "F");
+  doc.rect(boxX, y, boxW, headerH, "F");
   setText(doc, 6.5, WHITE, true);
   const hb = rowBaseline(y, headerH, 6.5);
   doc.text("KONDİSYON", C_NAME.x, hb);
@@ -821,7 +860,7 @@ function drawRiskTable(doc: JsPdfInstance, insights: Insight[], y: number): numb
     const pal = severityPalette(sev);
     if (i % 2 === 1) {
       doc.setFillColor("#f8fafc");
-      doc.rect(M, y, CONTENT_W, rowH, "F");
+      doc.rect(boxX, y, boxW, rowH, "F");
     }
     const base = rowBaseline(y, rowH, 7);
     setText(doc, 7, INK, true);
@@ -831,24 +870,24 @@ function drawRiskTable(doc: JsPdfInstance, insights: Insight[], y: number): numb
     const score = String(insight.riskScore);
     doc.text(score, C_RISK.x, base);
     const scoreW = Math.min(doc.getTextWidth(score), 10);
-    const barX = C_RISK.x + scoreW + 2;
+    const barX = C_RISK.x + scoreW + 1.6;
     const barW = C_RISK.x + C_RISK.w - barX - 1;
     const barY = y + (rowH - 1.6) / 2;
-    if (barW > 6) {
+    if (barW > 5) {
       doc.setFillColor("#e2e8f0");
       doc.roundedRect(barX, barY, barW, 1.6, 0.6, 0.6, "F");
       doc.setFillColor(pal.color);
       doc.roundedRect(barX, barY, Math.max(1, (insight.riskScore / 100) * barW), 1.6, 0.6, 0.6, "F");
     }
 
-    drawSeverityChip(doc, C_SEV.x, y, rowH, sev, C_SEV.w);
+    drawSeverityChip(doc, C_SEV.x, y, rowH, sev, Math.max(16, C_SEV.w));
 
-    setText(doc, 6.5, MUTED, false);
-    doc.text(clip(doc, insight.description, C_FIND.w, 6.5), C_FIND.x, rowBaseline(y, rowH, 6.5));
+    setText(doc, 6.2, MUTED, false);
+    doc.text(clip(doc, insight.description, C_FIND.w, 6.2), C_FIND.x, rowBaseline(y, rowH, 6.2));
 
     doc.setDrawColor(LINE);
     doc.setLineWidth(0.15);
-    doc.line(M, y + rowH, PAGE_W - M, y + rowH);
+    doc.line(boxX, y + rowH, boxX + boxW, y + rowH);
     y += rowH;
   });
   return y;

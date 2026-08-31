@@ -570,15 +570,15 @@ export function assessMetric(
 export function severityPalette(severity: Severity) {
   switch (severity) {
     case "severe":
-      return { color: "#dc2626", bg: "#fef2f2", label: "Belirgin" };
+      return { color: "#dc2626", bg: "#fef2f2", bgSoft: "rgba(239,68,68,0.16)", label: "Belirgin" };
     case "moderate":
-      return { color: "#ea580c", bg: "#fff7ed", label: "Orta" };
+      return { color: "#ea580c", bg: "#fff7ed", bgSoft: "rgba(249,115,22,0.16)", label: "Orta" };
     case "mild":
-      return { color: "#ca8a04", bg: "#fefce8", label: "Hafif" };
+      return { color: "#ca8a04", bg: "#fefce8", bgSoft: "rgba(234,179,8,0.16)", label: "Hafif" };
     case "info":
-      return { color: "#475569", bg: "#f1f5f9", label: "Bilgi" };
+      return { color: "#475569", bg: "#f1f5f9", bgSoft: "rgba(148,163,184,0.16)", label: "Bilgi" };
     default:
-      return { color: "#16a34a", bg: "#f0fdf4", label: "Normal" };
+      return { color: "#16a34a", bg: "#f0fdf4", bgSoft: "rgba(34,197,94,0.16)", label: "Normal" };
   }
 }
 

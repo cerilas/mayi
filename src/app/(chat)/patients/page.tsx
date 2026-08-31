@@ -874,7 +874,7 @@ export default function PatientsPage() {
                 
                 <button 
                   onClick={() => router.push(`/patients/${postureTarget.id}/posture`)}
-                  className="w-full py-3 px-4 bg-white border-2 border-indigo-100 hover:border-indigo-200 text-indigo-600 rounded-xl font-medium transition-colors"
+                  className="w-full py-3 px-4 bg-white border-2 border-indigo-100 hover:border-indigo-200 dark:hover:border-indigo-400 text-indigo-600 rounded-xl font-medium transition-colors"
                 >
                   Geçmiş Raporları Görüntüle
                 </button>
