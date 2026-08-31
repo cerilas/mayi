@@ -226,13 +226,13 @@ export default function PostureReportsPage() {
               </div>
               
               {/* AI + clinician risk scores */}
-              <div className="px-6 py-5 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/20 border-b border-indigo-100">
+              <div className="risk-analysis-band px-6 py-5 border-b border-indigo-100">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                   <div className="flex items-center gap-2">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     <h3 className="font-bold text-indigo-900 text-sm">Risk Analizi (14 Kondisyon)</h3>
                   </div>
-                  <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80">
+                  <p className="text-[11px] text-indigo-700/80">
                     Çubuğu kaydırarak klinisyen yüzdesini değiştirin. Dikey çizgi yapay zeka skorudur. PDF klinisyen değerini kullanır.
                   </p>
                 </div>

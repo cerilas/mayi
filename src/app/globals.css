@@ -351,6 +351,13 @@ body {
 .dark .text-emerald-600,
 .dark .text-emerald-700 { color: var(--success-text) !important; }
 
+.risk-analysis-band {
+  background: linear-gradient(to bottom right, #eef2ff, #eff6ff);
+}
+.dark .risk-analysis-band {
+  background: linear-gradient(to bottom right, rgba(49, 46, 129, 0.28), rgba(30, 58, 138, 0.16));
+}
+
 /* Status colors in dark */
 .dark .bg-red-50       { background-color: var(--danger-bg) !important; }
 .dark .text-red-600    { color: var(--danger-text) !important; }
