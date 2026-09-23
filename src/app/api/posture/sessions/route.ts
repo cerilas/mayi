@@ -44,6 +44,17 @@ export async function POST(req: Request) {
 
     let targetUserId = userId;
 
+    // 1. Eğer appointmentCode varsa, appointment üzerinden gerçek userId'yi bulmayı dene
+    if (appointmentCode && (!targetUserId || targetUserId === "guest")) {
+      const appt = await prisma.postureAppointment.findUnique({
+        where: { appointmentCode: appointmentCode.trim().toUpperCase() },
+        select: { userId: true },
+      });
+      if (appt?.userId) {
+        targetUserId = appt.userId;
+      }
+    }
+
     if (!targetUserId || targetUserId === "guest") {
       const existingGuest = await prisma.user.findFirst({
         where: { email: "misafir@hasta.myfizyo.com" },
@@ -86,13 +97,13 @@ export async function POST(req: Request) {
     const session = await prisma.postureSession.create({
       data: {
         userId: targetUserId,
-        appointmentCode: appointmentCode ?? null,
+        appointmentCode: appointmentCode ? appointmentCode.trim().toUpperCase() : null,
         deviceInfo: deviceInfo ?? null,
         videoUrl: videoUrl ?? null,
         completedAt: new Date(),
         testResults: {
           create: testResults.map((tr) => ({
-            userId,
+            userId: targetUserId,
             testType: tr.testType,
             overallQuality: tr.overallQuality,
             avgConfidence: tr.avgConfidence,
@@ -117,7 +128,7 @@ export async function POST(req: Request) {
     // Randevu kodunu kullanıldı olarak işaretle
     if (appointmentCode) {
       await prisma.postureAppointment.updateMany({
-        where: { appointmentCode, userId },
+        where: { appointmentCode: appointmentCode.trim().toUpperCase() },
         data: { isUsed: true, updatedAt: new Date() },
       });
     }
@@ -125,7 +136,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ sessionId: session.id, createdAt: session.createdAt }, { status: 201 });
   } catch (error) {
     console.error("[posture/sessions POST]", error);
-    return NextResponse.json({ error: "Kayıt başarısız" }, { status: 500 });
+    return NextResponse.json({
+      error: "Kayıt başarısız",
+      details: error instanceof Error ? error.message : String(error),
+    }, { status: 500 });
   }
 }
 

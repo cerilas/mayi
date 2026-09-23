@@ -26,17 +26,28 @@ export async function GET(req: Request) {
     role: "patient",
   };
 
+  const andConditions: any[] = [];
+
   if (session.user.role === "physiotherapist") {
-    whereClause.patientProfile = {
-      responsibleAdminId: session.user.id
-    };
+    andConditions.push({
+      OR: [
+        { patientProfile: { responsibleAdminId: session.user.id } },
+        { email: "misafir@hasta.myfizyo.com" },
+      ],
+    });
   }
 
   if (search) {
-    whereClause.OR = [
-      { name: { contains: search, mode: "insensitive" as const } },
-      { email: { contains: search, mode: "insensitive" as const } },
-    ];
+    andConditions.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { email: { contains: search, mode: "insensitive" as const } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    whereClause.AND = andConditions;
   }
 
   const [users, total] = await Promise.all([
