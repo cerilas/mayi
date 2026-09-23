@@ -18,6 +18,7 @@ export interface TestResult {
   overallQuality: string;
   avgConfidence: number;
   snapshotUrl?: string | null;
+  videoUrl?: string | null;
   measurements: Measurement[];
 }
 
@@ -25,6 +26,7 @@ export interface PostureSession {
   id: string;
   deviceInfo?: string | null;
   clinicalOpinion?: string | null;
+  videoUrl?: string | null;
   createdAt: string;
   completedAt?: string | null;
   testResults: TestResult[];

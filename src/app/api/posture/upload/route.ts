@@ -28,14 +28,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 400 });
     }
 
-    const maxBytes = appConfig.upload.maxFileSizeMb * 1024 * 1024;
-    const allowedTypes = appConfig.upload.allowedMimeTypes;
-
-    // Sadece ilk dosyayı alacağız (her seferinde 1 fotoğraf yükleneceği varsayımıyla)
+    // Sadece ilk dosyayı alacağız (her istekte 1 dosya yüklendiği varsayımıyla)
     const file = allFiles[0];
 
+    const isVideo = file.type.startsWith("video/") || [".mp4", ".mov"].includes(path.extname(file.name).toLowerCase());
+    const maxBytes = isVideo ? 50 * 1024 * 1024 : appConfig.upload.maxFileSizeMb * 1024 * 1024;
+    const allowedTypes = isVideo
+      ? ["video/mp4", "video/quicktime", "video/x-m4v"]
+      : appConfig.upload.allowedMimeTypes;
+
     // Validate mime type
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedTypes.includes(file.type) && !isVideo) {
       return NextResponse.json(
         { error: `Desteklenmeyen dosya türü: ${file.type}` },
         { status: 400 }
@@ -44,18 +47,23 @@ export async function POST(req: Request) {
 
     // Validate size
     if (file.size > maxBytes) {
+      const limitMb = isVideo ? 50 : appConfig.upload.maxFileSizeMb;
       return NextResponse.json(
-        { error: `Dosya çok büyük. Maksimum: ${appConfig.upload.maxFileSizeMb}MB` },
+        { error: `Dosya çok büyük. Maksimum: ${limitMb}MB` },
         { status: 400 }
       );
     }
 
     const ext = path.extname(file.name).toLowerCase();
-    const safeExt = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif"].includes(ext)
-      ? ext
-      : ".jpg"; // fallback extension for photos
+    let safeExt = ".jpg";
+    if (isVideo) {
+      safeExt = [".mp4", ".mov"].includes(ext) ? ext : ".mp4";
+    } else if ([".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif"].includes(ext)) {
+      safeExt = ext;
+    }
     
-    const uniqueName = `posture_${uuidv4()}${safeExt}`;
+    const prefix = isVideo ? "posture_video_" : "posture_";
+    const uniqueName = `${prefix}${uuidv4()}${safeExt}`;
     const uploadDir = getUploadDir();
 
     await mkdir(uploadDir, { recursive: true });
@@ -71,6 +79,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ filePath: relPath }, { status: 201 });
   } catch (error) {
     console.error("[posture/upload POST]", error);
-    return NextResponse.json({ error: "Fotoğraf yüklenemedi" }, { status: 500 });
+    return NextResponse.json({ error: "Dosya yüklenemedi" }, { status: 500 });
   }
 }

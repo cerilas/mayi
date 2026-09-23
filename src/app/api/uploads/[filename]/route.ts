@@ -17,10 +17,16 @@ export async function GET(req: Request, context: { params: Promise<{ filename: s
     let mimeType = "image/jpeg";
     if (ext === ".png") mimeType = "image/png";
     if (ext === ".webp") mimeType = "image/webp";
+    if (ext === ".gif") mimeType = "image/gif";
+    if (ext === ".mp4") mimeType = "video/mp4";
+    if (ext === ".mov") mimeType = "video/quicktime";
+    if (ext === ".m4v") mimeType = "video/x-m4v";
+    if (ext === ".pdf") mimeType = "application/pdf";
     
     return new NextResponse(fileBuffer, {
       headers: {
         "Content-Type": mimeType,
+        "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=86400"
       }
     });

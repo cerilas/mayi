@@ -29,13 +29,14 @@ interface PostureSessionPayload {
   userId: string;
   appointmentCode?: string;
   deviceInfo?: string;
+  videoUrl?: string;
   testResults: TestResultPayload[];
 }
 
 export async function POST(req: Request) {
   try {
     const body: PostureSessionPayload = await req.json();
-    const { userId, appointmentCode, deviceInfo, testResults } = body;
+    const { userId, appointmentCode, deviceInfo, videoUrl, testResults } = body;
 
     if (!userId || !testResults?.length) {
       return NextResponse.json({ error: "userId ve testResults zorunludur" }, { status: 400 });
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
         userId,
         appointmentCode: appointmentCode ?? null,
         deviceInfo: deviceInfo ?? null,
+        videoUrl: videoUrl ?? null,
         completedAt: new Date(),
         testResults: {
           create: testResults.map((tr) => ({

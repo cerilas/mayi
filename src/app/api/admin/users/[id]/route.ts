@@ -54,7 +54,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 // DELETE /api/admin/users/[id]
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 

@@ -140,6 +140,7 @@ model PostureSession {
   appointmentCode String?
   deviceInfo      String?
   clinicalOpinion String?
+  videoUrl        String?
   completedAt     DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

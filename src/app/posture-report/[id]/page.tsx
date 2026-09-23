@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   Info,
   Loader2,
+  Video,
 } from "lucide-react";
 import {
   type ReportData,
@@ -392,11 +393,52 @@ function ReportInner() {
           </div>
         </Section>
 
+        {session.videoUrl && (
+          <Section icon={<Video size={18} />} title="Randevu Değerlendirme Videosu">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="w-full md:w-3/5 bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center aspect-video">
+                  <video
+                    src={resolveAssetUrl(session.videoUrl) || undefined}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex-1 space-y-3 w-full">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                    <Video size={14} />
+                    <span>Kesintisiz Oturum Kaydı</span>
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900">
+                    Tüm Değerlendirme Videosu
+                  </h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Bu kayıt, randevu boyunca tüm pozisyon testlerini kesintisiz olarak içermektedir. İncelemek veya arşivlemek için tek tıkla cihazınıza indirebilirsiniz.
+                  </p>
+                  <a
+                    href={resolveAssetUrl(session.videoUrl) || "#"}
+                    download={`postur_videosu_${patient.name.replace(/\s+/g, "_")}_${session.createdAt.slice(0, 10)}.mp4`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+                  >
+                    <Download size={16} />
+                    <span>Videoyu İndir</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </Section>
+        )}
+
         <Section icon={<Activity size={18} />} title="Ölçüm Modülü Detayları">
           <div className="grid gap-4 lg:grid-cols-2">
             {session.testResults.map((test) => {
               const ql = qualityLabel(test.overallQuality);
               const snap = resolveAssetUrl(test.snapshotUrl);
+              const video = resolveAssetUrl(test.videoUrl);
               return (
                 <div
                   key={test.id}
@@ -417,17 +459,27 @@ function ReportInner() {
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row">
-                    <div className="flex min-h-[140px] items-center justify-center bg-slate-50 sm:w-2/5">
+                    <div className="flex flex-col gap-2 min-h-[140px] items-center justify-center bg-slate-50 sm:w-2/5 p-2 border-r border-slate-100">
                       {snap ? (
                         <img
                           src={snap}
                           alt=""
-                          className="max-h-40 w-full object-contain"
+                          className="max-h-40 w-full object-contain rounded-md"
                         />
-                      ) : (
+                      ) : !video ? (
                         <span className="text-xs text-slate-400">
                           Görsel yok
                         </span>
+                      ) : null}
+                      
+                      {video && (
+                        <video
+                          src={video}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="max-h-40 w-full object-contain rounded-md mt-2"
+                        />
                       )}
                     </div>
                     <div className="flex-1 space-y-2 p-4">

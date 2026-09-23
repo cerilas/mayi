@@ -6,6 +6,7 @@ import {
   generateInsights,
   applyInsightOverrides,
   colorFromScore,
+  resolveAssetUrl,
   type InsightColor,
 } from "@/lib/posture-report-data";
 
@@ -32,6 +33,7 @@ interface Session {
   deviceInfo: string;
   createdAt: string;
   clinicalOpinion?: string;
+  videoUrl?: string | null;
   testResults: TestResult[];
   insightOverrides?: Array<{
     insightKey: string;
@@ -198,6 +200,21 @@ export default function PostureReportsPage() {
                   <div className="text-xs text-gray-400 bg-white px-2 py-1 border border-gray-200 rounded">
                     {session.deviceInfo || "Cihaz Bilgisi Yok"}
                   </div>
+                  {session.videoUrl && (
+                    <a
+                      href={resolveAssetUrl(session.videoUrl) || "#"}
+                      download={`postur_videosu_${session.id.slice(0, 8)}.mp4`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
+                      title="Randevu videosunu indir"
+                    >
+                      <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Videoyu İndir
+                    </a>
+                  )}
                   {session.clinicalOpinion ? (
                     <a
                       href={`/posture-report/${userId}?sessionId=${session.id}`}
