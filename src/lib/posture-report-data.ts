@@ -457,8 +457,13 @@ export function formatTrDate(iso: string | Date, withTime = false) {
 export function resolveAssetUrl(path?: string | null): string | null {
   if (!path) return null;
   if (path.startsWith("http") || path.startsWith("data:")) return path;
-  if (path.startsWith("/")) return path;
-  return `/${path}`;
+  
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  if (cleanPath.startsWith("uploads/")) {
+    return `/api/${cleanPath}`;
+  }
+  
+  return `/${cleanPath}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
