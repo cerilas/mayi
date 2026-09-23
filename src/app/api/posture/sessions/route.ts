@@ -38,20 +38,54 @@ export async function POST(req: Request) {
     const body: PostureSessionPayload = await req.json();
     const { userId, appointmentCode, deviceInfo, videoUrl, testResults } = body;
 
-    if (!userId || !testResults?.length) {
-      return NextResponse.json({ error: "userId ve testResults zorunludur" }, { status: 400 });
+    if (!testResults?.length) {
+      return NextResponse.json({ error: "testResults zorunludur" }, { status: 400 });
     }
 
-    // Kullanıcının var olduğunu doğrula
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      return NextResponse.json({ error: "Kullanıcı bulunamadı" }, { status: 404 });
+    let targetUserId = userId;
+
+    if (!targetUserId || targetUserId === "guest") {
+      const existingGuest = await prisma.user.findFirst({
+        where: { email: "misafir@hasta.myfizyo.com" },
+      });
+      if (existingGuest) {
+        targetUserId = existingGuest.id;
+      } else {
+        const newGuest = await prisma.user.create({
+          data: {
+            name: "Hızlı Değerlendirme (Misafir Hasta)",
+            email: "misafir@hasta.myfizyo.com",
+            passwordHash: "$2b$12$e0...dummyhash",
+            role: "patient",
+            patientProfile: {
+              create: {
+                shortDescription: "Randevu kodsuz hızlı değerlendirme ile oluşturuldu.",
+              },
+            },
+          },
+        });
+        targetUserId = newGuest.id;
+      }
+    } else {
+      // Kullanıcının var olduğunu doğrula
+      const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+      if (!user) {
+        const fallbackUser = await prisma.user.findFirst({
+          where: { role: "patient" },
+          orderBy: { createdAt: "desc" },
+        });
+        if (fallbackUser) {
+          targetUserId = fallbackUser.id;
+        } else {
+          return NextResponse.json({ error: "Kullanıcı bulunamadı" }, { status: 404 });
+        }
+      }
     }
 
     // Session + tüm alt kayıtları transaction içinde oluştur
     const session = await prisma.postureSession.create({
       data: {
-        userId,
+        userId: targetUserId,
         appointmentCode: appointmentCode ?? null,
         deviceInfo: deviceInfo ?? null,
         videoUrl: videoUrl ?? null,
