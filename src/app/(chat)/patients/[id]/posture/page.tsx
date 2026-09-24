@@ -200,7 +200,7 @@ export default function PostureReportsPage() {
                   <div className="text-xs text-gray-400 bg-white px-2 py-1 border border-gray-200 rounded">
                     {session.deviceInfo || "Cihaz Bilgisi Yok"}
                   </div>
-                  {session.videoUrl && (
+                  {session.videoUrl ? (
                     <a
                       href={resolveAssetUrl(session.videoUrl) || "#"}
                       download={`postur_videosu_${session.id.slice(0, 8)}.mp4`}
@@ -214,6 +214,10 @@ export default function PostureReportsPage() {
                       </svg>
                       Videoyu İndir
                     </a>
+                  ) : (
+                    <span className="text-xs text-gray-400 bg-gray-100/70 px-2.5 py-1 border border-gray-200 rounded-lg">
+                      Video Kaydı Yok
+                    </span>
                   )}
                   {session.clinicalOpinion ? (
                     <a
