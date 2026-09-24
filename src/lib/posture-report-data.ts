@@ -130,6 +130,14 @@ export const TEST_TYPE_MAP: Record<string, string> = {
   shoulder_abduction: "Omuz Abdüksiyonu",
 };
 
+export const MODULE_REF_IMAGES: Record<string, string> = {
+  front_static_posture: "/module-refs/front_static_posture.jpg",
+  side_static_posture: "/module-refs/side_static_posture.jpg",
+  squat_5_reps: "/module-refs/squat_5_reps.jpg",
+  shoulder_flexion: "/module-refs/shoulder_flexion.jpg",
+  shoulder_abduction: "/module-refs/shoulder_abduction.jpg",
+};
+
 export const METRIC_NAME_MAP: Record<string, string> = {
   shoulderLevelAngle: "Omuz Denge Açısı",
   pelvicLevelAngle: "Kalça (Pelvis) Denge Açısı",

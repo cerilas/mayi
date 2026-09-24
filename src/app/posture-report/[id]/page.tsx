@@ -14,6 +14,8 @@ import {
   Info,
   Loader2,
   Video,
+  Camera,
+  CameraOff,
 } from "lucide-react";
 import {
   type ReportData,
@@ -26,6 +28,7 @@ import {
   resolveAssetUrl,
   TEST_TYPE_MAP,
   METRIC_NAME_MAP,
+  MODULE_REF_IMAGES,
   assessMetric,
   severityPalette,
   posturalIndex,
@@ -46,6 +49,7 @@ function ReportInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSessionIdx, setSelectedSessionIdx] = useState(0);
+  const [includePatientPhotos, setIncludePatientPhotos] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
@@ -76,6 +80,7 @@ function ReportInner() {
       await generateAndDownloadPosturePdf({
         patient: data.patient,
         session,
+        includePatientPhotos,
       });
     } catch (e: unknown) {
       console.error("[posture-pdf]", e);
@@ -164,6 +169,35 @@ function ReportInner() {
           </select>
         )}
 
+        <label
+          className="inline-flex items-center gap-2 cursor-pointer select-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+          title="PDF raporunda gerçek hasta fotoğraflarına yer verilsin mi?"
+        >
+          <input
+            type="checkbox"
+            checked={includePatientPhotos}
+            onChange={(e) => setIncludePatientPhotos(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+          />
+          <span className="flex items-center gap-1.5">
+            {includePatientPhotos ? (
+              <Camera size={15} className="text-indigo-600" />
+            ) : (
+              <CameraOff size={15} className="text-slate-400" />
+            )}
+            <span>Gerçek Hasta Fotoğrafları</span>
+          </span>
+          <span
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+              includePatientPhotos
+                ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                : "bg-amber-50 text-amber-700 border border-amber-100"
+            }`}
+          >
+            {includePatientPhotos ? "Fotoğraflı" : "Temsili Görsel"}
+          </span>
+        </label>
+
         <button
           type="button"
           onClick={handleDownloadPdf}
@@ -187,10 +221,19 @@ function ReportInner() {
         </div>
       )}
 
-      <p className="mx-auto max-w-5xl px-4 pt-4 text-xs text-slate-500 sm:px-8">
-        PDF çıktısı sabit A4 (maks. 2 sayfa) olarak üretilir; ekran boyutu veya
-        cihazdan etkilenmez.
-      </p>
+      <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+        <p>
+          PDF çıktısı sabit A4 (maks. 2 sayfa) olarak üretilir; ekran boyutu veya cihazdan etkilenmez.
+        </p>
+        <span className="inline-flex items-center gap-1.5 font-medium text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
+          Fotoğraf Seçeneği:{" "}
+          <strong className={includePatientPhotos ? "text-indigo-600" : "text-amber-600"}>
+            {includePatientPhotos
+              ? "Gerçek hasta fotoğrafları aktif"
+              : "Temsili şablon görselleri aktif (Gizlilik / Placeholder)"}
+          </strong>
+        </span>
+      </div>
 
       {/* Screen preview (not used for PDF) */}
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-8">
@@ -437,7 +480,10 @@ function ReportInner() {
           <div className="grid gap-4 lg:grid-cols-2">
             {session.testResults.map((test) => {
               const ql = qualityLabel(test.overallQuality);
-              const snap = resolveAssetUrl(test.snapshotUrl);
+              const realSnap = resolveAssetUrl(test.snapshotUrl);
+              const placeholderSnap = MODULE_REF_IMAGES[test.testType] || null;
+              const snap = includePatientPhotos ? realSnap : (placeholderSnap || realSnap);
+              const isUsingPlaceholder = !includePatientPhotos && !!placeholderSnap;
               const video = resolveAssetUrl(test.videoUrl);
               return (
                 <div
@@ -461,11 +507,18 @@ function ReportInner() {
                   <div className="flex flex-col sm:flex-row">
                     <div className="flex flex-col gap-2 min-h-[140px] items-center justify-center bg-slate-50 sm:w-2/5 p-2 border-r border-slate-100">
                       {snap ? (
-                        <img
-                          src={snap}
-                          alt=""
-                          className="max-h-40 w-full object-contain rounded-md"
-                        />
+                        <div className="relative w-full flex flex-col items-center">
+                          <img
+                            src={snap}
+                            alt=""
+                            className="max-h-40 w-full object-contain rounded-md"
+                          />
+                          {isUsingPlaceholder && (
+                            <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+                              Temsili Görsel (Gizlilik)
+                            </span>
+                          )}
+                        </div>
                       ) : !video ? (
                         <span className="text-xs text-slate-400">
                           Görsel yok

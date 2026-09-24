@@ -56,6 +56,7 @@ let FONT = "helvetica";
 export interface PosturePdfInput {
   patient: Patient;
   session: PostureSession;
+  includePatientPhotos?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -410,7 +411,7 @@ function drawClosingStack(
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Promise<void> {
-  const { patient, session } = input;
+  const { patient, session, includePatientPhotos = true } = input;
   const insights = applyInsightOverrides(
     generateInsights(session),
     session.insightOverrides
@@ -447,7 +448,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
     isPatientPhoto: boolean;
   }> = [];
   for (const test of session.testResults.slice(0, 4)) {
-    const url = resolveAssetUrl(test.snapshotUrl);
+    const url = includePatientPhotos ? resolveAssetUrl(test.snapshotUrl) : null;
     const patientImg = url ? await loadImageAsDataUrl(url, 320) : null;
     const refUrl = MODULE_REF[test.testType];
     const refImg = !patientImg && refUrl ? await loadImageAsDataUrl(refUrl, 320) : null;
