@@ -488,34 +488,34 @@ function ReportInner() {
               return (
                 <div
                   key={test.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                    <h4 className="text-sm font-bold">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50">
+                    <h4 className="text-sm font-bold text-slate-800">
                       {TEST_TYPE_MAP[test.testType] || test.testType}
                     </h4>
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                         ql.ok
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                          : "bg-amber-50 text-amber-700 border border-amber-100"
                       }`}
                     >
                       {ql.text}
                     </span>
                   </div>
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="flex flex-col gap-2 min-h-[140px] items-center justify-center bg-slate-50 sm:w-2/5 p-2 border-r border-slate-100">
+                  <div className="flex flex-col sm:flex-row flex-1">
+                    <div className="relative flex flex-col items-center justify-center bg-slate-50/80 w-full sm:w-36 md:w-40 shrink-0 p-3 border-b sm:border-b-0 sm:border-r border-slate-100">
                       {snap ? (
-                        <div className="relative w-full flex flex-col items-center">
+                        <div className="relative w-full h-full min-h-[140px] flex flex-col items-center justify-center">
                           <img
                             src={snap}
                             alt=""
-                            className="max-h-40 w-full object-contain rounded-md"
+                            className="max-h-44 w-auto max-w-full rounded-lg object-contain shadow-xs"
                           />
                           {isUsingPlaceholder && (
-                            <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-                              Temsili Görsel (Gizlilik)
+                            <span className="mt-2 inline-flex items-center text-[10px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap">
+                              Temsili Görsel
                             </span>
                           )}
                         </div>
@@ -531,50 +531,54 @@ function ReportInner() {
                           controls
                           playsInline
                           preload="metadata"
-                          className="max-h-40 w-full object-contain rounded-md mt-2"
+                          className="max-h-36 w-full object-contain rounded-md mt-2"
                         />
                       )}
                     </div>
-                    <div className="flex-1 space-y-2 p-4">
-                      <div className="mb-2 flex justify-between text-xs text-slate-500">
-                        <span>AI Güven</span>
-                        <strong>
-                          {(test.avgConfidence * 100).toFixed(0)}%
-                        </strong>
-                      </div>
-                      {test.measurements.map((m) => {
-                        const a = assessMetric(m.metricKey, m.value, m.unit);
-                        const pal = severityPalette(a.severity);
-                        return (
-                          <div
-                            key={m.id}
-                            className="flex items-center justify-between border-b border-slate-100 py-1.5 text-sm last:border-0"
-                          >
-                            <div>
-                              <div className="font-medium text-slate-700">
-                                {METRIC_NAME_MAP[m.metricKey] || m.metricKey}
-                              </div>
-                              <div className="text-[11px] text-slate-400">
-                                {a.reference} · sapma {a.deviation}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold">
-                                {m.value.toFixed(1)}
-                                {m.unit ? ` ${m.unit}` : ""}
-                              </span>
-                              <span
-                                className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                style={{ color: pal.color, background: pal.bgSoft }}
+                    <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-4">
+                      <div>
+                        <div className="mb-2.5 flex justify-between items-center text-xs text-slate-500 pb-1.5 border-b border-slate-100">
+                          <span className="font-medium text-slate-500">AI Analiz Güveni</span>
+                          <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {(test.avgConfidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          {test.measurements.map((m) => {
+                            const a = assessMetric(m.metricKey, m.value, m.unit);
+                            const pal = severityPalette(a.severity);
+                            return (
+                              <div
+                                key={m.id}
+                                className="flex items-center justify-between gap-3 border-b border-slate-100/80 py-2 text-sm last:border-0"
                               >
-                                {a.status}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-slate-800 text-xs sm:text-[13px] leading-snug">
+                                    {METRIC_NAME_MAP[m.metricKey] || m.metricKey}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 mt-0.5">
+                                    {a.reference} · sapma {a.deviation}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0 text-right">
+                                  <span className="font-bold text-slate-900 text-xs sm:text-sm tabular-nums whitespace-nowrap">
+                                    {m.value.toFixed(1)}
+                                    {m.unit ? ` ${m.unit}` : ""}
+                                  </span>
+                                  <span
+                                    className="rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap inline-block text-center min-w-[62px]"
+                                    style={{ color: pal.color, background: pal.bgSoft }}
+                                  >
+                                    {a.status}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                       {test.measurements.length === 0 && (
-                        <p className="text-center text-xs italic text-slate-400">
+                        <p className="text-center text-xs italic text-slate-400 py-4">
                           Ölçüm verisi çıkarılamadı.
                         </p>
                       )}
