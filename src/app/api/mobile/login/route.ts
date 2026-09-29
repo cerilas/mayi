@@ -22,7 +22,11 @@ export async function POST(req: Request) {
           { patientProfile: { phone: email as string } }
         ]
       },
-      include: { patientProfile: true },
+      include: { 
+        patientProfile: {
+          include: { responsibleAdmin: true }
+        } 
+      },
     });
 
     if (!user) {
