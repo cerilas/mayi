@@ -193,11 +193,20 @@ export async function POST(
     try {
       const patientUser = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { patientProfile: true },
+        include: { 
+          patientProfile: {
+            include: { responsibleAdmin: true }
+          }
+        },
       });
       const p = patientUser?.patientProfile;
       const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
       dbBaseInstruction = ""; // Hastalar temel talimatı (base_instruction) görmemeli, sadece hasta talimatı ve profilleri geçerli
+
+      const physioName = p?.responsibleAdmin?.name;
+      const physioInstruction = physioName 
+        ? `\n- Sorumlu Fizyoterapisti: ${physioName}\nNot: Eğer hastanın bir fizyoterapistle görüşmesi veya iletişim kurması gerekiyorsa, "fizyoterapistimize" demek yerine direkt sorumlu fizyoterapistin ismini (${physioName}) ver.` 
+        : `\n- Sorumlu Fizyoterapisti: Atanmamış`;
 
       customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
 Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
@@ -207,7 +216,7 @@ Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uyg
 - Hastalık Kısa Tanıtımı: ${p?.shortDescription || 'Yok'}
 - Hastalık Uzun Detayları: ${p?.longDetails || 'Yok'}
 - Fizyoterapist/Klinik Görüşü: ${p?.clinicalOpinion || 'Yok'}
-- Atanmış Video/Egzersiz Linkleri: ${p?.videoLinks?.length ? p.videoLinks.join(', ') : 'Yok'}
+- Atanmış Video/Egzersiz Linkleri: ${p?.videoLinks?.length ? p.videoLinks.join(', ') : 'Yok'}${physioInstruction}
 
 ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel kurallara uymalısın:\n" + globalPatientInstruction : ""}
 `;
