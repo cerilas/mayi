@@ -4,8 +4,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
 
-const NETGSM_USERCODE = process.env.NETGSM_USERCODE || "3423411000";
-const NETGSM_PASSWORD = process.env.NETGSM_PASSWORD || "Dnz.24232423";
+
 
 async function requireAdmin(req: Request) {
   const session = await getUserSession(req);
@@ -32,13 +31,15 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { userId, phone, newPassword } = body;
+    const { userId, phone, newPassword, password } = body;
 
-    if (!userId || !phone || !newPassword) {
-      return NextResponse.json({ error: "Eksik bilgi (userId, phone, newPassword zorunlu)" }, { status: 400 });
+    const finalPassword = newPassword || password;
+
+    if (!userId || !phone || !finalPassword) {
+      return NextResponse.json({ error: "Eksik bilgi (userId, phone, newPassword/password zorunlu)" }, { status: 400 });
     }
 
-    if (newPassword.length < 6) {
+    if (finalPassword.length < 6) {
       return NextResponse.json({ error: "Şifre en az 6 karakter olmalıdır" }, { status: 400 });
     }
 
@@ -56,58 +57,62 @@ export async function POST(req: Request) {
     }
 
     // 1. Update user's password in DB
-    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const passwordHash = await bcrypt.hash(finalPassword, 12);
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash, passwordEncrypted: encryptPassword(newPassword) },
+      data: { passwordHash, passwordEncrypted: encryptPassword(finalPassword) },
     });
 
-    // 2. Prepare and send SMS via NETGSM
-    const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: my.cerilas.com\nE-posta: ${targetUser.email}\nSifre: ${newPassword}\nB021`;
+    // 2. Prepare and send SMS via Cerilas API
+    const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: my.cerilas.com\nE-posta: ${targetUser.email}\nSifre: ${finalPassword}\nB021`;
 
+    const apiEmail = process.env.CERILAS_API_EMAIL?.trim();
+    const apiPassword = process.env.CERILAS_API_PASSWORD?.trim();
 
+    if (!apiEmail || !apiPassword) {
+      return NextResponse.json({ error: "CERILAS_API_EMAIL veya CERILAS_API_PASSWORD eksik." }, { status: 500 });
+    }
 
-
-    // Fetch active header from DB
-    const headerSetting = await prisma.setting.findFirst({
-      where: { key: "netgsm_active_header" },
-      orderBy: { updatedAt: "desc" },
+    // Login to Cerilas API
+    const authRes = await fetch('https://cerilas.com/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: apiEmail, password: apiPassword })
     });
-    const activeHeader = headerSetting?.value || process.env.NETGSM_HEADER || "3423411000";
 
-    // NetGSM REST v2 uses HTTP Basic Authentication
-    const basicAuth = Buffer.from(`${NETGSM_USERCODE}:${NETGSM_PASSWORD}`).toString("base64");
+    if (!authRes.ok) {
+      const authErr = await authRes.text();
+      return NextResponse.json({ error: `Cerilas Login Hatası: ${authErr}` }, { status: 500 });
+    }
 
-    const payload = {
-      msgheader: activeHeader,
-      messages: [
-        {
-          msg: smsMessage,
-          no: formattedPhone,
-        },
-      ],
-      encoding: "TR",
-      iysfilter: "0",
-      appname: "Cerilas AI",
-    };
+    const authData = await authRes.json();
+    const token = authData.token;
 
-    const response = await fetch("https://api.netgsm.com.tr/sms/rest/v2/send", {
+    if (!token) {
+      return NextResponse.json({ error: "Cerilas login başarılı ancak token alınamadı." }, { status: 500 });
+    }
+
+    // Send SMS using Cerilas API
+    const response = await fetch("https://cerilas.com/api/sms/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Basic ${basicAuth}`,
+        "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        msg: smsMessage,
+        no: formattedPhone,
+      }),
     });
 
     const data = await response.json().catch(() => null);
 
-    if (data && data.code === "00") {
-      return NextResponse.json({ success: true, message: "SMS başarıyla kuyruğa eklendi", jobId: data.jobid });
+    if (response.ok) {
+      return NextResponse.json({ success: true, message: "SMS başarıyla gönderildi", data });
     } else {
-      console.error("NetGSM Error:", data);
+      console.error("Cerilas SMS Error:", data);
       return NextResponse.json(
-        { error: `SMS gönderilemedi. NetGSM Hata Kodu: ${data?.code || "Bilinmiyor"} - ${data?.description || ""}` },
+        { error: `SMS gönderilemedi. Hata: ${data?.error || data?.message || "Bilinmiyor"}` },
         { status: 500 }
       );
     }
