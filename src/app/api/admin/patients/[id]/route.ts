@@ -39,7 +39,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   if (!existing || existing.role !== "patient") {
-    return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
+    return NextResponse.json({ error: "Danışan bulunamadı" }, { status: 404 });
   }
 
   if (session.user.role === "physiotherapist" && existing.patientProfile?.responsibleAdminId !== session.user.id) {
@@ -95,13 +95,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireStaff(req);
-  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler hasta silebilir" }, { status: 403 });
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler danışan silebilir" }, { status: 403 });
 
   const { id } = await params;
 
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing || existing.role !== "patient") {
-    return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
+    return NextResponse.json({ error: "Danışan bulunamadı" }, { status: 404 });
   }
 
   await prisma.user.delete({ where: { id } });

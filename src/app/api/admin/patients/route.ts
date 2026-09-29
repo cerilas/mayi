@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     andConditions.push({
       OR: [
         { patientProfile: { responsibleAdminId: session.user.id } },
-        { email: "misafir@hasta.myfizyo.com" },
+        { email: "misafir@danışan.myfizyo.com" },
       ],
     });
   }
@@ -75,7 +75,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await requireStaff(req);
-  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler yeni hasta ekleyebilir" }, { status: 403 });
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Sadece adminler yeni danışan ekleyebilir" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const {
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
   if (!finalEmail) {
     // Generate a dummy email based on phone to satisfy db uniqueness
     let cleanPhone = phone.replace(/\D/g, "");
-    finalEmail = `${cleanPhone}@hasta.myfizyo.com`;
+    finalEmail = `${cleanPhone}@danışan.myfizyo.com`;
   }
 
   const existing = await prisma.user.findFirst({

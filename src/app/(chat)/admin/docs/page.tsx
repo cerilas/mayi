@@ -26,7 +26,7 @@ type GuideSection = {
 const ROLE_META: Record<GuideRole, { label: string; description: string }> = {
   physiotherapist: {
     label: "Fizyoterapist",
-    description: "Klinik çalışma, atanmış hastalar ve yapay zekâ destekli günlük iş akışları",
+    description: "Klinik çalışma, atanmış danışanlar ve yapay zekâ destekli günlük iş akışları",
   },
   admin: {
     label: "Admin",
@@ -64,28 +64,28 @@ const PERMISSION_ROWS = [
     patient: "Hayır",
   },
   {
-    capability: "Hasta listesini görüntüleme",
-    admin: "Tüm hastalar",
+    capability: "Danışan listesini görüntüleme",
+    admin: "Tüm danışanlar",
     physiotherapist: "Yalnızca atananlar",
     user: "Hayır",
     patient: "Hayır",
   },
   {
-    capability: "Hasta profilini ve klinik bağlamı düzenleme",
-    admin: "Tüm hastalar",
+    capability: "Danışan profilini ve klinik bağlamı düzenleme",
+    admin: "Tüm danışanlar",
     physiotherapist: "Yalnızca atananlar",
     user: "Hayır",
     patient: "Hayır",
   },
   {
-    capability: "Hasta oluşturma, silme ve toplu içe aktarma",
+    capability: "Danışan oluşturma, silme ve toplu içe aktarma",
     admin: "Evet",
     physiotherapist: "Hayır",
     user: "Hayır",
     patient: "Hayır",
   },
   {
-    capability: "Hastaya sorumlu atama veya sorumluyu değiştirme",
+    capability: "Danışana sorumlu atama veya sorumluyu değiştirme",
     admin: "Evet",
     physiotherapist: "Hayır",
     user: "Hayır",
@@ -99,7 +99,7 @@ const PERMISSION_ROWS = [
     patient: "Hayır",
   },
   {
-    capability: "Genel hasta talimatı ve hasta modelini değiştirme",
+    capability: "Genel danışan talimatı ve danışan modelini değiştirme",
     admin: "Evet · global",
     physiotherapist: "Hayır",
     user: "Hayır",
@@ -143,7 +143,7 @@ const INSTRUCTION_ROWS = [
     editor: "Admin, Fizyoterapist, Kullanıcı",
     scope: "Yalnızca kaydeden kişinin kendi sohbetleri",
     effect:
-      "Asistanın ana kimliğini ve temel çalışma şeklini belirler. Hasta sohbetlerinde okunmaz ve hasta profilini etkilemez.",
+      "Asistanın ana kimliğini ve temel çalışma şeklini belirler. Danışan sohbetlerinde okunmaz ve danışan profilini etkilemez.",
   },
   {
     name: "Ek Talimatlar",
@@ -154,20 +154,20 @@ const INSTRUCTION_ROWS = [
       "Temel talimatın sonuna “Özel Talimatlar” olarak eklenir; ton, format, kaynak kullanımı ve özel çalışma kurallarını daraltır.",
   },
   {
-    name: "Genel Hasta Talimatı",
+    name: "Genel Danışan Talimatı",
     key: "patient_system_instruction",
     editor: "Yalnızca Admin",
-    scope: "Sistemdeki tüm hastaların tüm sohbetleri",
+    scope: "Sistemdeki tüm danışanların tüm sohbetleri",
     effect:
-      "Hasta iletişim dili, güvenlik sınırları ve klinik genel kurallarını belirler. Adminin kendi sohbetini veya fizyoterapist sohbetini etkilemez.",
+      "Danışan iletişim dili, güvenlik sınırları ve klinik genel kurallarını belirler. Adminin kendi sohbetini veya fizyoterapist sohbetini etkilemez.",
   },
   {
-    name: "Hasta Profil Bağlamı",
+    name: "Danışan Profil Bağlamı",
     key: "PatientProfile",
-    editor: "Admin; atanmış hasta için Fizyoterapist",
-    scope: "Yalnızca ilgili hastanın sohbetleri",
+    editor: "Admin; atanmış danışan için Fizyoterapist",
+    scope: "Yalnızca ilgili danışanın sohbetleri",
     effect:
-      "Ad, yaş, cinsiyet, kısa/uzun detay, klinik görüş ve video bağlantılarını her yanıtta hastaya özel bağlam olarak ekler.",
+      "Ad, yaş, cinsiyet, kısa/uzun detay, klinik görüş ve video bağlantılarını her yanıtta danışana özel bağlam olarak ekler.",
   },
   {
     name: "Bilgilendirme / feragat metni",
@@ -185,7 +185,7 @@ const SECTIONS: GuideSection[] = [
     eyebrow: "Rol mimarisi",
     title: "Dört rol, üç çalışma alanı",
     description:
-      "Rollerin sistemdeki yerini, birbirleriyle ilişkisini ve hasta atama hiyerarşisini anlayın.",
+      "Rollerin sistemdeki yerini, birbirleriyle ilişkisini ve danışan atama hiyerarşisini anlayın.",
     icon: "H1",
     audience: "all",
     duration: "4 rol",
@@ -193,33 +193,33 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Admin · Sistem yöneticisi",
         detail:
-          "Kullanıcı ve rol yönetimi, tüm hastalar, sorumlu atama, global yapay zekâ ayarları, SMS, kullanım hakları ve raporlama üzerinde en geniş yetkiye sahiptir.",
+          "Kullanıcı ve rol yönetimi, tüm danışanlar, sorumlu atama, global yapay zekâ ayarları, SMS, kullanım hakları ve raporlama üzerinde en geniş yetkiye sahiptir.",
         badge: "En geniş yetki",
       },
       {
-        title: "Fizyoterapist · Atanmış hasta sorumlusu",
+        title: "Fizyoterapist · Atanmış danışan sorumlusu",
         detail:
-          "Kendi sohbetlerini ve kişisel talimatlarını yönetir. Yalnızca kendisine atanmış hastaları görür ve bu hastaların klinik bağlamını güncelleyebilir.",
+          "Kendi sohbetlerini ve kişisel talimatlarını yönetir. Yalnızca kendisine atanmış danışanları görür ve bu danışanların klinik bağlamını güncelleyebilir.",
         badge: "Atama kapsamlı",
       },
       {
         title: "Kullanıcı · Bağımsız sohbet kullanıcısı",
         detail:
-          "Hasta profili olmayan standart kullanıcıdır. Kendi sohbet, model, temel ve ek talimatlarını yönetir; hasta ve sistem yönetimine erişemez.",
+          "Danışan profili olmayan standart kullanıcıdır. Kendi sohbet, model, temel ve ek talimatlarını yönetir; danışan ve sistem yönetimine erişemez.",
       },
       {
-        title: "Hasta · Klinik son kullanıcı",
+        title: "Danışan · Klinik son kullanıcı",
         detail:
-          "Kendi sohbetlerini kullanır. Yanıtları kendi hasta profili, tüm hastalara uygulanan genel hasta talimatı ve adminin seçtiği hasta modeliyle şekillenir.",
+          "Kendi sohbetlerini kullanır. Yanıtları kendi danışan profili, tüm hastalara uygulanan genel danışan talimatı ve adminin seçtiği danışan modeliyle şekillenir.",
         badge: "Kısıtlı ayarlar",
       },
     ],
     note: {
       tone: "info",
       title: "Hiyerarşi kalıtım değildir",
-      text: "Fizyoterapist, Adminin alt rolüdür ancak Admin yetkilerini miras almaz. Kullanıcı rolü de Fizyoterapist ile Hasta arasında bir terfi basamağı değildir; hasta profili olmayan ayrı bir sohbet rolüdür.",
+      text: "Fizyoterapist, Adminin alt rolüdür ancak Admin yetkilerini miras almaz. Kullanıcı rolü de Fizyoterapist ile Danışan arasında bir terfi basamağı değildir; danışan profili olmayan ayrı bir sohbet rolüdür.",
     },
-    keywords: ["rol", "hiyerarşi", "admin", "fizyoterapist", "kullanıcı", "hasta", "atama"],
+    keywords: ["rol", "hiyerarşi", "admin", "fizyoterapist", "kullanıcı", "danışan", "atama"],
   },
   {
     id: "yetki-matrisi",
@@ -233,7 +233,7 @@ const SECTIONS: GuideSection[] = [
     note: {
       tone: "warning",
       title: "En az yetki ilkesi",
-      text: "Günlük klinik çalışma için Fizyoterapist rolü kullanın. Admin rolünü yalnızca kullanıcı, global ayar, hasta yaşam döngüsü ve raporlama gibi yönetim işlemlerinde kullanın.",
+      text: "Günlük klinik çalışma için Fizyoterapist rolü kullanın. Admin rolünü yalnızca kullanıcı, global ayar, danışan yaşam döngüsü ve raporlama gibi yönetim işlemlerinde kullanın.",
     },
     keywords: ["yetki", "matris", "izin", "erişim", "kim ne yapar", "rol tablosu"],
   },
@@ -242,20 +242,20 @@ const SECTIONS: GuideSection[] = [
     eyebrow: "Yapay zekâ davranışı",
     title: "Talimatlar hangi sırayla ve kimi etkiler?",
     description:
-      "Kişisel, global ve hastaya özel katmanların farkını; bir mesaj gönderildiğinde nasıl birleştirildiklerini görün.",
+      "Kişisel, global ve danışana özel katmanların farkını; bir mesaj gönderildiğinde nasıl birleştirildiklerini görün.",
     icon: "H3",
     audience: "all",
     duration: "6 katman",
     note: {
       tone: "warning",
       title: "En kritik ayrım",
-      text: "Temel Talimat ve Ek Talimatlar kullanıcıya özeldir. Genel Hasta Talimatı globaldir. Hasta Profil Bağlamı ise yalnızca tek bir hastaya özeldir. Bir Adminin kişisel temel talimatı hastalara aktarılmaz.",
+      text: "Temel Talimat ve Ek Talimatlar kullanıcıya özeldir. Genel Danışan Talimatı globaldir. Danışan Profil Bağlamı ise yalnızca tek bir danışana özeldir. Bir Adminin kişisel temel talimatı hastalara aktarılmaz.",
     },
     keywords: [
       "temel talimat",
       "ek talimat",
       "sistem talimatı",
-      "hasta talimatı",
+      "danışan talimatı",
       "genel",
       "kişisel",
       "prompt sırası",
@@ -294,7 +294,7 @@ const SECTIONS: GuideSection[] = [
     ],
     actions: [
       { label: "Sohbete git", href: "/chat", primary: true },
-      { label: "Hastalarımı aç", href: "/patients" },
+      { label: "Danışanlarımı aç", href: "/patients" },
     ],
     keywords: ["başlangıç", "ayarlar", "tema", "ilk sohbet", "klasör", "yeni sohbet"],
   },
@@ -311,7 +311,7 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Net bir istek yazın",
         detail:
-          "Hastanın kişisel verilerini gereksiz yere paylaşmadan hedefi, klinik bağlamı, istediğiniz formatı ve yanıt uzunluğunu belirtin.",
+          "Danışanın kişisel verilerini gereksiz yere paylaşmadan hedefi, klinik bağlamı, istediğiniz formatı ve yanıt uzunluğunu belirtin.",
         badge: "Önerilen",
       },
       {
@@ -344,7 +344,7 @@ const SECTIONS: GuideSection[] = [
     note: {
       tone: "info",
       title: "İyi komut formülü",
-      text: "Amaç + gerekli bağlam + istediğiniz çıktı biçimi + sınırlar. Örnek: “Aşağıdaki notları hastaya uygun, sade Türkçe ile 5 maddelik ev egzersizi hatırlatmasına dönüştür; tanı veya yeni tedavi önerisi ekleme.”",
+      text: "Amaç + gerekli bağlam + istediğiniz çıktı biçimi + sınırlar. Örnek: “Aşağıdaki notları danışana uygun, sade Türkçe ile 5 maddelik ev egzersizi hatırlatmasına dönüştür; tanı veya yeni tedavi önerisi ekleme.”",
     },
     keywords: [
       "chat",
@@ -362,15 +362,15 @@ const SECTIONS: GuideSection[] = [
     eyebrow: "Fizyoterapist",
     title: "Günlük klinik çalışma akışı",
     description:
-      "Atanmış hastalarınızı gözden geçirin, klinik bağlamı güncelleyin ve takip iletişimini hazırlayın.",
+      "Atanmış danışanlarınızı gözden geçirin, klinik bağlamı güncelleyin ve takip iletişimini hazırlayın.",
     icon: "03",
     audience: "physiotherapist",
     duration: "5 adım",
     steps: [
       {
-        title: "Atanmış hasta listenizi açın",
+        title: "Atanmış danışan listenizi açın",
         detail:
-          "Hastalarım ekranında yalnızca sorumluluğunuzdaki kayıtlar gösterilir. Arama alanıyla ad veya e-posta üzerinden hastayı bulun.",
+          "Danışanlarım ekranında yalnızca sorumluluğunuzdaki kayıtlar gösterilir. Arama alanıyla ad veya e-posta üzerinden hastayı bulun.",
       },
       {
         title: "Klinik bilgileri doğrulayın",
@@ -385,28 +385,28 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Kişisel sohbetinizde taslak hazırlayın",
         detail:
-          "Seans özeti, hasta bilgilendirme metni veya araştırma özeti hazırlatın; çıktıyı klinik kararınızın yerine değil, taslak olarak kullanın.",
+          "Seans özeti, danışan bilgilendirme metni veya araştırma özeti hazırlatın; çıktıyı klinik kararınızın yerine değil, taslak olarak kullanın.",
       },
       {
         title: "Göndermeden önce son kontrol yapın",
         detail:
-          "İsim, tarih, egzersiz dozu, taraf ve uyarı işaretlerini doğrulayın. Hastaya yalnızca onayladığınız metni iletin.",
+          "İsim, tarih, egzersiz dozu, taraf ve uyarı işaretlerini doğrulayın. Danışana yalnızca onayladığınız metni iletin.",
       },
     ],
-    actions: [{ label: "Atanmış hastaları aç", href: "/patients", primary: true }],
+    actions: [{ label: "Atanmış danışanları aç", href: "/patients", primary: true }],
     note: {
       tone: "success",
       title: "Yetki sınırı",
-      text: "Fizyoterapist rolü kendi atanmış hastalarını görüntüleyip klinik bilgilerini güncelleyebilir. Yeni hasta oluşturma, toplu içe aktarma, silme ve sorumlu değiştirme işlemleri admin tarafından yürütülür.",
+      text: "Fizyoterapist rolü kendi atanmış danışanlarını görüntüleyip klinik bilgilerini güncelleyebilir. Yeni danışan oluşturma, toplu içe aktarma, silme ve sorumlu değiştirme işlemleri admin tarafından yürütülür.",
     },
-    keywords: ["fizyoterapist", "atanmış hasta", "günlük", "klinik", "takip", "sorumlu"],
+    keywords: ["fizyoterapist", "atanmış danışan", "günlük", "klinik", "takip", "sorumlu"],
   },
   {
-    id: "hasta-kaydi",
+    id: "danışan-kaydi",
     eyebrow: "Fizyoterapist",
-    title: "Hasta bağlamını doğru ve faydalı tutun",
+    title: "Danışan bağlamını doğru ve faydalı tutun",
     description:
-      "Hasta profilindeki alanlar, hastaya verilen yapay zekâ yanıtlarının kişiselleştirilmesinde kullanılır.",
+      "Danışan profilindeki alanlar, danışana verilen yapay zekâ yanıtlarının kişiselleştirilmesinde kullanılır.",
     icon: "04",
     audience: "physiotherapist",
     duration: "4 alan",
@@ -424,7 +424,7 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Klinik görüş",
         detail:
-          "Sizin değerlendirmenizi, dikkat edilmesi gereken durumları ve hastaya daha önce iletilmiş kısıtları kaydedin.",
+          "Sizin değerlendirmenizi, dikkat edilmesi gereken durumları ve danışana daha önce iletilmiş kısıtları kaydedin.",
         badge: "Kritik alan",
       },
       {
@@ -436,9 +436,9 @@ const SECTIONS: GuideSection[] = [
     note: {
       tone: "warning",
       title: "Kayıt standardı",
-      text: "“İyi”, “kötü” gibi belirsiz ifadeler yerine gözlenebilir bilgi kullanın. Hasta profilini bir tıbbi kayıt sistemi yerine geçecek şekilde değil, güvenli yapay zekâ bağlamı sağlayacak kadar öz ve güncel tutun.",
+      text: "“İyi”, “kötü” gibi belirsiz ifadeler yerine gözlenebilir bilgi kullanın. Danışan profilini bir tıbbi kayıt sistemi yerine geçecek şekilde değil, güvenli yapay zekâ bağlamı sağlayacak kadar öz ve güncel tutun.",
     },
-    keywords: ["hasta profili", "klinik görüş", "uzun detay", "video", "youtube", "bağlam"],
+    keywords: ["danışan profili", "klinik görüş", "uzun detay", "video", "youtube", "bağlam"],
   },
   {
     id: "klinik-komutlar",
@@ -450,33 +450,33 @@ const SECTIONS: GuideSection[] = [
     audience: "physiotherapist",
     duration: "Kopyalanabilir",
     prompt:
-      "Rolün: Fizyoterapist için çalışan klinik yazım asistanı.\n\nAmaç: [seans özeti / hasta bilgilendirme / literatür özeti] hazırla.\nBağlam: [kişisel verileri çıkartılmış gerekli klinik bilgiler]\nHedef kitle: [hasta / fizyoterapist / klinik ekip]\nÇıktı: [madde sayısı, ton, uzunluk ve format]\nSınırlar: Yeni tanı koyma, kesinlik içeren kanıtsız ifade kullanma, verilen bilgilerin dışına çıkma. Eksik veya çelişkili bilgi varsa belirt.",
+      "Rolün: Fizyoterapist için çalışan klinik yazım asistanı.\n\nAmaç: [seans özeti / danışan bilgilendirme / literatür özeti] hazırla.\nBağlam: [kişisel verileri çıkartılmış gerekli klinik bilgiler]\nHedef kitle: [danışan / fizyoterapist / klinik ekip]\nÇıktı: [madde sayısı, ton, uzunluk ve format]\nSınırlar: Yeni tanı koyma, kesinlik içeren kanıtsız ifade kullanma, verilen bilgilerin dışına çıkma. Eksik veya çelişkili bilgi varsa belirt.",
     note: {
       tone: "info",
       title: "Web aramasıyla kullanırken",
-      text: "Kaynakların yayın tarihini, çalışma türünü ve hasta grubuna uygunluğunu isteyin. Asistan özetini orijinal kaynağın yerine kullanmayın.",
+      text: "Kaynakların yayın tarihini, çalışma türünü ve danışan grubuna uygunluğunu isteyin. Asistan özetini orijinal kaynağın yerine kullanmayın.",
     },
-    keywords: ["prompt", "komut", "şablon", "seans özeti", "literatür", "hasta bilgilendirme"],
+    keywords: ["prompt", "komut", "şablon", "seans özeti", "literatür", "danışan bilgilendirme"],
   },
   {
-    id: "admin-hasta",
+    id: "admin-danışan",
     eyebrow: "Admin",
-    title: "Hasta hesaplarını yönetin",
+    title: "Danışan hesaplarını yönetin",
     description:
-      "Tekil veya toplu hasta oluşturun, sorumlu atayın, erişim bilgilerini yönetin ve kayıt yaşam döngüsünü kontrol edin.",
+      "Tekil veya toplu danışan oluşturun, sorumlu atayın, erişim bilgilerini yönetin ve kayıt yaşam döngüsünü kontrol edin.",
     icon: "03",
     audience: "admin",
     duration: "6 işlem",
     items: [
       {
-        title: "Yeni hasta oluşturma",
+        title: "Yeni danışan oluşturma",
         detail:
-          "Ad, e-posta ve gerekli profil bilgilerini girin. Hastanın hesabına erişebilmesi için güçlü bir başlangıç parolası belirleyin.",
+          "Ad, e-posta ve gerekli profil bilgilerini girin. Danışanın hesabına erişebilmesi için güçlü bir başlangıç parolası belirleyin.",
       },
       {
         title: "Sorumlu atama",
         detail:
-          "Hastayı ilgili admin veya fizyoterapiste atayın. Fizyoterapistler yalnızca kendi sorumluluklarındaki hastaları görür.",
+          "Hastayı ilgili admin veya fizyoterapiste atayın. Fizyoterapistler yalnızca kendi sorumluluklarındaki danışanları görür.",
         badge: "Yetki",
       },
       {
@@ -487,22 +487,22 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Dışa aktarma",
         detail:
-          "Görüntülenen hasta verilerini Excel olarak alın. Dosyayı yalnızca yetkili ve güvenli bir konumda saklayın.",
+          "Görüntülenen danışan verilerini Excel olarak alın. Dosyayı yalnızca yetkili ve güvenli bir konumda saklayın.",
       },
       {
         title: "Parola ve SMS",
         detail:
-          "Gerekirse yeni parola üretip onaylı SMS başlığıyla hastaya iletin. Parolayı açık kanallarda tekrar paylaşmayın.",
+          "Gerekirse yeni parola üretip onaylı SMS başlığıyla danışana iletin. Parolayı açık kanallarda tekrar paylaşmayın.",
       },
       {
         title: "Kayıt silme",
         detail:
-          "Silme işlemini yalnızca kimlik ve kapsam doğrulamasından sonra kullanın; bu işlem hasta verilerini etkileyebilir.",
+          "Silme işlemini yalnızca kimlik ve kapsam doğrulamasından sonra kullanın; bu işlem danışan verilerini etkileyebilir.",
         badge: "Geri alınamaz",
       },
     ],
-    actions: [{ label: "Hasta yönetimine git", href: "/patients", primary: true }],
-    keywords: ["admin", "hasta ekle", "excel", "içe aktar", "dışa aktar", "sil", "sms", "parola"],
+    actions: [{ label: "Danışan yönetimine git", href: "/patients", primary: true }],
+    keywords: ["admin", "danışan ekle", "excel", "içe aktar", "dışa aktar", "sil", "sms", "parola"],
   },
   {
     id: "admin-sistem",
@@ -522,17 +522,17 @@ const SECTIONS: GuideSection[] = [
       {
         title: "Kişisel talimatları ayırın",
         detail:
-          "Temel ve ek talimatlar admin/fizyoterapistin kişisel sohbetini etkiler. Bunları klinik geneli hasta talimatıyla karıştırmayın.",
+          "Temel ve ek talimatlar admin/fizyoterapistin kişisel sohbetini etkiler. Bunları klinik geneli danışan talimatıyla karıştırmayın.",
       },
       {
-        title: "Genel hasta talimatını test edin",
+        title: "Genel danışan talimatını test edin",
         detail:
-          "Bu alan tüm hastaları etkiler. Kısa, açık ve çelişkisiz kurallar yazın; kaydetmeden önce örnek bir hasta hesabında beklenen davranışı düşünün.",
+          "Bu alan tüm danışanları etkiler. Kısa, açık ve çelişkisiz kurallar yazın; kaydetmeden önce örnek bir danışan hesabında beklenen davranışı düşünün.",
       },
       {
-        title: "Hasta modelini seçin",
+        title: "Danışan modelini seçin",
         detail:
-          "Tüm hastaların kullanacağı varsayılan modeli performans, yeterlilik ve maliyet dengesine göre seçin.",
+          "Tüm danışanların kullanacağı varsayılan modeli performans, yeterlilik ve maliyet dengesine göre seçin.",
       },
       {
         title: "Entegrasyon ayarlarını koruyun",
@@ -543,9 +543,9 @@ const SECTIONS: GuideSection[] = [
     note: {
       tone: "warning",
       title: "Değişiklik yönetimi",
-      text: "Genel hasta talimatı veya model değişikliğini önce dar bir test senaryosuyla doğrulayın. Ne değiştiğini ve ne zaman uygulandığını klinik içinde kayıt altına alın.",
+      text: "Genel danışan talimatı veya model değişikliğini önce dar bir test senaryosuyla doğrulayın. Ne değiştiğini ve ne zaman uygulandığını klinik içinde kayıt altına alın.",
     },
-    keywords: ["kullanıcı", "rol", "model", "api", "anahtar", "talimat", "genel hasta", "ayar"],
+    keywords: ["kullanıcı", "rol", "model", "api", "anahtar", "talimat", "genel danışan", "ayar"],
   },
   {
     id: "admin-rapor",
@@ -582,7 +582,7 @@ const SECTIONS: GuideSection[] = [
     eyebrow: "Her iki rol",
     title: "Güvenli ve sorumlu kullanım kontrol listesi",
     description:
-      "Yapay zekâ çıktısını klinik muhakemenin yerine koymadan, kişisel veriyi ve hasta güvenliğini koruyun.",
+      "Yapay zekâ çıktısını klinik muhakemenin yerine koymadan, kişisel veriyi ve danışan güvenliğini koruyun.",
     icon: "06",
     audience: "all",
     duration: "6 kural",
@@ -652,17 +652,17 @@ const SECTIONS: GuideSection[] = [
           "Web Araması modunun açık olduğunu doğrulayın; tarih aralığını ve istediğiniz kaynak türünü doğrudan yazın.",
       },
       {
-        title: "Hasta listede görünmüyor",
+        title: "Danışan listede görünmüyor",
         detail:
-          "Arama filtresini temizleyin. Fizyoterapistseniz hastanın size atanmış olduğunu admin ile doğrulayın.",
+          "Arama filtresini temizleyin. Fizyoterapistseniz danışanın size atanmış olduğunu admin ile doğrulayın.",
       },
       {
         title: "Bir ayar beklediğiniz gibi çalışmadı",
         detail:
-          "Kaydetme işlemini ve doğru ayar alanını kullandığınızı kontrol edin. Kişisel talimatlarla genel hasta talimatının kapsamı farklıdır.",
+          "Kaydetme işlemini ve doğru ayar alanını kullandığınızı kontrol edin. Kişisel talimatlarla genel danışan talimatının kapsamı farklıdır.",
       },
     ],
-    keywords: ["sorun", "çalışmıyor", "genel yanıt", "dosya", "hasta görünmüyor", "ayar"],
+    keywords: ["sorun", "çalışmıyor", "genel yanıt", "dosya", "danışan görünmüyor", "ayar"],
   },
 ];
 
@@ -772,7 +772,7 @@ export default function AdminDocsPage() {
               İşinizi daha güvenli, hızlı ve düzenli yürütün.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
-              Bu rehber; sohbet araçlarından hasta yönetimine, klinik iş akışlarından
+              Bu rehber; sohbet araçlarından danışan yönetimine, klinik iş akışlarından
               sistem ayarlarına kadar platformu adım adım açıklar. Rolünüzü seçin veya
               aradığınız işlemi doğrudan yazın.
             </p>
@@ -822,7 +822,7 @@ export default function AdminDocsPage() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Örn. hasta ekleme, web araması, genel talimat..."
+                placeholder="Örn. danışan ekleme, web araması, genel talimat..."
                 className="min-w-0 flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)]"
               />
               {query && (
@@ -980,13 +980,13 @@ export default function AdminDocsPage() {
                                 </p>
                                 <p className="mt-1 text-sm font-bold">Fizyoterapist</p>
                                 <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                  Atanmış hasta kapsamıyla çalışır.
+                                  Atanmış danışan kapsamıyla çalışır.
                                 </p>
                                 <div className="my-2 text-[var(--brand)]" aria-hidden="true">
                                   ↓
                                 </div>
                                 <div className="rounded-lg bg-[var(--brand-light)] px-3 py-2 text-xs font-semibold text-[var(--brand)]">
-                                  Atanmış Hastalar
+                                  Atanmış Danışanlar
                                 </div>
                               </div>
                               <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-primary)] p-4 text-center">
@@ -1001,14 +1001,14 @@ export default function AdminDocsPage() {
                                   ·
                                 </div>
                                 <div className="rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-xs font-semibold">
-                                  Hasta yönetimi yok
+                                  Danışan yönetimi yok
                                 </div>
                               </div>
                             </div>
                             <p className="mt-4 text-center text-[11px] leading-5 text-[var(--text-secondary)]">
-                              Hasta bir Admin veya Fizyoterapiste sorumlu olarak atanabilir.
-                              Admin tüm hastaları görür; Fizyoterapist yalnızca kendisine
-                              atanmış hastaları görür. Hasta bu yapının son kullanıcı
+                              Danışan bir Admin veya Fizyoterapiste sorumlu olarak atanabilir.
+                              Admin tüm danışanları görür; Fizyoterapist yalnızca kendisine
+                              atanmış danışanları görür. Danışan bu yapının son kullanıcı
                               katmanıdır.
                             </p>
                           </div>
@@ -1032,7 +1032,7 @@ export default function AdminDocsPage() {
                                     Kullanıcı
                                   </th>
                                   <th className="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                                    Hasta
+                                    Danışan
                                   </th>
                                 </tr>
                               </thead>
@@ -1163,9 +1163,9 @@ export default function AdminDocsPage() {
 
                               <article className="rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
                                 <div className="flex items-center justify-between gap-3">
-                                  <h3 className="text-sm font-bold">Hasta sohbeti</h3>
+                                  <h3 className="text-sm font-bold">Danışan sohbeti</h3>
                                   <span className="rounded-full bg-[var(--warning-bg)] px-2 py-1 text-[9px] font-bold text-[var(--warning-text)]">
-                                    Global + hastaya özel
+                                    Global + danışana özel
                                   </span>
                                 </div>
                                 <ol className="mt-4 space-y-2">
@@ -1173,9 +1173,9 @@ export default function AdminDocsPage() {
                                     "Tarih ve saat",
                                     "Platform varsayılan temel talimatı",
                                     "Global bilgilendirme metni",
-                                    "İlgili hastanın profil ve klinik bağlamı",
-                                    "Tüm hastalara uygulanan Genel Hasta Talimatı",
-                                    "Hastanın kendi sohbet geçmişi ve mesajı",
+                                    "İlgili danışanın profil ve klinik bağlamı",
+                                    "Tüm hastalara uygulanan Genel Danışan Talimatı",
+                                    "Danışanın kendi sohbet geçmişi ve mesajı",
                                   ].map((label, index) => (
                                     <li key={label} className="flex items-center gap-2">
                                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--warning-text)] text-[9px] font-bold text-white">
@@ -1189,7 +1189,7 @@ export default function AdminDocsPage() {
                                 </ol>
                                 <p className="mt-3 border-t border-[var(--border-primary)] pt-3 text-[10px] leading-5 text-[var(--text-tertiary)]">
                                   Admin, Fizyoterapist veya Kullanıcı hesabındaki kişisel
-                                  Temel/Ek Talimatlar hastaya aktarılmaz.
+                                  Temel/Ek Talimatlar danışana aktarılmaz.
                                 </p>
                               </article>
                             </div>
@@ -1198,10 +1198,10 @@ export default function AdminDocsPage() {
                               <h3 className="text-xs font-bold">Talimat olmayan ama global etki yaratan ayarlar</h3>
                               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                 <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
-                                  <p className="text-[11px] font-bold">Hasta Varsayılan Modeli</p>
+                                  <p className="text-[11px] font-bold">Danışan Varsayılan Modeli</p>
                                   <p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
-                                    Admin tarafından seçilir ve tüm hastaların modelini
-                                    belirler. Hastalar model değiştiremez. Personelin
+                                    Admin tarafından seçilir ve tüm danışanların modelini
+                                    belirler. Danışanlar model değiştiremez. Personelin
                                     kişisel sohbet modelini etkilemez.
                                   </p>
                                 </div>

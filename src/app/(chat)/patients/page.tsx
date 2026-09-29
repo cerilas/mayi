@@ -444,8 +444,8 @@ export default function PatientsPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Hastalar");
-    XLSX.writeFile(workbook, "hastalar.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Danışanlar");
+    XLSX.writeFile(workbook, "danışanlar.xlsx");
   }
 
   function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -525,8 +525,8 @@ export default function PatientsPage() {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hastalarım</h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">Hastalarınızı yönetin, listeleyin ve sisteme giriş yapmalarını sağlayın.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Danışanlarım</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Danışanlarınızı yönetin, listeleyin ve sisteme giriş yapmalarını sağlayın.</p>
           </div>
           {session?.user?.role === "admin" && (
           <div className="flex gap-2 sm:gap-3 flex-wrap">
@@ -563,7 +563,7 @@ export default function PatientsPage() {
               className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white rounded-lg"
               style={{ backgroundColor: "var(--brand)" }}
             >
-              + Yeni Hasta
+              + Yeni Danışan
             </button>
           </div>
           )}
@@ -935,7 +935,7 @@ export default function PatientsPage() {
         ) : showForm && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-full overflow-y-auto p-6 relative">
-              <h2 className="text-xl font-bold mb-4">{editingPatient ? "Hasta Düzenle" : "Yeni Hasta Ekle"}</h2>
+              <h2 className="text-xl font-bold mb-4">{editingPatient ? "Danışan Düzenle" : "Yeni Danışan Ekle"}</h2>
               <button onClick={() => setShowForm(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -1057,10 +1057,10 @@ export default function PatientsPage() {
                     </div>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Hasta Fotoğrafı</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Danışan Fotoğrafı</label>
                     <div className="flex items-center gap-4">
                       {form.photo && (
-                        <img src={form.photo} alt="Hasta" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                        <img src={form.photo} alt="Danışan" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
                       )}
                       <div className="flex-1">
                         <input

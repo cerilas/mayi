@@ -201,16 +201,16 @@ export async function POST(
       });
       const p = patientUser?.patientProfile;
       const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
-      dbBaseInstruction = ""; // Hastalar temel talimatı (base_instruction) görmemeli, sadece hasta talimatı ve profilleri geçerli
+      dbBaseInstruction = ""; // Danışanlar temel talimatı (base_instruction) görmemeli, sadece danışan talimatı ve profilleri geçerli
 
       const physioName = p?.responsibleAdmin?.name;
       const physioInstruction = physioName 
-        ? `\n- Sorumlu Fizyoterapisti: ${physioName}\nNot: Eğer hastanın bir fizyoterapistle görüşmesi veya iletişim kurması gerekiyorsa, "fizyoterapistimize" demek yerine direkt sorumlu fizyoterapistin ismini (${physioName}) ver.` 
+        ? `\n- Sorumlu Fizyoterapisti: ${physioName}\nNot: Eğer danışanın bir fizyoterapistle görüşmesi veya iletişim kurması gerekiyorsa, "fizyoterapistimize" demek yerine direkt sorumlu fizyoterapistin ismini (${physioName}) ver.` 
         : `\n- Sorumlu Fizyoterapisti: Atanmamış`;
 
       customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
-Hastanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
-- Hasta Adı: ${patientUser?.name || 'Bilinmiyor'}
+Danışanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
+- Danışan Adı: ${patientUser?.name || 'Bilinmiyor'}
 - Yaşı: ${p?.age || 'Bilinmiyor'}
 - Cinsiyeti: ${p?.gender || 'Bilinmiyor'}
 - Hastalık Kısa Tanıtımı: ${p?.shortDescription || 'Yok'}

@@ -57,15 +57,15 @@ export async function POST(req: Request) {
 
     if (!targetUserId || targetUserId === "guest") {
       const existingGuest = await prisma.user.findFirst({
-        where: { email: "misafir@hasta.myfizyo.com" },
+        where: { email: "misafir@danışan.myfizyo.com" },
       });
       if (existingGuest) {
         targetUserId = existingGuest.id;
       } else {
         const newGuest = await prisma.user.create({
           data: {
-            name: "Hızlı Değerlendirme (Misafir Hasta)",
-            email: "misafir@hasta.myfizyo.com",
+            name: "Hızlı Değerlendirme (Misafir Danışan)",
+            email: "misafir@danışan.myfizyo.com",
             passwordHash: "$2b$12$e0...dummyhash",
             role: "patient",
             patientProfile: {

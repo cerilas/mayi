@@ -49,7 +49,7 @@ export default function LoginPage() {
       textColor: "#fff",
       links: [
         { label: "1-3-5 Kuralı", href: "#kural-135", ariaLabel: "1-3-5 Kuralı" },
-        { label: "Standart Dışı Takip", href: "#hasta-takip", ariaLabel: "Hasta Takibi" },
+        { label: "Standart Dışı Takip", href: "#danışan-takip", ariaLabel: "Danışan Takibi" },
         { label: "WhatsApp Destek", href: "#whatsapp", ariaLabel: "WhatsApp Destek Hattı" },
       ],
     },
@@ -80,17 +80,17 @@ export default function LoginPage() {
       iconPath: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
       title: "1-3-5 Kuralı",
       subtitle: "Tedavide Yeni Standart",
-      desc: "İlk seansta temel değerlendirme, 3. seansta ara kontrol, 5. seansta hedef revizyonu. Bilimsel temelli bu yapı sayesinde her hastanın ilerlemesi ölçülür ve tedavi planı dinamik olarak güncellenir.",
+      desc: "İlk seansta temel değerlendirme, 3. seansta ara kontrol, 5. seansta hedef revizyonu. Bilimsel temelli bu yapı sayesinde her danışanın ilerlemesi ölçülür ve tedavi planı dinamik olarak güncellenir.",
       color: "#d22267",
       gradient: "linear-gradient(135deg, rgba(210,34,103,0.12), rgba(210,34,103,0.02))",
       border: "rgba(210,34,103,0.2)",
     },
     {
-      id: "hasta-takip",
+      id: "danışan-takip",
       iconPath: ["M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"],
-      title: "Standart Dışı Hasta Takibi",
-      subtitle: "Her Hasta Biriciktir",
-      desc: "Geleneksel klinik takibinin ötesinde; semptom günlüğü, aktivite skoru ve iyileşme eğrisi ile her hastanın süreci bireysel olarak izlenir. Veri odaklı karar alma ile daha hızlı ve kalıcı sonuçlar.",
+      title: "Standart Dışı Danışan Takibi",
+      subtitle: "Her Danışan Biriciktir",
+      desc: "Geleneksel klinik takibinin ötesinde; semptom günlüğü, aktivite skoru ve iyileşme eğrisi ile her danışanın süreci bireysel olarak izlenir. Veri odaklı karar alma ile daha hızlı ve kalıcı sonuçlar.",
       color: "#3caade",
       gradient: "linear-gradient(135deg, rgba(60,170,222,0.12), rgba(60,170,222,0.02))",
       border: "rgba(60,170,222,0.2)",
@@ -110,7 +110,7 @@ export default function LoginPage() {
       iconPath: ["M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1"],
       title: "Yapay Zeka",
       subtitle: "Klinik Zeka, Dijital Güç",
-      desc: "Google Gemini altyapılı yapay zeka motoru; hasta geçmişini, semptomları ve tedavi yanıtını analiz ederek fizyoterapistlere akıllı öneriler sunar. Daha iyi kararlar, daha hızlı iyileşme.",
+      desc: "Google Gemini altyapılı yapay zeka motoru; danışan geçmişini, semptomları ve tedavi yanıtını analiz ederek fizyoterapistlere akıllı öneriler sunar. Daha iyi kararlar, daha hızlı iyileşme.",
       color: "#7b2ff7",
       gradient: "linear-gradient(135deg, rgba(123,47,247,0.12), rgba(123,47,247,0.02))",
       border: "rgba(123,47,247,0.2)",
@@ -128,7 +128,7 @@ export default function LoginPage() {
     {
       id: "asistan",
       iconPath: ["M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"],
-      title: "Yapay Zekalı Hasta Asistanı 7/24",
+      title: "Yapay Zekalı Danışan Asistanı 7/24",
       subtitle: "Uyumayan Asistanınız",
       desc: "Gece yarısı ağrı mı başladı? Egzersizi doğru mu yapıyorsunuz? Kişisel yapay zeka asistanınız günün her saati soruları yanıtlar, egzersiz hatırlatmaları yapar ve ilerlemenizi takip eder.",
       color: "#3caade",
@@ -140,7 +140,7 @@ export default function LoginPage() {
       iconPath: ["M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"],
       title: "Kişiye Özel Videolu Egzersiz Planlaması",
       subtitle: "Evde Doğru Egzersiz",
-      desc: "Her hasta için özel hazırlanan video egzersiz kütüphanesi. Hangi hareketi, kaç tekrar, ne zaman yapacağınızı adım adım gösteren kişisel video rehberiniz her an cebinizde.",
+      desc: "Her danışan için özel hazırlanan video egzersiz kütüphanesi. Hangi hareketi, kaç tekrar, ne zaman yapacağınızı adım adım gösteren kişisel video rehberiniz her an cebinizde.",
       color: "#d22267",
       gradient: "linear-gradient(135deg, rgba(210,34,103,0.12), rgba(210,34,103,0.02))",
       border: "rgba(210,34,103,0.2)",
@@ -238,7 +238,7 @@ export default function LoginPage() {
           </h2>
 
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "1.1rem", lineHeight: 1.8, maxWidth: "680px", margin: "0 auto 4rem" }}>
-            Myfizyoterapi, geleneksel kliniği yapay zeka gücüyle birleştirerek her hastaya standart dışı, kişisel ve ölçülebilir bir tedavi deneyimi sunar. Artık veriler konuşur, sonuçlar görünür.
+            Myfizyoterapi, geleneksel kliniği yapay zeka gücüyle birleştirerek her danışana standart dışı, kişisel ve ölçülebilir bir tedavi deneyimi sunar. Artık veriler konuşur, sonuçlar görünür.
           </p>
 
           <div className="bento-grid-container" style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "1.5rem", textAlign: "left" }}>
@@ -256,7 +256,7 @@ export default function LoginPage() {
                   <div className="bento-badge" style={{ color: "#d22267", border: "1px solid rgba(210,34,103,0.3)" }}>Kanıta Dayalı</div>
                 </div>
                 <h3 className="bento-title">Bilimsel Protokol</h3>
-                <p className="bento-desc">İlk seansta temel değerlendirme, 3. seansta ara kontrol, 5. seansta hedef revizyonu. Bilimsel temelli bu yapı sayesinde her hastanın ilerlemesi ölçülür ve tedavi planı dinamik olarak güncellenir.</p>
+                <p className="bento-desc">İlk seansta temel değerlendirme, 3. seansta ara kontrol, 5. seansta hedef revizyonu. Bilimsel temelli bu yapı sayesinde her danışanın ilerlemesi ölçülür ve tedavi planı dinamik olarak güncellenir.</p>
               </div>
             </div>
 
@@ -288,7 +288,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <h3 className="bento-title">Akıllı Sistem</h3>
-                <p className="bento-desc">Yapay zeka destekli klinik karar desteği ve hasta asistanı.</p>
+                <p className="bento-desc">Yapay zeka destekli klinik karar desteği ve danışan asistanı.</p>
               </div>
             </div>
 

@@ -748,9 +748,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
               {/* Patient Default Model */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-800 mb-2">Hasta Varsayılan Modeli</h3>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">Danışan Varsayılan Modeli</h3>
                 <p className="text-xs text-gray-500 mb-4">
-                  Hastalar sohbette model değiştiremez. Burada seçtiğiniz model tüm hastalar için varsayılan olarak kullanılacaktır.
+                  Danışanlar sohbette model değiştiremez. Burada seçtiğiniz model tüm danışanlar için varsayılan olarak kullanılacaktır.
                 </p>
                 {availableModels.length > 0 ? (
                   <div className="space-y-4">
@@ -900,7 +900,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     Karakter limiti 10.000'e çıkarılmıştır ancak talimatların çok uzun tutulmasının bazı dezavantajları vardır:
                     <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90">
                       <li><strong>Maliyet:</strong> Yapay zeka her mesaja cevap verirken bu talimatları tekrar okur, bu da API (token) maliyetlerinizi doğrudan artırır.</li>
-                      <li><strong>Hafıza Sınırı:</strong> Sistemin hastanın eski sohbet mesajlarını hatırlama kapasitesini daraltır.</li>
+                      <li><strong>Hafıza Sınırı:</strong> Sistemin danışanın eski sohbet mesajlarını hatırlama kapasitesini daraltır.</li>
                       <li><strong>Odak Kaybı:</strong> Çok uzun talimatlarda yapay zeka bazı kuralları gözden kaçırabilir veya dikkate almayabilir. (Kısa ve öz talimatlar her zaman daha isabetlidir).</li>
                     </ul>
                   </div>
@@ -912,7 +912,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       <span>AI&apos;ın kim olduğunu ve nasıl davranacağını tanımlayan ana talimat. Boş bırakırsanız varsayılan kullanılır.</span>
                       <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Hastaları etkilemez)
+                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Danışanları etkilemez)
                       </span>
                     </p>
                     <textarea
@@ -938,7 +938,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       <span>Temel talimata ek olarak gönderilecek özel kurallar.</span>
                       <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Hastaları etkilemez)
+                        Dikkat: Bu ayar yalnızca sizin (Fizyoterapist/Admin) kişisel sohbetlerinizi etkiler. (Danışanları etkilemez)
                       </span>
                     </p>
                     <textarea
@@ -958,12 +958,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <>
                       <div className="border-t border-gray-100" />
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Genel Hasta Talimatı</label>
+                        <label className="text-sm font-medium text-gray-700">Genel Danışan Talimatı</label>
                         <p className="text-xs text-gray-400 flex flex-col gap-1">
-                          <span>Tüm hastalar için geçerli olacak genel kurallar (Örn: Hastalarla ismiyle konuş, onlara moral ver).</span>
+                          <span>Tüm danışanlar için geçerli olacak genel kurallar (Örn: Hastalarla ismiyle konuş, onlara moral ver).</span>
                           <span className="inline-flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md font-medium w-fit mt-0.5">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            Dikkat: Bu ayar sistemdeki TÜM hastaların yapay zeka yanıtlarını doğrudan etkiler!
+                            Dikkat: Bu ayar sistemdeki TÜM danışanların yapay zeka yanıtlarını doğrudan etkiler!
                           </span>
                         </p>
                         <textarea

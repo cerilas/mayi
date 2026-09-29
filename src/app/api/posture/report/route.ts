@@ -4,7 +4,7 @@ import { getUserSession } from "@/lib/auth-utils";
 
 /**
  * GET /api/posture/report?userId=xxx&sessionId=xxx
- * Admin için hasta postür raporunu getiren kapsamlı API.
+ * Admin için danışan postür raporunu getiren kapsamlı API.
  */
 export async function GET(req: Request) {
   try {
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "userId gerekli" }, { status: 400 });
     }
 
-    // Hasta bilgilerini al
+    // Danışan bilgilerini al
     const patient = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     });
 
     if (!patient) {
-      return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
+      return NextResponse.json({ error: "Danışan bulunamadı" }, { status: 404 });
     }
 
     // Postür oturumlarını al

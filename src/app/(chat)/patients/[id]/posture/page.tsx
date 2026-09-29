@@ -170,7 +170,7 @@ export default function PostureReportsPage() {
         </button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">Postür Analizi Raporları</h1>
-          <p className="text-sm text-gray-500 mt-1">Hastanın mobil cihaz ile yapılan değerlendirme sonuçları</p>
+          <p className="text-sm text-gray-500 mt-1">Danışanın mobil cihaz ile yapılan değerlendirme sonuçları</p>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export default function PostureReportsPage() {
         <div className="text-center py-20 bg-white border border-gray-200 rounded-2xl">
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Henüz Rapor Yok</h3>
-          <p className="text-gray-500">Bu hasta için kaydedilmiş bir postür analizi bulunmuyor.</p>
+          <p className="text-gray-500">Bu danışan için kaydedilmiş bir postür analizi bulunmuyor.</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -302,7 +302,7 @@ export default function PostureReportsPage() {
                   <textarea 
                     value={opinions[session.id] ?? ""}
                     onChange={(e) => setOpinions(prev => ({ ...prev, [session.id]: e.target.value }))}
-                    placeholder="Bu oturum için hasta değerlendirmenizi, öne çıkan bulguları ve tedavi önerilerinizi yazın..."
+                    placeholder="Bu oturum için danışan değerlendirmenizi, öne çıkan bulguları ve tedavi önerilerinizi yazın..."
                     className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[100px] resize-y bg-gray-50/50"
                   />
                   <div className="flex justify-between items-center mt-1">

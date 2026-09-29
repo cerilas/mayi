@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
         <div className="space-y-8 text-gray-700 leading-relaxed">
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Veri Sorumlusunun Kimliği</h2>
-            <p>FizioAI ("Biz", "Şirket", "Uygulama" veya "Servis"), kullanıcılarının ("Kullanıcı", "Fizyoterapist", "Sağlık Profesyoneli") ve onların platforma eklediği hastaların temel hak ve özgürlüklerini korumak amacıyla kişisel verilerin yasal mevzuata (KVKK ve uygun olduğu ölçüde GDPR) uygun şekilde işlenmesine son derece önem vermektedir. Bu politika, FizioAI web platformunu ve mobil uygulamasını kullanırken toplanan verilerin nasıl işlendiğini, saklandığını ve korunduğunu açıklar.</p>
+            <p>FizioAI ("Biz", "Şirket", "Uygulama" veya "Servis"), kullanıcılarının ("Kullanıcı", "Fizyoterapist", "Sağlık Profesyoneli") ve onların platforma eklediği danışanların temel hak ve özgürlüklerini korumak amacıyla kişisel verilerin yasal mevzuata (KVKK ve uygun olduğu ölçüde GDPR) uygun şekilde işlenmesine son derece önem vermektedir. Bu politika, FizioAI web platformunu ve mobil uygulamasını kullanırken toplanan verilerin nasıl işlendiğini, saklandığını ve korunduğunu açıklar.</p>
           </section>
 
           <section>
@@ -27,14 +27,14 @@ export default function PrivacyPolicy() {
               <li><strong>Kimlik Bilgileri:</strong> Ad, soyad, unvan.</li>
               <li><strong>İletişim Bilgileri:</strong> E-posta adresi, telefon numarası, klinik veya kurum adresi.</li>
               <li><strong>Mesleki Bilgiler:</strong> Çalıştığınız kurum, mesleki deneyiminiz ve uzmanlık alanınız.</li>
-              <li><strong>Hasta Verileri (Sağlık Verileri):</strong> Kullanıcıların (fizyoterapistlerin) sisteme kendi iradeleriyle ekledikleri hasta kayıtları, fiziksel değerlendirme sonuçları, ağrı skorları, tedavi geçmişi, seans notları ve postür analiz verileri.</li>
+              <li><strong>Danışan Verileri (Sağlık Verileri):</strong> Kullanıcıların (fizyoterapistlerin) sisteme kendi iradeleriyle ekledikleri danışan kayıtları, fiziksel değerlendirme sonuçları, ağrı skorları, tedavi geçmişi, seans notları ve postür analiz verileri.</li>
               <li><strong>Teknik Cihaz ve Kullanım Verileri:</strong> IP adresi, cihaz modeli, işletim sistemi, tarayıcı türü, uygulamada geçirilen süre, oturum açma zamanları ve hata logları.</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Kişisel Verilerin Toplanma Yöntemi ve Hukuki Sebebi</h2>
-            <p>Kişisel verileriniz; web sitemiz veya uygulamamız üzerinden hesap oluşturduğunuzda, platforma hasta verisi girdiğinizde, formları doldurduğunuzda, destek talebinde bulunduğunuzda veya yapay zeka asistanımızla etkileşime girdiğinizde tamamen otomatik ya da kısmen otomatik yollarla toplanmaktadır.</p>
+            <p>Kişisel verileriniz; web sitemiz veya uygulamamız üzerinden hesap oluşturduğunuzda, platforma danışan verisi girdiğinizde, formları doldurduğunuzda, destek talebinde bulunduğunuzda veya yapay zeka asistanımızla etkileşime girdiğinizde tamamen otomatik ya da kısmen otomatik yollarla toplanmaktadır.</p>
             <p className="mt-2">Bu veriler; bir sözleşmenin kurulması veya ifası, hukuki yükümlülüklerimizin yerine getirilmesi, temel hak ve özgürlüklerinize zarar vermemek kaydıyla meşru menfaatlerimiz kapsamında işlenmektedir. Özel nitelikli kişisel veriler (sağlık verileri) ise ilgili kişinin veya fizyoterapistin yasal onamı/açık rızası dahilinde, sır saklama yükümlülüğü altında işlenir.</p>
           </section>
 
@@ -42,7 +42,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Kişisel Verilerin İşlenme Amacı</h2>
             <p className="mb-3">Topladığımız veriler yalnızca aşağıdaki amaçlar doğrultusunda işlenmektedir:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Klinik yönetim, hasta kayıt, takip ve tedavi raporlama süreçlerinin güvenli şekilde sağlanması.</li>
+              <li>Klinik yönetim, danışan kayıt, takip ve tedavi raporlama süreçlerinin güvenli şekilde sağlanması.</li>
               <li>Yapay zeka (AI) destekli asistanımızın size doğru klinik analizler, egzersiz planları ve vaka değerlendirmeleri sunabilmesi.</li>
               <li>Platformun performansının artırılması, teknik hataların ve altyapı sorunlarının giderilmesi.</li>
               <li>Kullanıcı hesaplarının oluşturulması ve güvenliğinin sağlanması (örneğin iki faktörlü doğrulama, şüpheli işlem tespiti).</li>
@@ -52,9 +52,9 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Kişisel Verilerin Aktarımı (Üçüncü Kişiler ve Yapay Zeka Servisleri)</h2>
-            <p>FizioAI, kullanıcılarının ve hastaların kişisel verilerini yasal zorunluluklar dışında kati suretle üçüncü şahıslara veya şirketlere pazarlama, reklam ya da ticari gelir elde etme amacıyla <strong>satmaz veya aktarmaz</strong>.</p>
+            <p>FizioAI, kullanıcılarının ve danışanların kişisel verilerini yasal zorunluluklar dışında kati suretle üçüncü şahıslara veya şirketlere pazarlama, reklam ya da ticari gelir elde etme amacıyla <strong>satmaz veya aktarmaz</strong>.</p>
             <p className="mt-2">Verileriniz yalnızca sistemin düzgün çalışması için zorunlu olan hizmet sağlayıcılarıyla (güvenli bulut sunucu altyapıları, veri tabanı yönetim firmaları ve yetkili yasal merciler) gerekli güvenlik önlemleri alınarak paylaşılabilir.</p>
-            <p className="mt-2"><strong>Yapay Zeka Servis Sağlayıcıları:</strong> Uygulamamız, kullanıcılara analiz ve öneriler sunabilmek amacıyla üçüncü taraf yapay zeka servis sağlayıcılarını (OpenAI ve Google Gemini vb.) kullanmaktadır. Kullanıcıların (fizyoterapistlerin) sisteme girdiği değerlendirme notları, semptomlar ve şikayetler gibi metin tabanlı veriler; hastanın kimliğini doğrudan açığa çıkaracak ad, soyad, iletişim bilgileri gibi veriler (PII - Kişisel Tanımlanabilir Bilgiler) <strong>hariç tutularak ve anonimleştirilerek</strong> bu yapay zeka servislerine iletilir. Bu veriler sadece anlık analiz üretmek amacıyla (örneğin egzersiz planı oluşturma) iletilir. İlgili yapay zeka sağlayıcıları ile veri gizliliği sözleşmeleri ve standartları (GDPR/KVKK uyumluluğu) gözetilerek çalışılmaktadır.</p>
+            <p className="mt-2"><strong>Yapay Zeka Servis Sağlayıcıları:</strong> Uygulamamız, kullanıcılara analiz ve öneriler sunabilmek amacıyla üçüncü taraf yapay zeka servis sağlayıcılarını (OpenAI ve Google Gemini vb.) kullanmaktadır. Kullanıcıların (fizyoterapistlerin) sisteme girdiği değerlendirme notları, semptomlar ve şikayetler gibi metin tabanlı veriler; danışanın kimliğini doğrudan açığa çıkaracak ad, soyad, iletişim bilgileri gibi veriler (PII - Kişisel Tanımlanabilir Bilgiler) <strong>hariç tutularak ve anonimleştirilerek</strong> bu yapay zeka servislerine iletilir. Bu veriler sadece anlık analiz üretmek amacıyla (örneğin egzersiz planı oluşturma) iletilir. İlgili yapay zeka sağlayıcıları ile veri gizliliği sözleşmeleri ve standartları (GDPR/KVKK uyumluluğu) gözetilerek çalışılmaktadır.</p>
           </section>
 
           <section>

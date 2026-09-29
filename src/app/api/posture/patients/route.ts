@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
  * GET /api/posture/patients
  * Headers: { "x-admin-pin": "0000" }
  * 
- * iOS Admin Paneli (Clinician Dashboard) için hasta listesini döner.
+ * iOS Admin Paneli (Clinician Dashboard) için danışan listesini döner.
  */
 export async function GET(req: Request) {
   try {

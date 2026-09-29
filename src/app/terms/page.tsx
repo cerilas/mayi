@@ -33,7 +33,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Hizmetin Kullanım Amacı ve Tıbbi Tavsiye Olmama Durumu (Feragatname)</h2>
             <p>FizioAI, fizyoterapistler, doktorlar ve diğer sağlık profesyonelleri için bir klinik süreç yönetimi, asistanlık ve veri takip aracıdır. <strong>Uygulama hiçbir şekilde profesyonel bir tıbbi tavsiye, kesin teşhis veya tıbbi tedavi planlaması niteliği taşımaz.</strong></p>
-            <p className="mt-2">Platform içerisindeki Yapay Zeka (AI) asistanının verdiği yanıtlar, literatür verileri baz alınarak oluşturulan yönlendirme amaçlı asistan görüşleridir. Nihai klinik karar ve sorumluluk her zaman işlemi gerçekleştiren sağlık profesyoneline (Kullanıcıya) aittir. FizioAI, sistem tarafından önerilen bir tedavinin, analizin veya egzersizin doğrudan hastaya uygulanmasından doğabilecek tıbbi hata veya malpraktis durumlarından hiçbir koşulda sorumlu tutulamaz.</p>
+            <p className="mt-2">Platform içerisindeki Yapay Zeka (AI) asistanının verdiği yanıtlar, literatür verileri baz alınarak oluşturulan yönlendirme amaçlı asistan görüşleridir. Nihai klinik karar ve sorumluluk her zaman işlemi gerçekleştiren sağlık profesyoneline (Kullanıcıya) aittir. FizioAI, sistem tarafından önerilen bir tedavinin, analizin veya egzersizin doğrudan danışana uygulanmasından doğabilecek tıbbi hata veya malpraktis durumlarından hiçbir koşulda sorumlu tutulamaz.</p>
           </section>
 
           <section>
@@ -49,7 +49,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Veri Girişi ve KVKK Uyumluluğu</h2>
-            <p>Kullanıcı (Sağlık Profesyoneli), sisteme girdiği tüm hastalarına ait kişisel ve sağlık verilerinden hukuken sorumludur. Kullanıcı, hastalarından KVKK/GDPR kapsamında gerekli açık rıza ve aydınlatma onamlarını aldığını peşinen kabul ve taahhüt eder. FizioAI sadece bir veri işleyen (Data Processor) veya yer sağlayıcı konumunda olup, eksik onam kaynaklı ihlallerde sorumluluk doğrudan Kullanıcı'ya rücu edilir.</p>
+            <p>Kullanıcı (Sağlık Profesyoneli), sisteme girdiği tüm danışanlarına ait kişisel ve sağlık verilerinden hukuken sorumludur. Kullanıcı, danışanlarından KVKK/GDPR kapsamında gerekli açık rıza ve aydınlatma onamlarını aldığını peşinen kabul ve taahhüt eder. FizioAI sadece bir veri işleyen (Data Processor) veya yer sağlayıcı konumunda olup, eksik onam kaynaklı ihlallerde sorumluluk doğrudan Kullanıcı'ya rücu edilir.</p>
           </section>
 
           <section>

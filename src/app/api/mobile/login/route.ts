@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Sadece hastaların giriş yapmasına izin vermek istiyorsak buraya bir rol kontrolü ekleyebiliriz:
+    // Sadece danışanların giriş yapmasına izin vermek istiyorsak buraya bir rol kontrolü ekleyebiliriz:
     // if (user.role !== "user") return NextResponse.json({error: "Yetkisiz"}, {status: 403});
     // Şimdilik herkese açık bırakıyoruz (Admin/Fizyoterapist de girebilir)
 

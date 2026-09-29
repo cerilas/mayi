@@ -121,7 +121,7 @@ export async function GET(req: Request) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;" width="30"><img src="https://unpkg.com/lucide-static@0.344.0/icons/user-plus.svg" width="20" height="20" style="opacity: 0.6;"></td>
-                  <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 15px;">Yeni Hasta Kaydı</td>
+                  <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 15px;">Yeni Danışan Kaydı</td>
                   <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: 700; color: #059669; font-size: 16px;">+${dailyPatients}</td>
                 </tr>
                 <tr>
@@ -149,7 +149,7 @@ export async function GET(req: Request) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;" width="30"><img src="https://unpkg.com/lucide-static@0.344.0/icons/users.svg" width="20" height="20" style="opacity: 0.6;"></td>
-                  <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 15px;">Toplam Kayıtlı Hasta</td>
+                  <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 15px;">Toplam Kayıtlı Danışan</td>
                   <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: 700; color: #111827; font-size: 16px;">${totalPatients}</td>
                 </tr>
                 <tr>

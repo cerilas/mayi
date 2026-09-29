@@ -112,7 +112,7 @@ function ReportInner() {
   if (!data || data.sessions.length === 0) {
     return (
       <div className="p-10 text-center text-slate-500 min-h-screen bg-slate-50">
-        Bu hasta için rapor verisi bulunamadı.
+        Bu danışan için rapor verisi bulunamadı.
       </div>
     );
   }
@@ -171,7 +171,7 @@ function ReportInner() {
 
         <label
           className="inline-flex items-center gap-2 cursor-pointer select-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
-          title="PDF raporunda gerçek hasta fotoğraflarına yer verilsin mi?"
+          title="PDF raporunda gerçek danışan fotoğraflarına yer verilsin mi?"
         >
           <input
             type="checkbox"
@@ -185,7 +185,7 @@ function ReportInner() {
             ) : (
               <CameraOff size={15} className="text-slate-400" />
             )}
-            <span>Gerçek Hasta Fotoğrafları</span>
+            <span>Gerçek Danışan Fotoğrafları</span>
           </span>
           <span
             className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -229,7 +229,7 @@ function ReportInner() {
           Fotoğraf Seçeneği:{" "}
           <strong className={includePatientPhotos ? "text-indigo-600" : "text-amber-600"}>
             {includePatientPhotos
-              ? "Gerçek hasta fotoğrafları aktif"
+              ? "Gerçek danışan fotoğrafları aktif"
               : "Temsili şablon görselleri aktif (Gizlilik / Placeholder)"}
           </strong>
         </span>
@@ -378,7 +378,7 @@ function ReportInner() {
         {patient.profile?.shortDescription && (
           <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
             <strong className="mb-1 flex items-center gap-2 text-slate-800">
-              <Info size={14} className="text-indigo-600" /> Hasta Notu
+              <Info size={14} className="text-indigo-600" /> Danışan Notu
             </strong>
             {patient.profile.shortDescription}
           </div>

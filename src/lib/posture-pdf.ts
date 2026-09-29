@@ -343,7 +343,7 @@ function drawClosingStack(
   doc.text("GİZLİLİK VE YASAL UYARI", M + 5, discY + 4.4);
   setText(doc, 6, MUTED, false);
   const disclaimer =
-    "Bu belge hasta gizliliği kapsamındadır ve yalnızca ilgili klinisyen / hasta için üretilmiştir. Yapay zeka destekli biyomekanik ölçümlere dayanır; tanı koymaz. Kesin tanı ve tedavi planı lisanslı fizyoterapist veya ortopedi uzmanının klinik muayenesine bağlıdır. İzinsiz çoğaltılamaz, iletilemez veya üçüncü taraflarla paylaşılamaz.";
+    "Bu belge danışan gizliliği kapsamındadır ve yalnızca ilgili klinisyen / danışan için üretilmiştir. Yapay zeka destekli biyomekanik ölçümlere dayanır; tanı koymaz. Kesin tanı ve tedavi planı lisanslı fizyoterapist veya ortopedi uzmanının klinik muayenesine bağlıdır. İzinsiz çoğaltılamaz, iletilemez veya üçüncü taraflarla paylaşılamaz.";
   truncateLines(wrapText(doc, disclaimer, CONTENT_W - 9, 6), 4).forEach((ln, i) => {
     doc.text(ln, M + 5, discY + 8 + i * 2.5);
   });
@@ -470,7 +470,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 1
   // ═══════════════════════════════════════════════════════════════════════════
-  drawFooter(doc, 1, reportId, patient.name || "Hasta");
+  drawFooter(doc, 1, reportId, patient.name || "Danışan");
 
   // ── Masthead ──
   drawNavyHeader(doc, 24, 1.2);
@@ -502,10 +502,10 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
   let y = 30;
 
   // ── Patient & assessment info ──
-  y = drawSectionHeader(doc, "Hasta & Değerlendirme Bilgileri", y);
+  y = drawSectionHeader(doc, "Danışan & Değerlendirme Bilgileri", y);
   const infoFields: Array<[string, string]> = [
     ["Ad Soyad", patient.name || "—"],
-    ["Hasta No", patientId],
+    ["Danışan No", patientId],
     ["Yaş / Cinsiyet", `${profile?.age != null ? profile.age : "—"} / ${genderLabel(profile?.gender)}`],
     ["Değerlendirme Tarihi", sessionDate],
     ["Sorumlu Terapist", profile?.responsibleAdmin?.name || "—"],
@@ -685,7 +685,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
   // PAGE 2
   // ═══════════════════════════════════════════════════════════════════════════
   doc.addPage();
-  drawFooter(doc, 2, reportId, patient.name || "Hasta");
+  drawFooter(doc, 2, reportId, patient.name || "Danışan");
 
   // ── Running header ──
   drawNavyHeader(doc, 13, 0.8);
@@ -693,7 +693,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
   doc.text(clip(doc, "Postüral Biyomekanik Değerlendirme Raporu", 108, 8.5), M, 8.4);
   setText(doc, 7, "#c7d7ea", false);
   doc.text(
-    clip(doc, `${patient.name || "Hasta"}  ·  ${reportId}`, 68, 7),
+    clip(doc, `${patient.name || "Danışan"}  ·  ${reportId}`, 68, 7),
     PAGE_W - M,
     8.4,
     { align: "right" }
@@ -808,7 +808,7 @@ export async function generateAndDownloadPosturePdf(input: PosturePdfInput): Pro
 
   while (doc.getNumberOfPages() > MAX_PAGES) doc.deletePage(doc.getNumberOfPages());
 
-  const safeName = (patient.name || "hasta")
+  const safeName = (patient.name || "danışan")
     .replace(/[^\w\s\-ğüşıöçĞÜŞİÖÇ]/gi, "")
     .trim()
     .replace(/\s+/g, "_")
