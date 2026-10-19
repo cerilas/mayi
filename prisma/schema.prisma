@@ -14,6 +14,8 @@ model User {
   passwordHash  String
   passwordEncrypted String?
   role          String         @default("user")
+  /// Currently unused: "Sorumlu terapistim" always calls the clinic line (CLINIC_PHONE).
+  phone         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   conversations Conversation[]
@@ -133,6 +135,9 @@ model PatientProfile {
   longDetails         String?
   clinicalOpinion     String?
   videoLinks          String[]
+  /// Plain-language rewrite of the therapist notes; regenerated when friendlySummaryHash no longer matches.
+  friendlySummary     String?
+  friendlySummaryHash String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

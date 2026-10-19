@@ -64,27 +64,64 @@ export function usageLimitMessage(resetAt: Date): string {
   return `Bu haftaki ücretsiz soru hakkınız doldu. Hakkınız ${resetLabel} günü otomatik ve ücretsiz olarak yenilenir. Bu sürede geçmiş sohbetleriniz, randevu alma, konum ve çalışma saatleri kullanılmaya devam eder. Daha önce ihtiyacınız olursa kliniğimizle iletişime geçebilirsiniz. Uygulamada hiçbir ücretli işlem yoktur.`;
 }
 
-export type QuickActionKey = "appointment" | "location" | "hours" | "about";
+export type StaticQuickActionKey = "appointment" | "location" | "hours" | "about";
+/** Answers built per user on the server (see lib/quick-answers.ts). */
+export type PersonalQuickActionKey = "therapist" | "videos" | "summary";
+export type QuickActionKey = StaticQuickActionKey | PersonalQuickActionKey;
 
-export const QUICK_ACTIONS: Record<QuickActionKey, { question: string; answer: string }> = {
+export const QUICK_ACTIONS: Record<StaticQuickActionKey, { question: string; answer: string }> = {
   appointment: { question: "Klinikten randevu almak istiyorum", answer: APPOINTMENT_TEXT },
   location: { question: "Kliniğin konumunu alabilir miyim?", answer: LOCATION_TEXT },
   hours: { question: "Kliniğin çalışma saatleri nedir?", answer: HOURS_TEXT },
   about: { question: "Mahmut Yücel kimdir?", answer: ABOUT_TEXT },
 };
 
+export const QUICK_QUESTIONS: Record<QuickActionKey, string> = {
+  appointment: QUICK_ACTIONS.appointment.question,
+  location: QUICK_ACTIONS.location.question,
+  hours: QUICK_ACTIONS.hours.question,
+  about: QUICK_ACTIONS.about.question,
+  therapist: "Sorumlu terapistim kim?",
+  videos: "Bana önerilen videolar neler?",
+  summary: "Fizyoterapistimin özetini görebilir miyim?",
+};
+
 export function isQuickActionKey(value: unknown): value is QuickActionKey {
-  return typeof value === "string" && value in QUICK_ACTIONS;
+  return typeof value === "string" && value in QUICK_QUESTIONS;
+}
+
+export function isStaticQuickActionKey(key: QuickActionKey): key is StaticQuickActionKey {
+  return key in QUICK_ACTIONS;
+}
+
+/** Main clinic line (also the fallback when a therapist has no number on file). */
+export const CLINIC_PHONE = "+905406502727";
+
+export function toTelHref(phone: string): string | null {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("90")) digits = digits.slice(2);
+  else if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits.length === 10 ? `tel:+90${digits}` : null;
+}
+
+/** "tel:+905406502727" → "0540 650 27 27" */
+export function formatTelHref(href: string): string {
+  const d = href.replace(/\D/g, "").replace(/^90/, "");
+  return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : href.replace(/^tel:/, "");
 }
 
 /** Fixed-answer intents matched on short typed messages so these questions never depend on the model. */
-const TYPED_INTENTS: Array<{ key: Exclude<QuickActionKey, "appointment">; pattern: RegExp }> = [
+type TypedIntentKey = Exclude<QuickActionKey, "appointment">;
+const TYPED_INTENTS: Array<{ key: TypedIntentKey; pattern: RegExp }> = [
   { key: "about", pattern: /mahmut\s*y[üu]cel.*(kim|hakk[ıi]nda|tan[ıi]t)|(kim|nedir).*mahmut\s*y[üu]cel/i },
+  { key: "summary", pattern: /terapist\S*\s*[öo]zet|[öo]zetim/i },
+  { key: "therapist", pattern: /terapist(im|imi|imin|imle|ime)|sorumlu\s*(fizyo)?terapist/i },
+  { key: "videos", pattern: /video(lar)?(ım|im)|[öo]neri(len|lmi[sş])\s*video|bana\s.*video/i },
   { key: "hours", pattern: /(çal[ıi]şma|a[çc][ıi]l[ıi]ş|kapan[ıi]ş|mesai)\s*saat|ka[çc]a?\s*kadar\s*a[çc][ıi]k|saat\s*ka[çc]ta\s*(a[çc]|kapan)|hangi\s*g[üu]nler\s*a[çc][ıi]k/i },
   { key: "location", pattern: /(konum|adres|yol\s*tarif|harita|nerede(siniz)?|nas[ıi]l\s*gelir)/i },
 ];
 
-export function matchTypedIntent(text: string): Exclude<QuickActionKey, "appointment"> | null {
+export function matchTypedIntent(text: string): TypedIntentKey | null {
   const trimmed = text.trim();
   if (!trimmed || trimmed.length > 120) return null;
   return TYPED_INTENTS.find((intent) => intent.pattern.test(trimmed))?.key ?? null;

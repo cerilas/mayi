@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus, ChevronRight, Clock, MapPin, UserRound } from "lucide-react";
+import { CalendarPlus, ChevronRight, Clock, FileText, MapPin, Phone, UserRound, Video } from "lucide-react";
 import type { QuickActionKey } from "@/lib/clinic";
 
 interface ClinicQuickActionsProps {
@@ -8,17 +8,28 @@ interface ClinicQuickActionsProps {
   onSelect: (key: QuickActionKey) => void;
 }
 
-const SECONDARY = [
-  { key: "location" as const, title: "Konum al", subtitle: "Google Haritalar'da aç", Icon: MapPin },
-  { key: "hours" as const, title: "Çalışma saatleri", subtitle: "Pazartesi – Cumartesi", Icon: Clock },
-  { key: "about" as const, title: "Mahmut Yücel kimdir?", subtitle: "Kurucumuzu tanıyın", Icon: UserRound },
+type CardAction = { key: QuickActionKey; title: string; subtitle: string; Icon: typeof MapPin };
+
+const CLINIC_CARDS: CardAction[] = [
+  { key: "location", title: "Konum al", subtitle: "Google Haritalar'da aç", Icon: MapPin },
+  { key: "hours", title: "Çalışma saatleri", subtitle: "Pazartesi – Cumartesi", Icon: Clock },
+  { key: "about", title: "Mahmut Yücel kimdir?", subtitle: "Kurucumuzu tanıyın", Icon: UserRound },
 ];
 
-const CHIPS = [
-  { key: "appointment" as const, label: "Randevu al", Icon: CalendarPlus },
-  { key: "location" as const, label: "Konum", Icon: MapPin },
-  { key: "hours" as const, label: "Çalışma saatleri", Icon: Clock },
-  { key: "about" as const, label: "Mahmut Yücel", Icon: UserRound },
+const PERSONAL_CARDS: CardAction[] = [
+  { key: "therapist", title: "Sorumlu terapistim", subtitle: "Tek dokunuşla arayın", Icon: Phone },
+  { key: "videos", title: "Önerilen videolar", subtitle: "Size özel içerikler", Icon: Video },
+  { key: "summary", title: "Fizyoterapist özeti", subtitle: "Sade bir dille", Icon: FileText },
+];
+
+const CHIPS: Array<{ key: QuickActionKey; label: string; Icon: typeof MapPin }> = [
+  { key: "appointment", label: "Randevu al", Icon: CalendarPlus },
+  { key: "therapist", label: "Terapistim", Icon: Phone },
+  { key: "videos", label: "Videolarım", Icon: Video },
+  { key: "summary", label: "Özetim", Icon: FileText },
+  { key: "location", label: "Konum", Icon: MapPin },
+  { key: "hours", label: "Çalışma saatleri", Icon: Clock },
+  { key: "about", label: "Mahmut Yücel", Icon: UserRound },
 ];
 
 function Spinner({ light }: { light?: boolean }) {
@@ -26,6 +37,31 @@ function Spinner({ light }: { light?: boolean }) {
     <span
       className={`inline-block w-4 h-4 rounded-full border-2 animate-spin ${light ? "border-white/40 border-t-white" : "border-[var(--brand-light)] border-t-[var(--brand)]"}`}
     />
+  );
+}
+
+function CardGrid({ cards, busyKey, onSelect }: ClinicQuickActionsProps & { cards: CardAction[] }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+      {cards.map(({ key, title, subtitle, Icon }) => (
+        <button
+          key={key}
+          type="button"
+          disabled={busyKey !== null}
+          onClick={() => onSelect(key)}
+          className="brand-card-hover min-w-0 rounded-2xl p-3 sm:p-3.5 text-left flex flex-col justify-between min-h-[112px] transition-colors disabled:opacity-70"
+          style={{ border: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}
+        >
+          <span className="flex w-9 h-9 items-center justify-center rounded-xl brand-bg-light">
+            {busyKey === key ? <Spinner /> : <Icon className="w-[18px] h-[18px] brand-text" strokeWidth={2.2} />}
+          </span>
+          <span className="mt-3 block min-w-0">
+            <span className="block text-[13px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>{title}</span>
+            <span className="block text-[11px] mt-1 truncate" style={{ color: "var(--text-tertiary)" }}>{subtitle}</span>
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -70,33 +106,21 @@ export default function ClinicQuickActions({ busyKey, onSelect }: ClinicQuickAct
         </span>
       </button>
 
-      <div className="grid grid-cols-3 gap-2.5 mt-2.5">
-        {SECONDARY.map(({ key, title, subtitle, Icon }) => (
-          <button
-            key={key}
-            type="button"
-            disabled={disabled}
-            onClick={() => onSelect(key)}
-            className="brand-card-hover rounded-2xl p-3.5 text-left flex flex-col justify-between min-h-[118px] transition-colors disabled:opacity-70"
-            style={{ border: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}
-          >
-            <span className="flex w-9 h-9 items-center justify-center rounded-xl brand-bg-light">
-              {busyKey === key ? <Spinner /> : <Icon className="w-[18px] h-[18px] brand-text" strokeWidth={2.2} />}
-            </span>
-            <span className="mt-3 block">
-              <span className="block text-[13px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>{title}</span>
-              <span className="block text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>{subtitle}</span>
-            </span>
-          </button>
-        ))}
+      <div className="mt-2.5">
+        <CardGrid cards={CLINIC_CARDS} busyKey={busyKey} onSelect={onSelect} />
       </div>
+
+      <p className="text-[11px] font-bold tracking-[0.12em] mt-5 mb-2.5 ml-0.5" style={{ color: "var(--text-tertiary)" }}>
+        SİZE ÖZEL
+      </p>
+      <CardGrid cards={PERSONAL_CARDS} busyKey={busyKey} onSelect={onSelect} />
     </div>
   );
 }
 
 export function ClinicQuickChips({ busyKey, onSelect }: ClinicQuickActionsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto px-3 sm:px-4 pt-2 [scrollbar-width:none]">
+    <div className="flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible px-3 sm:px-4 pt-2 [scrollbar-width:none]">
       {CHIPS.map(({ key, label, Icon }) => {
         const primary = key === "appointment";
         return (

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       },
       include: { 
         patientProfile: {
-          include: { responsibleAdmin: true }
+          include: { responsibleAdmin: { select: { id: true, name: true } } }
         } 
       },
     });

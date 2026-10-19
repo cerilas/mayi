@@ -1,0 +1,3 @@
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "PatientProfile" ADD COLUMN IF NOT EXISTS "friendlySummary" TEXT;
+ALTER TABLE "PatientProfile" ADD COLUMN IF NOT EXISTS "friendlySummaryHash" TEXT;

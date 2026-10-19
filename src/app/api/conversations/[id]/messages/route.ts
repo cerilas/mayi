@@ -7,7 +7,8 @@ import type { AIMessage, AIMessageContent, AIProvider } from "@/types";
 import path from "path";
 import fs from "fs";
 import { checkAndUpdateUsage, incrementUsage } from "@/lib/usage";
-import { clinicFactsForAI, QUICK_ACTIONS, matchTypedIntent, usageLimitMessage, withDisclaimer } from "@/lib/clinic";
+import { clinicFactsForAI, matchTypedIntent, usageLimitMessage } from "@/lib/clinic";
+import { buildQuickAnswer } from "@/lib/quick-answers";
 import { appointmentToolSet } from "@/ai/tools/appointmentTools";
 
 function getUploadDir() {
@@ -66,18 +67,18 @@ export async function POST(
   // Clinic info questions get the fixed answer, even when the usage limit is reached.
   const typedIntent = attachmentIds.length === 0 ? matchTypedIntent(userContent) : null;
   if (typedIntent) {
-    const answer = withDisclaimer(QUICK_ACTIONS[typedIntent].answer);
+    const { question, answer } = await buildQuickAnswer(typedIntent, session.user.id);
     const isFirstMessage = conversation.title === "Yeni Sohbet";
     await prisma.$transaction([
       prisma.message.create({ data: { conversationId, role: "user", content: userContent } }),
       prisma.message.create({ data: { conversationId, role: "assistant", content: answer, status: "done" } }),
       prisma.conversation.update({
         where: { id: conversationId },
-        data: { updatedAt: new Date(), ...(isFirstMessage ? { title: QUICK_ACTIONS[typedIntent].question.slice(0, 60) } : {}) },
+        data: { updatedAt: new Date(), ...(isFirstMessage ? { title: question.slice(0, 60) } : {}) },
       }),
     ]);
     const titleMarker = isFirstMessage
-      ? `\n\n__TITLE_B64__${Buffer.from(QUICK_ACTIONS[typedIntent].question.slice(0, 60), "utf8").toString("base64")}`
+      ? `\n\n__TITLE_B64__${Buffer.from(question.slice(0, 60), "utf8").toString("base64")}`
       : "";
     return new Response(answer + titleMarker, {
       headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },

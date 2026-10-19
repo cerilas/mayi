@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getUserSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { QUICK_ACTIONS, isQuickActionKey, withDisclaimer } from "@/lib/clinic";
+import { isQuickActionKey } from "@/lib/clinic";
+import { buildQuickAnswer } from "@/lib/quick-answers";
 
-// POST /api/conversations/[id]/quick — { action } → stores a fixed question/answer pair; never calls the AI and never uses a credit
+// POST /api/conversations/[id]/quick — { action } → stores a fixed or per-user question/answer pair; never uses a credit
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,21 +22,21 @@ export async function POST(
   });
   if (!conversation) return NextResponse.json({ error: "Sohbet bulunamadı" }, { status: 404 });
 
-  const action = QUICK_ACTIONS[actionKey];
+  const { question, answer } = await buildQuickAnswer(actionKey, session.user.id);
   const [userMsg, assistantMsg] = await prisma.$transaction([
     prisma.message.create({
-      data: { conversationId, role: "user", content: action.question },
+      data: { conversationId, role: "user", content: question },
       include: { attachments: true },
     }),
     prisma.message.create({
-      data: { conversationId, role: "assistant", content: withDisclaimer(action.answer), status: "done" },
+      data: { conversationId, role: "assistant", content: answer, status: "done" },
       include: { attachments: true },
     }),
     prisma.conversation.update({
       where: { id: conversationId },
       data: {
         updatedAt: new Date(),
-        ...(conversation.title === "Yeni Sohbet" ? { title: action.question.slice(0, 60) } : {}),
+        ...(conversation.title === "Yeni Sohbet" ? { title: question.slice(0, 60) } : {}),
       },
     }),
   ]);

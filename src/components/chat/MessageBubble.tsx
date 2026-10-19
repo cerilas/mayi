@@ -5,8 +5,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import AssistantAvatar from "@/components/chat/AssistantAvatar";
-import { MapPin, Navigation } from "lucide-react";
-import { APPOINTMENT_PICKER_TOKEN, CLINIC_MAP_URL } from "@/lib/clinic";
+import { MapPin, Navigation, Phone } from "lucide-react";
+import { APPOINTMENT_PICKER_TOKEN, CLINIC_MAP_URL, formatTelHref } from "@/lib/clinic";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -251,6 +251,25 @@ export default function MessageBubble({
                     },
                     a: ({ href, children }) => {
                       if (!href) return <a>{children}</a>;
+
+                      if (href.startsWith("tel:")) {
+                        return (
+                          <a
+                            href={href}
+                            className="not-prose mt-1 flex w-full max-w-sm min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 leading-tight transition-opacity hover:opacity-90"
+                            style={{ textDecoration: "none", background: "var(--bg-primary)", border: "1px solid var(--border-primary)" }}
+                          >
+                            <span className="flex w-10 h-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                              <Phone className="w-5 h-5" />
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <span className="truncate text-sm font-bold" style={{ color: "var(--text-primary)" }}>{children}</span>
+                              <span className="truncate text-xs" style={{ color: "var(--text-secondary)" }}>{formatTelHref(href)}</span>
+                            </span>
+                            <span className="shrink-0 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700">Ara</span>
+                          </a>
+                        );
+                      }
 
                       if (href === CLINIC_MAP_URL) {
                         return (
