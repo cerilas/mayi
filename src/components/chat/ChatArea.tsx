@@ -785,7 +785,7 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
               const last = messages[messages.length - 1];
               if (!last || last.role !== "assistant" || !last.content.includes(APPOINTMENT_PICKER_TOKEN)) return null;
               return (
-                <div className="pl-11 -mt-2 pb-4">
+                <div className="min-w-0 sm:pl-11 -mt-2 pb-4">
                   <AppointmentPicker<Message>
                     key={last.id}
                     conversationId={conversationId}

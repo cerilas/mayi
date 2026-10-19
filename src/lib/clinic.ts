@@ -2,6 +2,8 @@ import { appConfig } from "@/lib/config";
 
 export const CLINIC_MAP_URL = "https://share.google/UNp8yFP502cNh6NNA";
 export const APPOINTMENT_PICKER_TOKEN = "[[RANDEVU_SECICI]]";
+/** Clinic staff who receive an SMS for every new appointment request. */
+export const APPOINTMENT_NOTIFY_PHONES = ["+905456150207", "+905304492922", "+905406502727"];
 
 /** Europe/Istanbul is fixed at UTC+3 (no DST). Key: JS weekday, 0 = Sunday. */
 export const CLINIC_HOURS: Record<number, { open: number; close: number } | null> = {

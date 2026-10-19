@@ -258,17 +258,19 @@ export default function MessageBubble({
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="not-prose my-2 flex max-w-xs items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 no-underline transition-colors hover:bg-blue-100"
-                            style={{ textDecoration: "none" }}
+                            className="not-prose mt-1 flex w-full max-w-sm min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 leading-tight transition-opacity hover:opacity-90"
+                            style={{ textDecoration: "none", background: "var(--bg-primary)", border: "1px solid var(--border-primary)" }}
                           >
-                            <span className="flex w-9 h-9 shrink-0 items-center justify-center rounded-full bg-blue-600">
-                              <MapPin className="w-[18px] h-[18px] text-white" />
+                            <span className="btn-brand flex w-10 h-10 shrink-0 items-center justify-center rounded-full">
+                              <MapPin className="w-5 h-5" />
                             </span>
-                            <span className="flex-1">
-                              <span className="block text-sm font-bold text-blue-900">Haritada Aç</span>
-                              <span className="block text-[11.5px] text-blue-600">Google Haritalar&apos;da yol tarifi</span>
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <span className="truncate text-sm font-bold" style={{ color: "var(--text-primary)" }}>Haritada Aç</span>
+                              <span className="truncate text-xs" style={{ color: "var(--text-secondary)" }}>Google Haritalar&apos;da yol tarifi</span>
                             </span>
-                            <Navigation className="w-4 h-4 text-blue-600" />
+                            <span className="brand-bg-light flex w-8 h-8 shrink-0 items-center justify-center rounded-lg">
+                              <Navigation className="w-4 h-4 brand-text" />
+                            </span>
                           </a>
                         );
                       }

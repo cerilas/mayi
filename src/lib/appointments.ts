@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { APPOINTMENT_RULES, CLINIC_HOURS } from "@/lib/clinic";
+import { APPOINTMENT_NOTIFY_PHONES, APPOINTMENT_RULES, CLINIC_HOURS } from "@/lib/clinic";
+import { sendNetgsmSms } from "@/lib/sms";
 
 const TR_OFFSET = "+03:00";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -147,7 +148,9 @@ export async function createAppointment(input: {
       });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
-    return { ok: true, appointment, label: formatAppointmentLabel(appointment.startsAt) };
+    const label = formatAppointmentLabel(appointment.startsAt);
+    void notifyClinicStaff(input.userId, label, note);
+    return { ok: true, appointment, label };
   } catch (err) {
     if (err instanceof AppointmentError) return { ok: false, error: err.message };
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034") {
@@ -155,6 +158,27 @@ export async function createAppointment(input: {
     }
     console.error("[appointments] create failed", err);
     return { ok: false, error: "Randevu talebi kaydedilemedi. Lütfen tekrar deneyin." };
+  }
+}
+
+/** Best-effort: an SMS failure must never fail the booking itself. */
+async function notifyClinicStaff(userId: string, label: string, note: string | null) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, patientProfile: { select: { phone: true } } },
+    });
+    const lines = [
+      "MY FizyoAI - Yeni randevu talebi",
+      `Danışan: ${user?.name || "-"}`,
+      `Tarih: ${label}`,
+      `Tel: ${user?.patientProfile?.phone || "Kayıtlı değil"}`,
+    ];
+    if (note) lines.push(`Not: ${note.slice(0, 120)}`);
+    const result = await sendNetgsmSms(APPOINTMENT_NOTIFY_PHONES, lines.join("\n"));
+    if (!result.ok) console.error("[appointments] staff SMS failed", result.code);
+  } catch (err) {
+    console.error("[appointments] staff SMS error", err);
   }
 }
 

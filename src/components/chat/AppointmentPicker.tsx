@@ -84,7 +84,7 @@ export default function AppointmentPicker<TMessage>({ conversationId, onBooked }
   }
 
   return (
-    <div className="mt-2 w-full max-w-md rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
+    <div className="mt-2 w-full min-w-0 max-w-md rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}>
       <div className="flex items-center gap-2 px-4 pt-4 pb-2.5">
         <span className="flex w-8 h-8 items-center justify-center rounded-lg brand-bg-light">
           <CalendarDays className="w-4 h-4 brand-text" />
@@ -102,7 +102,7 @@ export default function AppointmentPicker<TMessage>({ conversationId, onBooked }
         </p>
       ) : (
         <>
-          <div className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:thin]">
+          <div className="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 gap-1.5 sm:gap-2 px-3 sm:px-4 pb-1">
             {days.map((day) => {
               const [dayNum, month] = day.label.split(" ");
               const active = day.date === selectedDate;
@@ -111,7 +111,7 @@ export default function AppointmentPicker<TMessage>({ conversationId, onBooked }
                   key={day.date}
                   type="button"
                   onClick={() => { setSelectedDate(day.date); setSelectedTime(null); setError(""); }}
-                  className={`shrink-0 w-[58px] rounded-xl py-2 text-center transition-colors ${active ? "btn-brand" : ""}`}
+                  className={`min-w-0 rounded-xl py-2 text-center transition-colors ${active ? "btn-brand" : ""}`}
                   style={active ? undefined : { background: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
                   title={day.label}
                 >
@@ -130,11 +130,11 @@ export default function AppointmentPicker<TMessage>({ conversationId, onBooked }
           </div>
 
           {selectedDay && (
-            <div className="px-4 pt-3.5">
+            <div className="px-3 sm:px-4 pt-3.5">
               <p className="flex items-center gap-1.5 text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
                 <Clock className="w-3.5 h-3.5" /> {selectedDay.label}
               </p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 min-[420px]:grid-cols-4 gap-1.5 sm:gap-2">
                 {selectedDay.slots.map((slot) => {
                   const active = slot.time === selectedTime;
                   return (
@@ -154,9 +154,9 @@ export default function AppointmentPicker<TMessage>({ conversationId, onBooked }
             </div>
           )}
 
-          {error && <p className="px-4 pt-2.5 text-xs text-red-600">{error}</p>}
+          {error && <p className="px-3 sm:px-4 pt-2.5 text-xs text-red-600">{error}</p>}
 
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             <button
               type="button"
               onClick={() => void submit()}
