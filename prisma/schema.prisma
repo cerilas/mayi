@@ -33,6 +33,28 @@ model User {
   postureTestResults  PostureTestResult[]
   insightOverrides    PostureInsightOverride[]
   insightOverrideLogs PostureInsightOverrideHistory[]
+
+  clinicAppointments  ClinicAppointment[]
+}
+
+/// Sohbet üzerinden alınan klinik randevu talebi. startsAt UTC saklanır; klinik saati Europe/Istanbul.
+model ClinicAppointment {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startsAt       DateTime
+  durationMin    Int      @default(60)
+  /// pending | confirmed | cancelled
+  status         String   @default("pending")
+  note           String?
+  /// picker | chat
+  source         String   @default("picker")
+  conversationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([startsAt])
+  @@index([userId, startsAt])
 }
 
 model Conversation {

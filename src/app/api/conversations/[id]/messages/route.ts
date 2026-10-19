@@ -7,6 +7,8 @@ import type { AIMessage, AIMessageContent, AIProvider } from "@/types";
 import path from "path";
 import fs from "fs";
 import { checkAndUpdateUsage, incrementUsage } from "@/lib/usage";
+import { clinicFactsForAI, QUICK_ACTIONS, matchTypedIntent, usageLimitMessage, withDisclaimer } from "@/lib/clinic";
+import { appointmentToolSet } from "@/ai/tools/appointmentTools";
 
 function getUploadDir() {
   return process.env.UPLOAD_DIR
@@ -46,19 +48,6 @@ export async function POST(
   if (!session?.user?.id)
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
-  // ── Usage limit validation ──────────────────────────────────────────
-  try {
-    const usage = await checkAndUpdateUsage(session.user.id);
-    if (usage.isExceeded) {
-      return NextResponse.json(
-        { error: "usage_limit_exceeded", message: "Kullanım hakkınız tükenmiştir. Yeni soru sormak için lütfen kliniğiniz ile iletişime geçin." },
-        { status: 403 }
-      );
-    }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Kullanım hakları kontrol edilemedi." }, { status: 500 });
-  }
-
   // ── Paralel: conversation lookup + request body parse ──────────────────
   const [{ id: conversationId }, body] = await Promise.all([
     params,
@@ -73,6 +62,40 @@ export async function POST(
 
   const userContent: string = (body.content ?? "").toString().trim();
   const attachmentIds: string[] = body.attachmentIds ?? [];
+
+  // Clinic info questions get the fixed answer, even when the usage limit is reached.
+  const typedIntent = attachmentIds.length === 0 ? matchTypedIntent(userContent) : null;
+  if (typedIntent) {
+    const answer = withDisclaimer(QUICK_ACTIONS[typedIntent].answer);
+    const isFirstMessage = conversation.title === "Yeni Sohbet";
+    await prisma.$transaction([
+      prisma.message.create({ data: { conversationId, role: "user", content: userContent } }),
+      prisma.message.create({ data: { conversationId, role: "assistant", content: answer, status: "done" } }),
+      prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date(), ...(isFirstMessage ? { title: QUICK_ACTIONS[typedIntent].question.slice(0, 60) } : {}) },
+      }),
+    ]);
+    const titleMarker = isFirstMessage
+      ? `\n\n__TITLE_B64__${Buffer.from(QUICK_ACTIONS[typedIntent].question.slice(0, 60), "utf8").toString("base64")}`
+      : "";
+    return new Response(answer + titleMarker, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
+    });
+  }
+
+  // ── Usage limit validation ──────────────────────────────────────────
+  try {
+    const usage = await checkAndUpdateUsage(session.user.id);
+    if (usage.isExceeded) {
+      return NextResponse.json(
+        { error: "usage_limit_exceeded", message: usageLimitMessage(usage.resetAt), resetAt: usage.resetAt },
+        { status: 403 }
+      );
+    }
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Kullanım hakları kontrol edilemedi." }, { status: 500 });
+  }
   const requestedProvider: AIProvider = body.provider ?? conversation.aiProvider;
   const requestedModel: string = body.model ?? conversation.aiModel;
   const webSearch: boolean = body.webSearch === true;
@@ -190,37 +213,51 @@ export async function POST(
 
   if (isPatient) {
     // Patient profile fetched only when needed
-    try {
-      const patientUser = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: { 
-          patientProfile: {
-            include: { responsibleAdmin: true }
-          }
-        },
-      });
+    const patientUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { 
+        patientProfile: {
+          include: { responsibleAdmin: true }
+        }
+      },
+    }).catch(() => null);
+    {
       const p = patientUser?.patientProfile;
       const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
       dbBaseInstruction = ""; // Danışanlar temel talimatı (base_instruction) görmemeli, sadece danışan talimatı ve profilleri geçerli
 
       const physioName = p?.responsibleAdmin?.name;
-      const physioInstruction = physioName 
-        ? `\n- Sorumlu Fizyoterapisti: ${physioName}\nNot: Eğer danışanın bir fizyoterapistle görüşmesi veya iletişim kurması gerekiyorsa, "fizyoterapistimize" demek yerine direkt sorumlu fizyoterapistin ismini (${physioName}) ver.` 
-        : `\n- Sorumlu Fizyoterapisti: Atanmamış`;
+      const contactLine = physioName
+        ? `Kullanıcının bağlı olduğu uzman: ${physioName}. İletişim gerektiğinde bu ismi kullan.`
+        : `Kullanıcıya atanmış bir uzman yok. İletişim gerektiğinde "kliniğimiz" de.`;
+      const linksLine = p?.videoLinks?.length
+        ? `Kliniğin bu kullanıcıyla paylaştığı içerik bağlantıları: ${p.videoLinks.join(', ')}. Kullanıcı bunları isterse yalnızca bağlantıyı ver; içeriği yorumlama, uygulama talimatı ekleme.`
+        : "";
 
-      customInstruction = `Önemli Not: Şu an bir hastayla konuşuyorsun. 
-Danışanın bilgileri aşağıdadır. Hastayı tanı, ona ismiyle ve profiline uygun şekilde yaklaş. Gerekirse bu bilgileri kullanarak tavsiyeler ver.
-- Danışan Adı: ${patientUser?.name || 'Bilinmiyor'}
-- Yaşı: ${p?.age || 'Bilinmiyor'}
-- Cinsiyeti: ${p?.gender || 'Bilinmiyor'}
-- Hastalık Kısa Tanıtımı: ${p?.shortDescription || 'Yok'}
-- Hastalık Uzun Detayları: ${p?.longDetails || 'Yok'}
-- Fizyoterapist/Klinik Görüşü: ${p?.clinicalOpinion || 'Yok'}
-- Atanmış Video/Egzersiz Linkleri: ${p?.videoLinks?.length ? p.videoLinks.join(', ') : 'Yok'}${physioInstruction}
+      customInstruction = `${globalPatientInstruction ? "Klinik iletişim notları:\n" + globalPatientInstruction + "\n\n" : ""}SABİT KURALLAR (yukarıdaki notlarla çelişirse her zaman bu kurallar geçerlidir):
 
-${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel kurallara uymalısın:\n" + globalPatientInstruction : ""}
-`;
-    } catch { /* ignore */ }
+Rolün: MY FizyoAI kliniğinin dijital karşılama ve yönlendirme asistanısın. Sağlık profesyoneli değilsin; hasta, şikâyet veya tedavi üzerinden konuşmazsın.
+
+Yapacakların:
+- Klinik, randevu, iletişim ve uygulamanın kullanımı hakkındaki soruları kısa ve net yanıtla.
+- Genel, kişiye özel olmayan yaşam alışkanlıkları (hareketli kalmak, mola vermek, ergonomik oturma gibi) hakkında birkaç cümlelik genel bilgi verebilirsin.
+- Sağlıkla ilgili her somut soruda kullanıcıyı uzmanına veya hekimine yönlendir.
+
+Yapmayacakların:
+- Teşhis koyma, olası hastalık veya neden sayma, risk değerlendirmesi yapma.
+- Tedavi, egzersiz programı, set/tekrar, ilaç, dozaj veya iyileşme süresi önerme.
+- Ağrı, şikâyet veya ölçüm değerlerini yorumlama.
+- "Geçmiş olsun", "şikâyetiniz nedir", "ağrınız nasıl" gibi hasta karşılama kalıpları kullanma. Kullanıcıyı hasta olarak değil, kliniğin bir kullanıcısı olarak karşıla.
+- Akademik makale, yazar veya yıl referansı verme.
+- Kendi tıbbi uyarı metnini ekleme; uygulama bunu her yanıtın altına kendisi ekler.
+
+Selamlaşma: Kullanıcı "merhaba" gibi kısa bir mesaj yazarsa yalnızca kısa bir karşılama yap ve nasıl yardımcı olabileceğini sor. Örnek: "Merhaba, ben MY FizyoAI asistanıyım. Randevu, iletişim veya uygulama hakkında nasıl yardımcı olabilirim?"
+
+Acil durum: Kullanıcı şiddetli ağrı, nefes darlığı, bilinç kaybı, düşme sonrası yaralanma gibi acil bir durum anlatırsa yorum yapmadan hemen 112'yi aramasını ve uzmanına haber vermesini söyle.
+
+${contactLine}
+${linksLine}`;
+    }
   } else {
     customInstruction = settingsMap.get("system_instruction") || "";
     dbBaseInstruction = settingsMap.get("base_instruction") || "";
@@ -231,12 +268,16 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
     " Kullanıcı senden bir görseli düzenlemeni, değiştirmeni veya yeni görsel oluşturmanı isterse, bunu kendin yapamayacağını belirt ve mesaj kutusunun yanındaki 🎨 (Görsel Üret) butonuna tıklayarak görsel üretme moduna geçmesini söyle." +
     " Asla '🎨 Görsel üret:' önekiyle başlayan mesajlar üretme.";
 
+  const appointmentTools = provider === "gemini" && !webSearch
+    ? appointmentToolSet(session.user.id, conversationId)
+    : undefined;
+
   const baseInstruction =
     `Şu anki tarih ve saat: ${nowTR} (Türkiye saati). ` +
     (dbBaseInstruction || defaultBase) +
-    (appConfig.disclaimer.enabled
-      ? " Hatırlat: Bu içerik yalnızca bilgilendirme amaçlıdır; uzman değerlendirmesi gereklidir."
-      : "");
+    `\n\n${clinicFactsForAI(!!appointmentTools)}`;
+
+  const disclaimerFooter = `\n\n---\n*${appConfig.disclaimer.text}*`;
 
   const aiMessages: AIMessage[] = [
     {
@@ -247,7 +288,11 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
     },
     ...history.map((msg) => ({
       role: msg.role as "user" | "assistant",
-      content: buildContent(msg.content, msg.attachments, msg.role),
+      content: buildContent(
+        msg.role === "assistant" ? msg.content.replace(disclaimerFooter, "") : msg.content,
+        msg.attachments,
+        msg.role
+      ),
     })),
   ];
 
@@ -273,7 +318,7 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
       try {
         if (appConfig.ai.enableStreaming) {
           fullResponse = await withTimeout(
-            streamAI({ provider, model, messages: aiMessages, webSearch, structuredOutput: true }, (chunk) => {
+            streamAI({ provider, model, messages: aiMessages, webSearch, structuredOutput: true, tools: appointmentTools }, (chunk) => {
               safeEnqueue(new TextEncoder().encode(chunk));
             }),
             generationTimeoutMs,
@@ -281,7 +326,7 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
           );
         } else {
           fullResponse = await withTimeout(
-            chatAI({ provider, model, messages: aiMessages, webSearch, structuredOutput: true }),
+            chatAI({ provider, model, messages: aiMessages, webSearch, structuredOutput: !appointmentTools, tools: appointmentTools }),
             generationTimeoutMs,
             "AI yanıt üretimi"
           );
@@ -290,6 +335,11 @@ ${globalPatientInstruction ? "Ayrıca hastalarla iletişim kurarken şu genel ku
 
         if (!fullResponse.trim()) {
           throw new Error("Model boş yanıt döndürdü. Sağlayıcı/model ayarlarını kontrol edin.");
+        }
+
+        if (appConfig.disclaimer.enabled) {
+          safeEnqueue(new TextEncoder().encode(disclaimerFooter));
+          fullResponse += disclaimerFooter;
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : "Bilinmeyen hata";

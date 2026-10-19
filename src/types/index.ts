@@ -12,6 +12,11 @@ export interface AIMessageContent {
   inline_data?: { mimeType: string; data: string };
 }
 
+export interface AIToolSet {
+  declarations: Record<string, unknown>[];
+  execute: (name: string, args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+}
+
 export interface AIRequestOptions {
   provider: AIProvider;
   model: string;
@@ -19,6 +24,8 @@ export interface AIRequestOptions {
   stream?: boolean;
   webSearch?: boolean;
   structuredOutput?: boolean;
+  /** Function-calling tools (Gemini only). Ignored when URL context or web search is active. */
+  tools?: AIToolSet;
 }
 
 export interface ConversationWithMessages {

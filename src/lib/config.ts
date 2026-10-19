@@ -35,6 +35,6 @@ export const appConfig = {
 
   disclaimer: {
     enabled: process.env.ENABLE_DISCLAIMER !== "false",
-    text: "Bu içerik yalnızca bilgilendirme amaçlıdır. Kesin tanı ve tedavi için uzman değerlendirmesi gereklidir.",
+    text: "MY FizyoAI tıbbi bir cihaz değildir; teşhis koymaz, tedavi önermez. Sağlıkla ilgili her konuda hekiminize veya uzmanınıza danışın.",
   },
 } as const;

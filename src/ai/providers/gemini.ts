@@ -1,6 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { AIMessage, AIRequestOptions } from "@/types";
-import { toolDeclarations, executeToolCall } from "@/ai/tools/builtinTools";
+import type { AIMessage, AIRequestOptions, AIToolSet } from "@/types";
 import { prisma } from "@/lib/prisma";
 
 const URL_REGEX = /https?:\/\/[^\s"'<>()[\]{}]+/i;
@@ -82,16 +81,31 @@ function buildContents(messages: AIMessage[]) {
 // - URL varsa   → urlContext only  (sayfayı okur)
 // - URL yoksa   → functionDeclarations only  (datetime, BMI vb.)
 // - "Arama" isteği → googleSearch only  (geçici: ayrı fonksiyon)
-function buildTools(messages: AIMessage[], webSearch?: boolean): { mode: "url" | "fn" | "search"; tools: Record<string, unknown>[] } {
+function buildTools(messages: AIMessage[], webSearch?: boolean, toolSet?: AIToolSet): { mode: "url" | "fn" | "search"; tools: Record<string, unknown>[] } {
   if (hasUrl(messages)) {
     return { mode: "url", tools: [{ urlContext: {} }] };
   }
   if (webSearch) {
     return { mode: "search", tools: [{ googleSearch: {} }] };
   }
-  // Gemini 2.5+ models have google_search built-in; functionDeclarations conflicts.
-  // Use no tools for normal requests — model handles math/date natively.
-  return { mode: "fn", tools: [] };
+  // functionDeclarations cannot be combined with googleSearch in one request; only caller-provided tools are sent.
+  return { mode: "fn", tools: toolSet?.declarations.length ? [{ functionDeclarations: toolSet.declarations }] : [] };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function runFunctionCalls(functionCalls: any[], toolSet?: AIToolSet) {
+  return Promise.all(
+    functionCalls.map(async (fc) => {
+      let result: Record<string, unknown>;
+      try {
+        result = toolSet ? await toolSet.execute(fc.name, fc.args ?? {}) : { error: `Bilinmeyen fonksiyon: ${fc.name}` };
+      } catch (err) {
+        console.error("[gemini] tool failed", fc.name, err);
+        result = { error: "Araç çalıştırılamadı." };
+      }
+      return { functionResponse: { id: fc.id, name: fc.name, response: { result } } };
+    })
+  );
 }
 
 // googleSearch sadece burada: hiçbir custom tool ile birleştirilmez
@@ -126,7 +140,8 @@ async function runToolLoop(
   ai: GoogleGenAI,
   model: string,
   contents: unknown[],
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  toolSet?: AIToolSet
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ finalText: string; lastCandidate: any }> {
   let currentContents = [...contents];
@@ -152,14 +167,7 @@ async function runToolLoop(
       return { finalText: response.text ?? "", lastCandidate };
     }
 
-    // Execute each function call and build the response parts
-    const functionResponseParts = functionCalls.map((fc) => ({
-      functionResponse: {
-        id: fc.id,
-        name: fc.name,
-        response: { result: executeToolCall(fc.name, fc.args ?? {}) },
-      },
-    }));
+    const functionResponseParts = await runFunctionCalls(functionCalls, toolSet);
 
     // Append model turn + function responses to contents
     currentContents = [
@@ -265,7 +273,7 @@ export async function streamGemini(
   const ai = new GoogleGenAI({ apiKey: await getApiKey() });
   const systemInstruction = getSystemInstruction(options.messages);
   const contents = buildContents(options.messages);
-  const { mode, tools } = buildTools(options.messages, options.webSearch);
+  const { mode, tools } = buildTools(options.messages, options.webSearch, options.tools);
 
   const config: Record<string, unknown> = {
     ...(systemInstruction ? { systemInstruction } : {}),
@@ -274,7 +282,7 @@ export async function streamGemini(
 
   // URL mode: urlContext, non-streaming
   if (mode === "url") {
-    const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config);
+    const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config, options.tools);
     const citations = extractCitations(lastCandidate);
     const full = finalText + citations;
     if (full) onChunk(full);
@@ -326,23 +334,19 @@ export async function streamGemini(
 
   // If the streaming response triggered function calls, continue the loop
   if (pendingFunctionCalls.length) {
-    const functionResponseParts = pendingFunctionCalls.map((fc) => ({
-      functionResponse: {
-        id: fc.id,
-        name: fc.name,
-        response: { result: executeToolCall(fc.name, fc.args ?? {}) },
-      },
-    }));
+    const functionResponseParts = await runFunctionCalls(pendingFunctionCalls, options.tools);
 
     const continuedContents = [
       ...contents,
       lastModelContent,
       { role: "user", parts: functionResponseParts },
     ];
-    const { finalText, lastCandidate: lc } = await runToolLoop(ai, options.model, continuedContents, config);
+    const { finalText, lastCandidate: lc } = await runToolLoop(ai, options.model, continuedContents, config, options.tools);
     lastCandidate = lc;
-    full = finalText;
-    if (finalText) onChunk(finalText);
+    if (finalText) {
+      full += (full ? "\n\n" : "") + finalText;
+      onChunk((full === finalText ? "" : "\n\n") + finalText);
+    }
   }
 
   const citations = extractCitations(lastCandidate);
@@ -354,7 +358,7 @@ export async function chatGemini(options: AIRequestOptions): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: await getApiKey() });
   const systemInstruction = getSystemInstruction(options.messages);
   const contents = buildContents(options.messages);
-  const { tools } = buildTools(options.messages, options.webSearch);
+  const { tools } = buildTools(options.messages, options.webSearch, options.tools);
 
   const config: Record<string, unknown> = {
     ...(systemInstruction ? { systemInstruction } : {}),
@@ -376,7 +380,7 @@ export async function chatGemini(options: AIRequestOptions): Promise<string> {
     return formatStructuredResponse(response.text ?? "");
   }
 
-  const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config);
+  const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config, options.tools);
   const citations = extractCitations(lastCandidate);
   return finalText + citations;
 }

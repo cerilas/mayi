@@ -5,6 +5,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import AssistantAvatar from "@/components/chat/AssistantAvatar";
+import { MapPin, Navigation } from "lucide-react";
+import { APPOINTMENT_PICKER_TOKEN, CLINIC_MAP_URL } from "@/lib/clinic";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -79,7 +81,9 @@ export default function MessageBubble({
 
   // Typewriter effect: reveal streamed content character by character
   const typedContent = useTypewriter(isStreaming ? (content || '') : '', 14);
-  const renderContent = isStreaming ? typedContent : (content || '');
+  const renderContent = (isStreaming ? typedContent : (content || ''))
+    .split(APPOINTMENT_PICKER_TOKEN).join('')
+    .trim();
 
   // Long message expansion logic
   const CHARACTER_LIMIT = 800;
@@ -247,6 +251,27 @@ export default function MessageBubble({
                     },
                     a: ({ href, children }) => {
                       if (!href) return <a>{children}</a>;
+
+                      if (href === CLINIC_MAP_URL) {
+                        return (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="not-prose my-2 flex max-w-xs items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 no-underline transition-colors hover:bg-blue-100"
+                            style={{ textDecoration: "none" }}
+                          >
+                            <span className="flex w-9 h-9 shrink-0 items-center justify-center rounded-full bg-blue-600">
+                              <MapPin className="w-[18px] h-[18px] text-white" />
+                            </span>
+                            <span className="flex-1">
+                              <span className="block text-sm font-bold text-blue-900">Haritada Aç</span>
+                              <span className="block text-[11.5px] text-blue-600">Google Haritalar&apos;da yol tarifi</span>
+                            </span>
+                            <Navigation className="w-4 h-4 text-blue-600" />
+                          </a>
+                        );
+                      }
                       
                       const match = href.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
                       if (match) {

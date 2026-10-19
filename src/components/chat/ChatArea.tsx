@@ -7,6 +7,10 @@ import MessageInput from "./MessageInput";
 import TextType from "./TextType";
 import { appConfig } from "@/lib/config";
 import AssistantAvatar from "./AssistantAvatar";
+import ClinicQuickActions, { ClinicQuickChips } from "./ClinicQuickActions";
+import AppointmentPicker from "./AppointmentPicker";
+import { useRouter } from "next/navigation";
+import { APPOINTMENT_PICKER_TOKEN, isQuickActionKey, type QuickActionKey } from "@/lib/clinic";
 
 function ShareButton({ conversationId }: { conversationId: string }) {
   const [shared, setShared] = useState(false);
@@ -164,7 +168,9 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [editImage, setEditImage] = useState<{ mimeType: string; base64: string } | null>(null);
   const [imageEditHint, setImageEditHint] = useState(false);
+  const [quickBusy, setQuickBusy] = useState<QuickActionKey | null>(null);
   const [, startTransition] = useTransition();
+  const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const oldestMsgIdRef = useRef<string | null>(null);
@@ -238,6 +244,40 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
       requestAnimationFrame(() => scrollToBottom("instant"));
     }
   }, [messages, scrollToBottom]);
+
+  const runQuickAction = useCallback(async (action: QuickActionKey) => {
+    if (quickBusy || sending) return;
+    setQuickBusy(action);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/quick`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMessages((prev) => [...prev, ...((data.messages ?? []) as Message[])]);
+      window.dispatchEvent(new CustomEvent("refreshSidebarConversations"));
+      requestAnimationFrame(() => scrollToBottom("smooth"));
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { id: `err-${Date.now()}`, role: "assistant", content: "", provider: null, model: null, status: "error", errorMessage: "İşlem tamamlanamadı. Lütfen tekrar deneyin.", attachments: [] },
+      ]);
+    } finally {
+      setQuickBusy(null);
+    }
+  }, [quickBusy, sending, conversationId, scrollToBottom]);
+
+  // Welcome screen deep link: /chat/[id]?quick=appointment
+  useEffect(() => {
+    if (loading) return;
+    const quickParam = new URLSearchParams(window.location.search).get("quick");
+    if (!isQuickActionKey(quickParam)) return;
+    router.replace(`/chat/${conversationId}`);
+    if (messages.length === 0) void runQuickAction(quickParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Load more messages when scrolling to top
   const loadMoreMessages = useCallback(async () => {
@@ -363,7 +403,11 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             if (contentType.includes("application/json")) {
               const data = await res.json();
               if (data?.error === "usage_limit_exceeded") {
-                serverErr = "Kullanım hakkınız dolmuştur. Yeni soru sormak için lütfen kliniğiniz ile iletişime geçin.";
+                setMessages((prev) => [
+                  ...prev,
+                  { id: `limit-${Date.now()}`, role: "assistant", content: data.message, provider: null, model: null, status: "done", errorMessage: null, attachments: [] },
+                ]);
+                return;
               } else {
                 serverErr = data?.error ?? serverErr;
               }
@@ -714,9 +758,13 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
             )}
           </div>
         )}
-        {messages.length === 0 && !streamingContent ? (
-          <div className="flex items-center justify-center h-full text-sm" style={{ color: "var(--text-tertiary)" }}>
-            Bir şeyler yazın...
+        {messages.length === 0 && !streamingContent && !sending ? (
+          <div className="relative z-10 flex flex-col items-center justify-center min-h-full py-10 px-1">
+            <h2 className="text-xl font-bold mb-1.5 text-center" style={{ color: "var(--text-primary)" }}>Size nasıl yardımcı olabiliriz?</h2>
+            <p className="text-sm mb-7 text-center" style={{ color: "var(--text-secondary)" }}>
+              Randevu, konum ve klinik bilgileri için bir seçenek seçin ya da yazın.
+            </p>
+            <ClinicQuickActions busyKey={quickBusy} onSelect={(key) => void runQuickAction(key)} />
           </div>
         ) : (
           <>
@@ -733,6 +781,22 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
                 onEditImage={handleEditImage}
               />
             ))}
+            {!sending && !streamingContent && (() => {
+              const last = messages[messages.length - 1];
+              if (!last || last.role !== "assistant" || !last.content.includes(APPOINTMENT_PICKER_TOKEN)) return null;
+              return (
+                <div className="pl-11 -mt-2 pb-4">
+                  <AppointmentPicker<Message>
+                    key={last.id}
+                    conversationId={conversationId}
+                    onBooked={(booked) => {
+                      if (booked.length) setMessages((prev) => [...prev, ...booked]);
+                      requestAnimationFrame(() => scrollToBottom("smooth"));
+                    }}
+                  />
+                </div>
+              );
+            })()}
             {streamingContent ? (
               <MessageBubble
                 role="assistant"
@@ -767,6 +831,9 @@ export default function ChatArea({ conversationId }: ChatAreaProps) {
       </div>
 
       {/* Input */}
+      {messages.length > 0 && !sending && (
+        <ClinicQuickChips busyKey={quickBusy} onSelect={(key) => void runQuickAction(key)} />
+      )}
       <MessageInput
         onSend={handleSend}
         onGenerateImage={handleGenerateImage}
