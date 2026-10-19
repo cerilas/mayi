@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { APPOINTMENT_NOTIFY_PHONES, APPOINTMENT_RULES, CLINIC_HOURS } from "@/lib/clinic";
-import { sendNetgsmSms } from "@/lib/sms";
+import { sendSms } from "@/lib/sms";
 
 const TR_OFFSET = "+03:00";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -175,8 +175,8 @@ async function notifyClinicStaff(userId: string, label: string, note: string | n
       `Tel: ${user?.patientProfile?.phone || "Kayıtlı değil"}`,
     ];
     if (note) lines.push(`Not: ${note.slice(0, 120)}`);
-    const result = await sendNetgsmSms(APPOINTMENT_NOTIFY_PHONES, lines.join("\n"));
-    if (!result.ok) console.error("[appointments] staff SMS failed", result.code);
+    const result = await sendSms(APPOINTMENT_NOTIFY_PHONES, lines.join("\n"));
+    if (!result.ok) console.error("[appointments] staff SMS failed", result.provider, result.detail);
   } catch (err) {
     console.error("[appointments] staff SMS error", err);
   }
