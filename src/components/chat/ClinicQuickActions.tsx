@@ -120,7 +120,7 @@ export default function ClinicQuickActions({ busyKey, onSelect }: ClinicQuickAct
 
 export function ClinicQuickChips({ busyKey, onSelect }: ClinicQuickActionsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible px-3 sm:px-4 pt-2 [scrollbar-width:none]">
+    <div className="flex shrink-0 gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible px-3 sm:px-4 pt-2 pb-2.5 sm:pt-2.5 sm:pb-3 [scrollbar-width:none]">
       {CHIPS.map(({ key, label, Icon }) => {
         const primary = key === "appointment";
         return (
