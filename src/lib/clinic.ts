@@ -43,17 +43,17 @@ const LOCATION_TEXT = `Kliniğimizin konumu Google Haritalar'da hazır. Aşağı
 const ABOUT_TEXT = `## KALİTELİ EKİP KALİTELİ HİZMETİ GETİRİR
 **Fizyoterapist Mahmut Yücel**
 
-Orta öğrenimimi 30 Ağustos İlköğretim Okulu'nda tamamladıktan sonra lise eğitimimi Tekereloğlu Anadolu Lisesi'nde aldım. Lisans eğitimimi ise 2016 yılında Ankara Yıldırım Beyazıt Üniversitesi'nde Fizik Tedavi ve Rehabilitasyon bölümünden mezun oldum. Mezuniyetimin ardından pediatrik rehabilitasyon alanına yönelerek meslek hayatıma başladım. Daha sonra ilerleyen süreçte yönümü ortopedik rehabilitasyon ve skolyoz alanına çevirdim. Bu süreç içerisinde cerrahlarla ortak çalışarak hastaların ameliyat öncesi, ameliyat sonrası ve ameliyatsız tedavi konularında deneyim kazandım.
+Orta öğrenimimi 30 Ağustos İlköğretim Okulu'nda tamamladıktan sonra lise eğitimimi Tekereloğlu Anadolu Lisesi'nde aldım. 2016 yılında Ankara Yıldırım Beyazıt Üniversitesi'nden fizyoterapist olarak mezun oldum ve meslek hayatıma başladım.
 
-Daha sonra yurt dışında çalışma kararı aldım ve İngiltere, Almanya, Güney ve Kuzey Amerika'da mesleğimi icra etme fırsatı buldum. 2019 yılında Türkiye'ye tam dönüş yaparak, yıllar içinde edindiğim bilgileri hastalarıma aktarmak amacıyla Nisan 2019'da Myfizyoterapi/Myfizyopilatesi'yi kurma kararı aldım. Multidisipliner bir yaklaşım konsepti ile hizmet verdiğimiz Myfizyopilates'e ek olarak, 2021 yılında ikinci şubemiz olan Myfizyoterapi'yi açtık. Üçüncü şubemizin Adana'da kuruluşu devam etmektedir ve yılbaşına kadar açmayı planlıyoruz. MyfizyoPilates konsepti ile Türkiye'ye en iyi tedaviyi sunmayı hedefleyen Mahmut Yücel, bekar ve iki kedi babasıdır.
+Daha sonra yurt dışında çalışma kararı aldım ve İngiltere, Almanya, Güney ve Kuzey Amerika'da mesleğimi icra etme fırsatı buldum. 2019 yılında Türkiye'ye tam dönüş yaparak, yıllar içinde edindiğim deneyimi paylaşmak amacıyla Nisan 2019'da Myfizyoterapi/Myfizyopilates'i kurdum. Myfizyopilates'e ek olarak 2021 yılında ikinci şubemiz Myfizyoterapi'yi açtık. Üçüncü şubemizin Adana'da kuruluşu devam etmektedir ve yılbaşına kadar açmayı planlıyoruz. Mahmut Yücel, bekar ve iki kedi babasıdır.
 
-MyFizyoPilates, Gaziantep fizyoterapist ekibiyle, her bireye özel tedavi yaklaşımları sunarak, sağlıklı ve konforlu bir yaşam sürmelerine yardımcı olmayı amaçlıyor. Ekibimiz, her hastanın durumu için özel bir değerlendirme yaparak, cerrahi olmayan (ameliyatsız) yöntemlerle en iyi tedavi planını oluşturur. Her tedavi sürecinde, vücudu bir bütün olarak değerlendirip, sadece lokal probleme odaklanmadan bütünsel iyileşmeyi hedefleriz.
+### Kliniğimiz
+MyFizyoPilates, Gaziantep'te deneyimli fizyoterapist ekibiyle fizyoterapi ve pilates hizmetleri sunan bir kliniktir. Danışanlarımızla yakın iletişim kurmayı, randevu ve takip süreçlerini kolay ve şeffaf şekilde yürütmeyi önemsiyoruz.
 
-### Ekibimizin Uzmanlık Alanları
-MyFizyoPilates ekibi, farklı tedavi alanlarında uzmanlaşmış fizyoterapistlerden oluşmaktadır. Gaziantep en iyi fizyoterapist kadrosu ile sizlere en etkili ve verimli tedavi hizmetini sunuyoruz. Uzman fizyoterapistlerimiz, alanlarında yüksek eğitim almış ve tecrübeli profesyonellerdir. Ekibimizin uzmanlık alanları şunlardır:
+### Ekibimiz
+Ekibimiz, alanlarında eğitim almış ve tecrübeli fizyoterapistlerden oluşmaktadır. Her danışanımızla birebir ilgileniyor, sorularını yanıtlıyor ve klinik sürecini birlikte planlıyoruz.
 
-**Fizyoterapi ve Rehabilitasyon**
-Her bireyin farklı bir vücut yapısı ve sağlık geçmişi olduğunu göz önünde bulunduruyoruz. Bu sebeple, uzman fizyoterapistler Gaziantep ekibimiz, her hastaya özel olarak hazırlanan tedavi planları ile başlar. Boyun düzleşmesi, bel fıtığı, kas-iskelet sistemi rahatsızlıkları gibi geniş bir yelpazede fizyoterapi hizmetleri sunuyoruz.`;
+Sağlığınızla ilgili her konuda değerlendirme ve bilgi için lütfen fizyoterapistinizle veya hekiminizle görüşün.`;
 
 const APPOINTMENT_TEXT = `Randevu talebi oluşturmak için aşağıdan uygun bir gün ve saat seçin. Dilerseniz "Perşembe 14:00" gibi yazarak da isteyebilirsiniz. Talebiniz kliniğimize iletilir ve sizinle iletişime geçilerek kesinleştirilir.
 
