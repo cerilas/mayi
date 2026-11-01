@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     });
 
     // 2. Send SMS directly via NetGSM using the active header selected in Settings
-    const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: my.cerilas.com\nE-posta: ${targetUser.email}\nSifre: ${finalPassword}\nB021`;
+    const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: http://www.myfizyoterapi.com/\nE-posta: ${targetUser.email}\nSifre: ${finalPassword}\nB021`;
 
     const result = await sendSms([formattedPhone], smsMessage);
 
