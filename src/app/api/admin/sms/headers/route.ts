@@ -1,8 +1,6 @@
 import { getUserSession } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
-
-const NETGSM_USERCODE = process.env.NETGSM_USERCODE || "3423411000";
-const NETGSM_PASSWORD = process.env.NETGSM_PASSWORD || "Dnz.24232423";
+import { NETGSM_USERCODE, NETGSM_PASSWORD } from "@/lib/sms";
 
 async function requireAdmin(req: Request) {
   const session = await getUserSession(req);
@@ -22,7 +20,7 @@ export async function GET(req: Request) {
     const response = await fetch("https://api.netgsm.com.tr/sms/rest/v2/msgheader", {
       method: "GET",
       headers: {
-        "Authorization": `Basic ${basicAuth}`,
+        Authorization: `Basic ${basicAuth}`,
       },
     });
 

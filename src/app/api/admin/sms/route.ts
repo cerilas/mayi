@@ -3,26 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { encryptPassword } from "@/lib/encryption";
-
-
+import { sendSms, toLocalMobile } from "@/lib/sms";
 
 async function requireAdmin(req: Request) {
   const session = await getUserSession(req);
   if (!session?.user?.id) return null;
   if (session.user.role !== "admin") return null;
   return session;
-}
-
-function formatPhone(phone: string): string {
-  // Sadece rakamları al
-  let cleaned = phone.replace(/\D/g, "");
-  // Başındaki 0'ı veya 90'ı temizle, 5xx ile başlayacak şekilde ayarla
-  if (cleaned.startsWith("905")) {
-    cleaned = cleaned.substring(2);
-  } else if (cleaned.startsWith("05")) {
-    cleaned = cleaned.substring(1);
-  }
-  return cleaned;
 }
 
 export async function POST(req: Request) {
@@ -51,9 +38,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Kullanıcı bulunamadı" }, { status: 404 });
     }
 
-    const formattedPhone = formatPhone(phone);
-    if (formattedPhone.length !== 10 || !formattedPhone.startsWith("5")) {
-      return NextResponse.json({ error: "Geçersiz telefon numarası formatı. Lütfen 5xx ile başlayan 10 haneli bir numara girin." }, { status: 400 });
+    const formattedPhone = toLocalMobile(String(phone));
+    if (!formattedPhone) {
+      return NextResponse.json(
+        { error: "Geçersiz telefon numarası formatı. Lütfen 5xx ile başlayan 10 haneli bir numara girin." },
+        { status: 400 }
+      );
     }
 
     // 1. Update user's password in DB
@@ -63,56 +53,22 @@ export async function POST(req: Request) {
       data: { passwordHash, passwordEncrypted: encryptPassword(finalPassword) },
     });
 
-    // 2. Prepare and send SMS via Cerilas API
+    // 2. Send SMS directly via NetGSM using the active header selected in Settings
     const smsMessage = `MYFizyo AI platformuna giris bilgileriniz:\nURL: my.cerilas.com\nE-posta: ${targetUser.email}\nSifre: ${finalPassword}\nB021`;
 
-    const apiEmail = process.env.CERILAS_API_EMAIL?.trim();
-    const apiPassword = process.env.CERILAS_API_PASSWORD?.trim();
+    const result = await sendSms([formattedPhone], smsMessage);
 
-    if (!apiEmail || !apiPassword) {
-      return NextResponse.json({ error: "CERILAS_API_EMAIL veya CERILAS_API_PASSWORD eksik." }, { status: 500 });
-    }
-
-    // Login to Cerilas API
-    const authRes = await fetch('https://cerilas.com/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: apiEmail, password: apiPassword })
-    });
-
-    if (!authRes.ok) {
-      const authErr = await authRes.text();
-      return NextResponse.json({ error: `Cerilas Login Hatası: ${authErr}` }, { status: 500 });
-    }
-
-    const authData = await authRes.json();
-    const token = authData.token;
-
-    if (!token) {
-      return NextResponse.json({ error: "Cerilas login başarılı ancak token alınamadı." }, { status: 500 });
-    }
-
-    // Send SMS using Cerilas API
-    const response = await fetch("https://cerilas.com/api/sms/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        msg: smsMessage,
-        no: formattedPhone,
-      }),
-    });
-
-    const data = await response.json().catch(() => null);
-
-    if (response.ok) {
-      return NextResponse.json({ success: true, message: "SMS başarıyla gönderildi", data });
+    if (result.ok) {
+      return NextResponse.json({
+        success: true,
+        message: "SMS başarıyla kuyruğa eklendi",
+        jobId: result.jobId,
+        header: result.header,
+      });
     } else {
-      console.error("Cerilas SMS Error:", data);
+      console.error("NetGSM Error:", result);
       return NextResponse.json(
-        { error: `SMS gönderilemedi. Hata: ${data?.error || data?.message || "Bilinmiyor"}` },
+        { error: `SMS gönderilemedi. NetGSM Hata Kodu: ${result.code || "Bilinmiyor"} - ${result.description || ""}` },
         { status: 500 }
       );
     }

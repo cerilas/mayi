@@ -1,19 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCerilasMail } from "@/lib/mail";
-
-const NETGSM_USERCODE = process.env.NETGSM_USERCODE || "3423411000";
-const NETGSM_PASSWORD = process.env.NETGSM_PASSWORD || "Dnz.24232423";
-
-function formatPhone(phone: string): string {
-  let cleaned = phone.replace(/\D/g, "");
-  if (cleaned.startsWith("905")) {
-    cleaned = cleaned.substring(2);
-  } else if (cleaned.startsWith("05")) {
-    cleaned = cleaned.substring(1);
-  }
-  return cleaned;
-}
+import { sendSms } from "@/lib/sms";
 
 export async function GET(req: Request) {
   // CRON servisleri için güvenlik (Query param veya Header üzerinden kontrol)
@@ -205,46 +193,21 @@ export async function GET(req: Request) {
       let smsCount = 0;
       try {
         const phoneSetting = await prisma.setting.findFirst({
-          where: { key: "daily_report_phones" }
+          where: { key: "daily_report_phones" },
+          orderBy: { updatedAt: "desc" },
         });
-        
+
         if (phoneSetting && phoneSetting.value.trim()) {
-          const phoneList = phoneSetting.value.split(",").map(p => p.trim()).filter(p => p.length > 0);
-          
+          const phoneList = phoneSetting.value
+            .split(",")
+            .map((p) => p.trim())
+            .filter((p) => p.length > 0);
+
           if (phoneList.length > 0) {
-            const headerSetting = await prisma.setting.findFirst({
-              where: { key: "netgsm_active_header" },
-              orderBy: { updatedAt: "desc" },
-            });
-            const activeHeader = headerSetting?.value || process.env.NETGSM_HEADER || "3423411000";
-            const basicAuth = Buffer.from(`${NETGSM_USERCODE}:${NETGSM_PASSWORD}`).toString("base64");
-            
-            const smsMessage = "MY Fizio AI platformunda gunluk raporunuz hazirdir. Epostaniza bakiniz veya https://my.cerilas.com/admin/stats";
-            
-            const messages = phoneList.map(phone => {
-               const formattedPhone = formatPhone(phone);
-               return { msg: smsMessage, no: formattedPhone };
-            }).filter(m => m.no.length === 10 && m.no.startsWith("5"));
-
-            if (messages.length > 0) {
-               const payload = {
-                 msgheader: activeHeader,
-                 messages: messages,
-                 encoding: "TR",
-                 iysfilter: "0",
-                 appname: "Cerilas AI",
-               };
-
-               await fetch("https://api.netgsm.com.tr/sms/rest/v2/send", {
-                 method: "POST",
-                 headers: {
-                   "Content-Type": "application/json",
-                   "Authorization": `Basic ${basicAuth}`,
-                 },
-                 body: JSON.stringify(payload),
-               });
-               smsCount = messages.length;
-            }
+            const smsMessage =
+              "MY Fizio AI platformunda gunluk raporunuz hazirdir. Epostaniza bakiniz veya https://my.cerilas.com/admin/stats";
+            const smsResult = await sendSms(phoneList, smsMessage);
+            smsCount = smsResult.sentCount ?? 0;
           }
         }
       } catch (smsErr) {
