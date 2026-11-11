@@ -4,15 +4,23 @@ import { streamAI, chatAI } from "@/ai";
 import { appConfig } from "@/lib/config";
 import type { AIMessage, AIProvider } from "@/types";
 import {
+  APPOINTMENT_PICKER_TOKEN,
+  CLINIC_MAP_URL,
   CLINIC_PHONE,
   QUICK_ACTIONS,
-  clinicFactsForAI,
   isStaticQuickActionKey,
   matchTypedIntent,
   withDisclaimer,
 } from "@/lib/clinic";
 
 const MAX_GUEST_QUESTIONS = 5;
+
+const GUEST_APPOINTMENT_ANSWER = `Kliniğimizden randevu almak ve ilk değerlendirme sürecinizi planlamak için doğrudan **WhatsApp Danışma Hattımız** üzerinden bizimle iletişime geçebilirsiniz:
+
+- **WhatsApp / Telefon:** [0540 650 27 27 — WhatsApp'tan Ulaşın](https://wa.me/905406502727)
+- **Çalışma Saatlerimiz:** Pazartesi – Cuma 09:00 – 19:00, Cumartesi 09:00 – 15:00 (Pazar kapalı)
+
+> **Not:** Uygulama içi online randevu takvimi, kliniğimizde aktif kaydı bulunan danışanlarımıza özeldir. Mevcut danışanımızsanız sağ üstteki **Giriş** butonundan hesabınıza giriş yaparak doğrudan uygulama üzerinden randevu oluşturabilirsiniz.`;
 
 const GUEST_LIMIT_MESSAGE =
   "5 soruluk ücretsiz misafir danışma hakkınız doldu. MY FizyoAI uygulaması kliniğimizin danışanlarına özeldir. Daha fazla soru sormak ve kişisel danışan hesabınızın tanımlanması için önce kliniğimize başvurmanız gerekmektedir.";
@@ -80,10 +88,24 @@ export async function POST(req: Request) {
 
     const userContent = lastMessage.content;
 
+    // Direct appointment intent for guests -> guide to WhatsApp + Login for existing patients
+    if (/(randevu|seans\s*al|muayene\s*ol|de[ğg]erlendirme\s*randevu)/i.test(userContent) && userContent.length <= 160) {
+      return new Response(withDisclaimer(GUEST_APPOINTMENT_ANSWER), {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
+
     // Static clinic info questions (hours, location, about)
     const typedIntent = matchTypedIntent(userContent);
     if (typedIntent && isStaticQuickActionKey(typedIntent)) {
-      const answer = withDisclaimer(QUICK_ACTIONS[typedIntent].answer);
+      const rawAnswer =
+        typedIntent === "hours"
+          ? `**Çalışma saatlerimiz**\n\n- **Pazartesi – Cuma:** 09:00 – 19:00\n- **Cumartesi:** 09:00 – 15:00\n- **Pazar:** Kapalı\n\nRandevu almak için [0540 650 27 27 WhatsApp hattımızdan](https://wa.me/905406502727) bize ulaşabilir, kayıtlı danışanımızsanız giriş yaparak uygulama içi randevu sistemimizi kullanabilirsiniz.`
+          : QUICK_ACTIONS[typedIntent].answer;
+      const answer = withDisclaimer(rawAnswer);
       return new Response(answer, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
@@ -124,6 +146,12 @@ export async function POST(req: Request) {
     const globalPatientInstruction = settingsMap.get("patient_system_instruction") || "";
     const disclaimerFooter = `\n\n---\n*${appConfig.disclaimer.text}*`;
 
+    const guestClinicFacts = `Klinik bilgileri (bunlar kesindir, değiştirme):
+- Çalışma saatleri: Pazartesi–Cuma 09:00–19:00, Cumartesi 09:00–15:00, Pazar kapalı.
+- Konum: [Haritada Aç](${CLINIC_MAP_URL})
+- WhatsApp Danışma ve Randevu Hattı: 0540 650 27 27 ([WhatsApp'tan Ulaşın](https://wa.me/905406502727))
+- Randevu Kuralı (Misafir Modu): Uygulama içi randevu seçici yalnızca giriş yapmış kayıtlı danışanlarımız içindir. Misafir kullanıcı randevu almak istediğinde ASLA ${APPOINTMENT_PICKER_TOKEN} kodunu kullanma; kullanıcıyı doğrudan 0540 650 27 27 numaralı WhatsApp hattımıza yönlendir ve mevcut danışanımız ise sağ üstteki Giriş butonundan giriş yaparak uygulama içi randevu sisteminden randevu alabileceğini belirt.`;
+
     const systemPrompt = `Şu anki tarih ve saat: ${nowTR} (Türkiye saati).
 Sen MY FizyoAI (MyFizyoterapi / MyFizyoPilates Kliniği - Fizyoterapist Mahmut Yücel) yapay zeka danışma asistanısın. Türkçe, samimi, anlaşılır ve bilgilendirici yanıtlar ver.
 
@@ -133,7 +161,7 @@ Kullanıcı şu anda uygulamayı "Misafir" modunda (5 soruluk ücretsiz danışm
 - Kendi tıbbi uyarı altbilgini ekleme; uygulama bunu her yanıtın altına otomatik olarak ekler.
 - Selamlaşma, hal hatır sorma ("nasılsın"), teşekkür veya kısa sohbet mesajlarına yalnızca 1-2 cümlelik doğal bir yanıt ver; bu mesajlarda ASLA kaynak, referans, makale veya madde listesi ekleme.
 
-${globalPatientInstruction ? `Klinik Notları ve Yönergeler:\n${globalPatientInstruction}\n\n` : ""}${clinicFactsForAI(false)}`;
+${globalPatientInstruction ? `Klinik Notları ve Yönergeler:\n${globalPatientInstruction}\n\n` : ""}${guestClinicFacts}`;
 
     const aiMessages: AIMessage[] = [
       { role: "system", content: systemPrompt },
@@ -167,7 +195,8 @@ ${globalPatientInstruction ? `Klinik Notları ve Yönergeler:\n${globalPatientIn
               streamAI(
                 { provider, model, messages: aiMessages, webSearch: false, structuredOutput: true },
                 (chunk) => {
-                  safeEnqueue(new TextEncoder().encode(chunk));
+                  const cleaned = chunk.replaceAll(APPOINTMENT_PICKER_TOKEN, "");
+                  if (cleaned) safeEnqueue(new TextEncoder().encode(cleaned));
                 }
               ),
               90000,
@@ -179,7 +208,7 @@ ${globalPatientInstruction ? `Klinik Notları ve Yönergeler:\n${globalPatientIn
               90000,
               "AI yanıt üretimi"
             );
-            safeEnqueue(new TextEncoder().encode(fullResponse));
+            safeEnqueue(new TextEncoder().encode(fullResponse.replaceAll(APPOINTMENT_PICKER_TOKEN, "")));
           }
 
           if (!fullResponse.trim()) {
