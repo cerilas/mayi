@@ -280,12 +280,18 @@ ${linksLine}`;
 
   const disclaimerFooter = `\n\n---\n*${appConfig.disclaimer.text}*`;
 
+  // Final override — placed last so it wins over any DB instruction that asks for references.
+  const smallTalkRule =
+    "YANIT KURALI (en yüksek öncelik): Selamlaşma, hal hatır sorma (\"nasılsın\", \"naber\"), teşekkür, vedalaşma veya kısa sohbet mesajlarına " +
+    "yalnızca 1-2 cümlelik doğal ve samimi bir yanıt ver. Bu tür mesajlarda ASLA kaynak, referans, kaynakça, makale, başlık veya madde listesi ekleme. " +
+    "Kaynak/referans yalnızca kullanıcı bilimsel veya klinik bir bilgi sorduğunda ve gerçekten gerekiyorsa eklenebilir.";
+
   const aiMessages: AIMessage[] = [
     {
       role: "system",
-      content: customInstruction
+      content: (customInstruction
         ? `${baseInstruction}\n\nÖzel Talimatlar:\n${customInstruction}`
-        : baseInstruction,
+        : baseInstruction) + `\n\n${smallTalkRule}`,
     },
     ...history.map((msg) => ({
       role: msg.role as "user" | "assistant",

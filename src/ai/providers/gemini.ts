@@ -180,9 +180,20 @@ async function runToolLoop(
   return { finalText: "", lastCandidate };
 }
 
+// Short greetings / small talk should never get a "Kaynaklar" footer.
+const SMALL_TALK_REGEX =
+  /^(selam(lar)?|merhaba(lar)?|mrb|slm|hey|hi|hello|g[üu]nayd[ıi]n|iyi (g[üu]nler|ak[şs]amlar|geceler)|nas[ıi]ls[ıi]n(ız)?|naber|ne haber|nas[ıi]l gidiyor|te[şs]ekk[üu]r(ler| ederim)?|sa[ğg] ?ol(un)?|eyvallah|tamam|ok(ey)?|g[öo]r[üu][şs][üu]r[üu]z|ho[şs][çc]a ?kal)\b/i;
+
+function isSmallTalk(messages: AIMessage[]): boolean {
+  const text = lastUserText(messages).trim().toLocaleLowerCase("tr-TR").replace(/[!?.,…]+/g, " ").trim();
+  if (!text) return false;
+  return text.split(/\s+/).length <= 6 && SMALL_TALK_REGEX.test(text);
+}
+
 // Extract grounding chunks and return a formatted citations footnote
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractCitations(candidate: any): string {
+function extractCitations(candidate: any, messages?: AIMessage[]): string {
+  if (messages && isSmallTalk(messages)) return "";
   const chunks: Array<{ web?: { uri?: string; title?: string } }> =
     candidate?.groundingMetadata?.groundingChunks ?? [];
   if (!chunks.length) return "";
@@ -283,7 +294,7 @@ export async function streamGemini(
   // URL mode: urlContext, non-streaming
   if (mode === "url") {
     const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config, options.tools);
-    const citations = extractCitations(lastCandidate);
+    const citations = extractCitations(lastCandidate, options.messages);
     const full = finalText + citations;
     if (full) onChunk(full);
     return full;
@@ -292,7 +303,7 @@ export async function streamGemini(
   // Google Search mode: non-streaming
   if (mode === "search") {
     const { text, candidate } = await runGoogleSearch(ai, options.model, contents, systemInstruction);
-    const citations = extractCitations(candidate);
+    const citations = extractCitations(candidate, options.messages);
     const full = text + citations;
     if (full) onChunk(full);
     return full;
@@ -349,7 +360,7 @@ export async function streamGemini(
     }
   }
 
-  const citations = extractCitations(lastCandidate);
+  const citations = extractCitations(lastCandidate, options.messages);
   if (citations) onChunk(citations);
   return full + citations;
 }
@@ -381,6 +392,6 @@ export async function chatGemini(options: AIRequestOptions): Promise<string> {
   }
 
   const { finalText, lastCandidate } = await runToolLoop(ai, options.model, contents, config, options.tools);
-  const citations = extractCitations(lastCandidate);
+  const citations = extractCitations(lastCandidate, options.messages);
   return finalText + citations;
 }

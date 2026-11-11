@@ -131,6 +131,7 @@ Kullanıcı şu anda uygulamayı "Misafir" modunda (5 soruluk ücretsiz danışm
 - Kullanıcının fizyoterapi, egzersiz, duruş (postür), kas-iskelet sağlığı, günlük yaşam ergonomisi, ağrı yönetimi veya kliniğimiz hakkındaki sorularını detaylı, açıklayıcı ve yardımcı şekilde yanıtla.
 - Kesin tıbbi teşhis koymaktan veya reçeteli ilaç önermekten kaçın; bilgilendirme yaptıktan sonra kapsamlı değerlendirme ve kişiye özel planlama için MyFizyoterapi kliniğimize başvurabileceğini nazikçe hatırlat.
 - Kendi tıbbi uyarı altbilgini ekleme; uygulama bunu her yanıtın altına otomatik olarak ekler.
+- Selamlaşma, hal hatır sorma ("nasılsın"), teşekkür veya kısa sohbet mesajlarına yalnızca 1-2 cümlelik doğal bir yanıt ver; bu mesajlarda ASLA kaynak, referans, makale veya madde listesi ekleme.
 
 ${globalPatientInstruction ? `Klinik Notları ve Yönergeler:\n${globalPatientInstruction}\n\n` : ""}${clinicFactsForAI(false)}`;
 
